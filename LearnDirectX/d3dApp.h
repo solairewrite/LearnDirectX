@@ -42,7 +42,7 @@ public:
 	// ***************************** 框架方法 ****************************************
 
 	virtual bool Initialize(); // 初始化,如分配资源,初始化对象,建立3D场景等
-	virtual LRESULT MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM LPARAM); // 实现应用程序主窗口的窗口过程函数 LRESULT:窗口程序或回调函数返回的32位值, WPARAM,LPARAM:消息相应机制
+	virtual LRESULT MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM LPARAM); // 应用程序主窗口的窗口过程函数 LRESULT:窗口程序或回调函数返回的32位值, WPARAM,LPARAM:消息相应机制
 
 protected:
 	virtual void CreateRtvAndDsvDescriptorHeaps(); // 创建RTV和DSV描述符堆
@@ -80,7 +80,7 @@ protected:
 
 	static D3DApp* mApp;
 
-	HINSTANCE	mhAppInst = nullptr;		// 应用实例句柄
+	HINSTANCE	mhAppInst = nullptr;	// 应用实例句柄
 	HWND		mhMainWnd = nullptr;	// 主窗口句柄
 	bool		mAppPaused = false;		// 程序是否暂停
 	bool		mMinimized = false;		// 程序是否最小化
@@ -96,8 +96,8 @@ protected:
 	GameTimer mTimer; // 游戏时间相关
 
 	Microsoft::WRL::ComPtr<IDXGIFactory4> mdxgiFactory; // WRL:Windows Runtime Library
-	Microsoft::WRL::ComPtr<IDXGISwapChain> mSwapChain;
-	Microsoft::WRL::ComPtr<ID3D12Device> md3dDevice;
+	Microsoft::WRL::ComPtr<IDXGISwapChain> mSwapChain; // 交换链
+	Microsoft::WRL::ComPtr<ID3D12Device> md3dDevice; // 显示适配器(显卡)
 
 	Microsoft::WRL::ComPtr<ID3D12Fence> mFence;
 	UINT64 mCurrentFence = 0;
@@ -126,6 +126,6 @@ protected:
 	D3D_DRIVER_TYPE md3dDriverType = D3D_DRIVER_TYPE_HARDWARE;
 	DXGI_FORMAT mBackBufferFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
 	DXGI_FORMAT mDepthStencilFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
-	int mClientWidth = 800;
-	int mClientHeight = 600;
+	int mClientWidth = 800;		// 窗口宽度
+	int mClientHeight = 600;	// 窗口高度
 };
