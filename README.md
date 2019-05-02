@@ -2,3 +2,5 @@
 学习书籍: DirectX 12 3D 游戏开发实战  
 ## 框架项目
 核心文件: d3dApp.h
+## 参考
+[Github项目DXAppendixA: 为使用DX而创建Windows应用程序所需的最简代码](https://github.com/solairewrite/DXAppendixA)  
