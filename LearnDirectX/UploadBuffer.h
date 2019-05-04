@@ -1,64 +1,64 @@
-#pragma once
+﻿#pragma once
 
 #include "d3dUtil.h"
 
 template<typename T>
-class UploadBuffer
+class UploadBuffer // 上传缓冲区辅助函数
 {
 public:
-    UploadBuffer(ID3D12Device* device, UINT elementCount, bool isConstantBuffer) : 
-        mIsConstantBuffer(isConstantBuffer)
-    {
-        mElementByteSize = sizeof(T);
+	UploadBuffer(ID3D12Device* device, UINT elementCount, bool isConstantBuffer) :
+		mIsConstantBuffer(isConstantBuffer)
+	{
+		mElementByteSize = sizeof(T);
 
-        // Constant buffer elements need to be multiples of 256 bytes.
-        // This is because the hardware can only view constant data 
-        // at m*256 byte offsets and of n*256 byte lengths. 
-        // typedef struct D3D12_CONSTANT_BUFFER_VIEW_DESC {
-        // UINT64 OffsetInBytes; // multiple of 256
-        // UINT   SizeInBytes;   // multiple of 256
-        // } D3D12_CONSTANT_BUFFER_VIEW_DESC;
-        if(isConstantBuffer)
-            mElementByteSize = d3dUtil::CalcConstantBufferByteSize(sizeof(T));
+		// 常量缓冲区的大小为 256 bytes 的整数倍
+		// 因为硬盘只能按 m*256B的偏移量和n*256B的数据长度 查看常量数据 
+		// 
+		// typedef struct D3D12_CONSTANT_BUFFER_VIEW_DESC {
+		// UINT64 OffsetInBytes; // multiple of 256
+		// UINT   SizeInBytes;   // multiple of 256
+		// } D3D12_CONSTANT_BUFFER_VIEW_DESC;
+		if (isConstantBuffer)
+			mElementByteSize = d3dUtil::CalcConstantBufferByteSize(sizeof(T));
 
-        ThrowIfFailed(device->CreateCommittedResource(
-            &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
-            D3D12_HEAP_FLAG_NONE,
-            &CD3DX12_RESOURCE_DESC::Buffer(mElementByteSize*elementCount),
+		ThrowIfFailed(device->CreateCommittedResource(
+			&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD), // 上传堆
+			D3D12_HEAP_FLAG_NONE,
+			&CD3DX12_RESOURCE_DESC::Buffer(mElementByteSize*elementCount),
 			D3D12_RESOURCE_STATE_GENERIC_READ,
-            nullptr,
-            IID_PPV_ARGS(&mUploadBuffer)));
+			nullptr,
+			IID_PPV_ARGS(&mUploadBuffer)));
 
-        ThrowIfFailed(mUploadBuffer->Map(0, nullptr, reinterpret_cast<void**>(&mMappedData)));
+		ThrowIfFailed(mUploadBuffer->Map(0, nullptr, reinterpret_cast<void**>(&mMappedData))); // 获取指向想要更新资源数据的指针
 
-        // We do not need to unmap until we are done with the resource.  However, we must not write to
-        // the resource while it is in use by the GPU (so we must use synchronization techniques).
-    }
+		// 只要还会修改当前的资源,就不取消映射
+		// 在资源被GPU使用期间,不能向资源进行写操作(使用同步技术)
+	}
 
-    UploadBuffer(const UploadBuffer& rhs) = delete;
-    UploadBuffer& operator=(const UploadBuffer& rhs) = delete;
-    ~UploadBuffer()
-    {
-        if(mUploadBuffer != nullptr)
-            mUploadBuffer->Unmap(0, nullptr);
+	UploadBuffer(const UploadBuffer& rhs) = delete;
+	UploadBuffer& operator=(const UploadBuffer& rhs) = delete;
+	~UploadBuffer()
+	{
+		if (mUploadBuffer != nullptr)
+			mUploadBuffer->Unmap(0, nullptr); // 取消映射
 
-        mMappedData = nullptr;
-    }
+		mMappedData = nullptr;
+	}
 
-    ID3D12Resource* Resource()const
-    {
-        return mUploadBuffer.Get();
-    }
+	ID3D12Resource* Resource()const
+	{
+		return mUploadBuffer.Get();
+	}
 
-    void CopyData(int elementIndex, const T& data)
-    {
-        memcpy(&mMappedData[elementIndex*mElementByteSize], &data, sizeof(T));
-    }
+	void CopyData(int elementIndex, const T& data)
+	{
+		memcpy(&mMappedData[elementIndex*mElementByteSize], &data, sizeof(T)); // 将数据从系统内存复制到常量缓冲区
+	}
 
 private:
-    Microsoft::WRL::ComPtr<ID3D12Resource> mUploadBuffer;
-    BYTE* mMappedData = nullptr;
+	Microsoft::WRL::ComPtr<ID3D12Resource> mUploadBuffer; // 上传缓冲区
+	BYTE* mMappedData = nullptr; // 想要更新资源数据的指针
 
-    UINT mElementByteSize = 0;
-    bool mIsConstantBuffer = false;
+	UINT mElementByteSize = 0;
+	bool mIsConstantBuffer = false; // 是否是常量缓冲区
 };
