@@ -142,7 +142,7 @@ void BoxApp::OnResize()
 	D3DApp::OnResize();
 
 	// 如果用户调整了窗口尺寸,则更新纵横比并重新计算投影矩阵 param: 垂直角度,宽高比,近点,远点
-	XMMATRIX P = XMMatrixPerspectiveFovLH(0.25*MathHelper::Pi, AspectRatio(), 1.0f, 1000.0f);
+	XMMATRIX P = XMMatrixPerspectiveFovLH(0.25f*MathHelper::Pi, AspectRatio(), 1.0f, 1000.0f);
 	XMStoreFloat4x4(&mProj, P);
 }
 

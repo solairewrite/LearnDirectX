@@ -1,8 +1,4 @@
-﻿
-
-
-
-#include "d3dApp.h"
+﻿#include "d3dApp.h"
 #include <windowsx.h> // GET_X_LPARAM
 
 using Microsoft::WRL::ComPtr;
@@ -12,8 +8,6 @@ using namespace DirectX;
 LRESULT CALLBACK
 MainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-
-
 	return D3DApp::GetApp()->MsgProc(hwnd, msg, wParam, lParam);
 }
 
@@ -120,6 +114,7 @@ bool D3DApp::Initialize()
 
 void D3DApp::CreateRtvAndDsvDescriptorHeaps()
 {
+	// 创建RTV描述符堆
 	D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc;
 	rtvHeapDesc.NumDescriptors = SwapChainBufferCount;
 	rtvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
@@ -128,7 +123,7 @@ void D3DApp::CreateRtvAndDsvDescriptorHeaps()
 	ThrowIfFailed(md3dDevice->CreateDescriptorHeap(
 		&rtvHeapDesc, IID_PPV_ARGS(mRtvHeap.GetAddressOf())));
 
-
+	// 创建DSV描述符堆
 	D3D12_DESCRIPTOR_HEAP_DESC dsvHeapDesc;
 	dsvHeapDesc.NumDescriptors = 1;
 	dsvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
@@ -166,12 +161,14 @@ void D3DApp::OnResize()
 	CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHeapHandle(mRtvHeap->GetCPUDescriptorHandleForHeapStart());
 	for (UINT i = 0; i < SwapChainBufferCount; i++)
 	{
+		// 获取交换链中的缓冲区资源
 		ThrowIfFailed(mSwapChain->GetBuffer(i, IID_PPV_ARGS(&mSwapChainBuffer[i])));
+		// 为获取的后台缓冲区创建渲染目标视图
 		md3dDevice->CreateRenderTargetView(mSwapChainBuffer[i].Get(), nullptr, rtvHeapHandle);
 		rtvHeapHandle.Offset(1, mRtvDescriptorSize);
 	}
 
-	// 创建深度/模板缓冲区
+	// 深度/模板缓冲区描述结构体
 	D3D12_RESOURCE_DESC depthStencilDesc;
 	depthStencilDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
 	depthStencilDesc.Alignment = 0;
@@ -181,7 +178,7 @@ void D3DApp::OnResize()
 	depthStencilDesc.MipLevels = 1;
 	depthStencilDesc.Format = mDepthStencilFormat;
 	depthStencilDesc.SampleDesc.Count = m4xMsaaState ? 4 : 1;
-	depthStencilDesc.SampleDesc.Quality = m4xMsaaQuality ? (m4xMsaaQuality - 1) : 0;
+	depthStencilDesc.SampleDesc.Quality = m4xMsaaState ? (m4xMsaaQuality - 1) : 0;
 	depthStencilDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
 	depthStencilDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
 
@@ -189,6 +186,7 @@ void D3DApp::OnResize()
 	optClear.Format = mDepthStencilFormat;
 	optClear.DepthStencil.Depth = 1.0f;
 	optClear.DepthStencil.Stencil = 0;
+	// 创建深度模板缓冲区
 	ThrowIfFailed(md3dDevice->CreateCommittedResource(
 		&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
 		D3D12_HEAP_FLAG_NONE,
@@ -197,7 +195,7 @@ void D3DApp::OnResize()
 		&optClear,
 		IID_PPV_ARGS(mDepthStencilBuffer.GetAddressOf())));
 
-	// Create descriptor to mip level 0 of entire resource using the format of the resource. ???
+	// 创建DSV
 	md3dDevice->CreateDepthStencilView(mDepthStencilBuffer.Get(), nullptr, DepthStencilView());
 
 	// 将资源从初始状态转换为深度缓冲
@@ -229,7 +227,6 @@ LRESULT D3DApp::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	{
 		// 窗口被激活或反激活时,WM_ACTIVATE被发送
 		// 反激活时暂停游戏,激活时取消暂停
-
 	case WM_ACTIVATE:
 		if (LOWORD(wParam) == WA_INACTIVE)
 		{
@@ -265,7 +262,6 @@ LRESULT D3DApp::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			}
 			else if (wParam == SIZE_RESTORED)
 			{
-
 				// 从最小化恢复
 				if (mMinimized)
 				{
@@ -273,9 +269,8 @@ LRESULT D3DApp::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 					mMinimized = false;
 					OnResize();
 				}
-
 				// 从最大化恢复
-				else if (mMinimized)
+				else if (mMaximized)
 				{
 					mAppPaused = false;
 					mMaximized = false;
@@ -284,13 +279,6 @@ LRESULT D3DApp::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 				else if (mResizing)
 				{
 					// 交给WM_EXITSIZEMOVE处理,否则会不断触发
-
-
-
-
-
-
-
 				}
 				else // 调用API,如SetWindowPos,mSwapChain->SetFullscreenState
 				{
@@ -322,7 +310,6 @@ LRESULT D3DApp::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		return 0;
 
 		// 激活菜单,并且用户按下的键不响应助记键或加速键
-
 	case WM_MENUCHAR:
 		// alt-enter 不发出哔哔声
 		return MAKELRESULT(0, MNC_CLOSE);
@@ -362,6 +349,7 @@ LRESULT D3DApp::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 bool D3DApp::InitMainWindow()
 {
+	// 填写WNDCLASS结构体
 	WNDCLASS wc;
 	wc.style = CS_HREDRAW | CS_VREDRAW;
 	wc.lpfnWndProc = MainWndProc; // 关联窗口过程函数的指针
@@ -374,6 +362,7 @@ bool D3DApp::InitMainWindow()
 	wc.lpszMenuName = 0;
 	wc.lpszClassName = L"MainWnd"; // 引用这个窗口类结构体的名字
 
+	// 注册结构体
 	if (!RegisterClass(&wc))
 	{
 		MessageBox(0, L"RegisterClass Failed", 0, 0);
@@ -386,6 +375,7 @@ bool D3DApp::InitMainWindow()
 	int width = R.right - R.left;
 	int height = R.bottom - R.top;
 
+	// 创建窗口
 	mhMainWnd = CreateWindow(L"MainWnd", mMainWndCaption.c_str(),
 		WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, width, height, 0, 0, mhAppInst, 0);
 	if (!mhMainWnd)
@@ -413,7 +403,7 @@ bool D3DApp::InitDirect3D()
 
 	ThrowIfFailed(CreateDXGIFactory1(IID_PPV_ARGS(&mdxgiFactory)));
 
-	// 尝试创建硬件设备
+	// 1,尝试创建硬件设备
 	HRESULT hardwareResult = D3D12CreateDevice(
 		nullptr,	// 默认适配器
 		D3D_FEATURE_LEVEL_11_0,
@@ -431,17 +421,15 @@ bool D3DApp::InitDirect3D()
 			IID_PPV_ARGS(&md3dDevice)));
 	}
 
+	// 2-1,创建围栏
 	ThrowIfFailed(md3dDevice->CreateFence(0, D3D12_FENCE_FLAG_NONE,
 		IID_PPV_ARGS(&mFence)));
-
+	// 2-2,获取描述符的大小
 	mRtvDescriptorSize = md3dDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 	mDsvDescriptorSize = md3dDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
 	mCbvSrvUavDescriptorSize = md3dDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
-	// 检查 4X MSAA 质量支持
-
-
-
+	// 3,检查 4X MSAA 质量支持
 	D3D12_FEATURE_DATA_MULTISAMPLE_QUALITY_LEVELS msQualityLevels;
 	msQualityLevels.Format = mBackBufferFormat;
 	msQualityLevels.SampleCount = 4;
@@ -459,8 +447,11 @@ bool D3DApp::InitDirect3D()
 	LogAdapters();
 #endif
 
+	// 4,创建命令队列,命令列表,命令分配器
 	CreateCommandObjects();
+	// 5,创建交换链
 	CreateSwapChain();
+	// 6,7,8 创建描述符堆,缓冲区,RTV,DSV
 	CreateRtvAndDsvDescriptorHeaps();
 
 	return true;
@@ -468,15 +459,18 @@ bool D3DApp::InitDirect3D()
 
 void D3DApp::CreateCommandObjects()
 {
+	// 创建命令队列
 	D3D12_COMMAND_QUEUE_DESC queueDesc = {};
 	queueDesc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
 	queueDesc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
 	ThrowIfFailed(md3dDevice->CreateCommandQueue(&queueDesc, IID_PPV_ARGS(&mCommandQueue)));
 
+	// 创建命令分配器
 	ThrowIfFailed(md3dDevice->CreateCommandAllocator(
 		D3D12_COMMAND_LIST_TYPE_DIRECT,
 		IID_PPV_ARGS(mDirectCmdListAlloc.GetAddressOf())));
 
+	// 创建命令列表
 	ThrowIfFailed(md3dDevice->CreateCommandList(
 		0,
 		D3D12_COMMAND_LIST_TYPE_DIRECT,
@@ -485,8 +479,6 @@ void D3DApp::CreateCommandObjects()
 		IID_PPV_ARGS(mCommandList.GetAddressOf())));
 
 	// 首次引用命令列表时需要重置,而重置前需要关闭
-
-
 	mCommandList->Close();
 }
 
@@ -495,6 +487,7 @@ void D3DApp::CreateSwapChain()
 	// 释放之前的交换链
 	mSwapChain.Reset();
 
+	// 填写DXGI_SWAP_CHAIN_DESC结构体
 	DXGI_SWAP_CHAIN_DESC sd;
 	sd.BufferDesc.Width = mClientWidth;
 	sd.BufferDesc.Height = mClientHeight;
@@ -512,7 +505,7 @@ void D3DApp::CreateSwapChain()
 	sd.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
 	sd.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
 
-	// 交换链使用队列flush
+	// 创建交换链
 	ThrowIfFailed(mdxgiFactory->CreateSwapChain(
 		mCommandQueue.Get(),
 		&sd,
@@ -521,12 +514,10 @@ void D3DApp::CreateSwapChain()
 
 void D3DApp::FlushCommandQueue()
 {
-
 	mCurrentFence++;
 
 	// 向命令队列加入指令,以设置新的围栏值
 	// 直到GPU完成所有优先于Signal()的命令,才设置
-
 	ThrowIfFailed(mCommandQueue->Signal(mFence.Get(), mCurrentFence));
 
 	// 等待直到GPU完成所有到这个围栏值的命令
@@ -564,9 +555,6 @@ D3D12_CPU_DESCRIPTOR_HANDLE D3DApp::DepthStencilView() const
 void D3DApp::CalculateFrameStats()
 {
 	// 统计数据置于窗口说明栏
-
-
-
 	static int frameCnt = 0;
 	static float timeElapsed = 0.0f;
 
@@ -585,6 +573,7 @@ void D3DApp::CalculateFrameStats()
 			L"		fps: " + fpsStr +
 			L"	   mspf: " + mspfStr;
 
+		// 设置窗口左上角文字 
 		SetWindowText(mhMainWnd, windowText.c_str());
 
 		// 重置带下一个周期

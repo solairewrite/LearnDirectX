@@ -13,10 +13,6 @@
 #pragma comment(lib, "D3D12.lib")
 #pragma comment(lib, "dxgi.lib")
 
-
-
-
-
 class D3DApp
 {
 protected:
@@ -42,7 +38,7 @@ public:
 	// ***************************** 框架方法 ****************************************
 
 	virtual bool Initialize(); // 初始化,如分配资源,初始化对象,建立3D场景等
-	virtual LRESULT MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM LPARAM); // 应用程序主窗口的窗口过程函数 LRESULT:窗口程序或回调函数返回的32位值, WPARAM,LPARAM:消息相应机制
+	virtual LRESULT MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPARAM); // 应用程序主窗口的窗口过程函数 LRESULT:窗口程序或回调函数返回的32位值, WPARAM,LPARAM:消息响应机制
 
 protected:
 	virtual void CreateRtvAndDsvDescriptorHeaps(); // 创建RTV和DSV描述符堆
@@ -78,7 +74,7 @@ protected:
 
 protected:
 
-	static D3DApp* mApp;
+	static D3DApp* mApp; // 静态实例
 
 	HINSTANCE	mhAppInst = nullptr;	// 应用实例句柄
 	HWND		mhMainWnd = nullptr;	// 主窗口句柄
@@ -87,29 +83,26 @@ protected:
 	bool		mMaximized = false;		// 程序是否最大化
 	bool		mResizing = false;		// 是否正在拖拽尺寸栏
 	bool		mFullScreenState = false; // 是否允许全屏
-
-
 	bool		m4xMsaaState = false;	// 是否允许4倍多重采样抗锯齿 4X MSAA
 	UINT		m4xMsaaQuality = 0;		// 4X MSAA 等级
 
-
 	GameTimer mTimer; // 游戏时间相关
 
-	Microsoft::WRL::ComPtr<IDXGIFactory4> mdxgiFactory; // WRL:Windows Runtime Library
+	Microsoft::WRL::ComPtr<IDXGIFactory4> mdxgiFactory; // WRL:Windows Runtime Library, 用于创建交换链,创建WARP(Windows高级光栅化平台)
 	Microsoft::WRL::ComPtr<IDXGISwapChain> mSwapChain; // 交换链
 	Microsoft::WRL::ComPtr<ID3D12Device> md3dDevice; // 显示适配器(显卡)
 
-	Microsoft::WRL::ComPtr<ID3D12Fence> mFence;
-	UINT64 mCurrentFence = 0;
+	Microsoft::WRL::ComPtr<ID3D12Fence> mFence; // 围栏
+	UINT64 mCurrentFence = 0; // 当前围栏值
 
 	Microsoft::WRL::ComPtr<ID3D12CommandQueue> mCommandQueue; // GPU命令队列
-	Microsoft::WRL::ComPtr<ID3D12CommandAllocator> mDirectCmdListAlloc;
+	Microsoft::WRL::ComPtr<ID3D12CommandAllocator> mDirectCmdListAlloc; // 命令分配器
 	Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> mCommandList; // CPU命令列表
 
 	static const int SwapChainBufferCount = 2; // 有几个缓冲区(前+后)
 	int mCurrBackBuffer = 0; // 当前后台缓冲区
-	Microsoft::WRL::ComPtr<ID3D12Resource> mSwapChainBuffer[SwapChainBufferCount];
-	Microsoft::WRL::ComPtr<ID3D12Resource> mDepthStencilBuffer;
+	Microsoft::WRL::ComPtr<ID3D12Resource> mSwapChainBuffer[SwapChainBufferCount]; // 渲染目标视图缓冲区
+	Microsoft::WRL::ComPtr<ID3D12Resource> mDepthStencilBuffer; // 深度/模板缓冲区
 
 	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> mRtvHeap; // RTV描述符堆
 	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> mDsvHeap; // DSV描述符堆
