@@ -1,80 +1,97 @@
-# Ñ§Ï°±Ê¼Ç
-2019-05-08 Ñ§Ï°±Ê¼Ç,ÔÚÑ§Ï°µÄ¹ı³ÌÖĞ,·¢ÏÖ»ù´¡²»ÀÎ¹Ì.´ÓDirect3DµÄ³õÊ¼»¯¿ªÊ¼¸´Ï°  
-## µÚ4ÕÂ Direct3DµÄ³õÊ¼»¯
-### 4.1 Ô¤±¸ÖªÊ¶
-#### 4.1.2 ×é¼ş¶ÔÏóÄ£ĞÍ
-COM: Component Object Model ×é¼ş¶ÔÏóÄ£ĞÍ,ÊÇÒ»ÖÖÁîDirectX²»ÊÜ±à³ÌÓïÑÔÊø¸¿,²¢Ê¹Ö®Ïòºó¼æÈİµÄ¼¼Êõ  
-ÎªÁË¹ÜÀíCOM¶ÔÏóµÄÉúÃüÖÜÆÚ,WindowsÔËĞĞÊ±¿â(WRL: Windows Runtime Library)Ìá¹©ÁËMicrosoft::WRL::ComPtrÀà  
-COMPtr 3¸ö·½·¨ Get: ·µ»ØÖ¸Ïò´Ëµ×²ãCOM½Ó¿ÚµÄÖ¸Õë  
-GetAddressOf: ·µ»ØÖ¸Ïò´Ëµ×²ãCOM½Ó¿ÚÖ¸ÕëµÄµØÖ·  
+ï»¿# å­¦ä¹ ç¬”è®°
+2019-05-08 å­¦ä¹ ç¬”è®°,åœ¨å­¦ä¹ çš„è¿‡ç¨‹ä¸­,å‘ç°åŸºç¡€ä¸ç‰¢å›º.ä»Direct3Dçš„åˆå§‹åŒ–å¼€å§‹å¤ä¹   
+## ç¬¬4ç«  Direct3Dçš„åˆå§‹åŒ–
+### 4.1 é¢„å¤‡çŸ¥è¯†
+#### 4.1.2 ç»„ä»¶å¯¹è±¡æ¨¡å‹
+COM: Component Object Model ç»„ä»¶å¯¹è±¡æ¨¡å‹,æ˜¯ä¸€ç§ä»¤DirectXä¸å—ç¼–ç¨‹è¯­è¨€æŸç¼š,å¹¶ä½¿ä¹‹å‘åå…¼å®¹çš„æŠ€æœ¯  
+ä¸ºäº†ç®¡ç†COMå¯¹è±¡çš„ç”Ÿå‘½å‘¨æœŸ,Windowsè¿è¡Œæ—¶åº“(WRL: Windows Runtime Library)æä¾›äº†Microsoft::WRL::ComPtrç±»  
+COMPtr 3ä¸ªæ–¹æ³• Get: è¿”å›æŒ‡å‘æ­¤åº•å±‚COMæ¥å£çš„æŒ‡é’ˆ  
+GetAddressOf: è¿”å›æŒ‡å‘æ­¤åº•å±‚COMæ¥å£æŒ‡é’ˆçš„åœ°å€  
 Reset  
-#### 4.1.6 ×ÊÔ´ÃèÊö·û
-·¢³ö»æÖÆÃüÁîÖ®Ç°,ĞèÒª½«Óë±¾´Î»æÖÆµ÷ÓÃÏà¹ØµÄ×ÊÔ´°ó¶¨µ½äÖÈ¾Á÷Ë®ÏßÉÏ  
-GPU×ÊÔ´²¢·ÇÖ±½ÓÓëäÖÈ¾Á÷Ë®ÏßÏà°ó¶¨,¶øÊÇÒªÍ¨¹ıÃèÊö·û¶ÔËü¼ä½ÓÒıÓÃ  
-³£ÓÃµÄÃèÊö·û: CBV(constant buffer view), SRV(shader resource view), UAV(unordered access view)  
+#### 4.1.6 èµ„æºæè¿°ç¬¦
+å‘å‡ºç»˜åˆ¶å‘½ä»¤ä¹‹å‰,éœ€è¦å°†ä¸æœ¬æ¬¡ç»˜åˆ¶è°ƒç”¨ç›¸å…³çš„èµ„æºç»‘å®šåˆ°æ¸²æŸ“æµæ°´çº¿ä¸Š  
+GPUèµ„æºå¹¶éç›´æ¥ä¸æ¸²æŸ“æµæ°´çº¿ç›¸ç»‘å®š,è€Œæ˜¯è¦é€šè¿‡æè¿°ç¬¦å¯¹å®ƒé—´æ¥å¼•ç”¨  
+å¸¸ç”¨çš„æè¿°ç¬¦: CBV(constant buffer view), SRV(shader resource view), UAV(unordered access view)  
 RTV(render target view), DSV(depth/stencil view)  
-ÃèÊö·û¶Ñ(¿ÉÒÔ¿´×öÃèÊö·ûÊı×é)  
-#### 4.1.10 DirectXÍ¼ĞÎ»ù´¡½á¹¹
-DXGI: DirectX Graphics Infrastructure DirectXÍ¼ĞÎ»ù´¡½á¹¹: Ìá¹©Í¨ÓÃAPI  
-ÏÔÊ¾ÊÊÅäÆ÷(ÏÔ¿¨)IDXGI, ÏÔÊ¾Êä³ö(ÏÔÊ¾Æ÷)IDXGIOutput
-### 4.2 CPUÓëGPUµÄ½»»¥
-#### 4.2.1 ÃüÁî¶ÓÁĞºÍÃüÁîÁĞ±í
-GPUÎ¬»¤ÃüÁî¶ÓÁĞ(command queue,±¾ÖÊÉÏÊÇ»·ĞÎ»º³åÇø)**ID3D12CommandQueue**  
-CPU¿ÉÒÔÀûÓÃÃüÁîÁĞ±í(command list,·â×°ÁËÒ»ÏµÁĞÍ¼ĞÎäÖÈ¾ÃüÁî)**ID3D12GraphicsCommandList**½«ÃüÁîÌá½»µ½Õâ¸ö¶ÓÁĞÖĞÈ¥  
-ÌîĞ´½á¹¹ÌåÃèÊö¶ÓÁĞ: **D3D12_COMMAND_QUEUE_DESC**  
-´´½¨¶ÓÁĞ: **ID3D12Device::CreateCommandQueue**  
-½«ÃüÁîÁĞ±íÀïµÄÃüÁîÌí¼Óµ½ÃüÁî¶ÓÁĞ: **ID3D12CommandQueue::ExecuteCommandLists**  
-½«ÃüÁî¼ÓÈëÃüÁîÁĞ±íºó,µ÷ÓÃ **ID3D12GraphicsCommandList::Close**  
-ÔÚµ÷ÓÃ ID3D12CommandQueue::ExecuteCommandLists Ìá½»ÃüÁîÁĞ±íÇ°,Ò»¶¨Òª½«Æä¹Ø±Õ  
-ÃüÁî·ÖÅäÆ÷(command allocator)**ID3D12CommandAllocator**,ÄÚ´æ¹ÜÀíÀà½Ó¿Ú  
-¼ÇÂ¼ÔÚÃüÁîÁĞ±íµÄÃüÁî,Êµ¼ÊÉÏÊÇ´¢´æÔÚÓëÖ®¹ØÁªµÄÃüÁî·ÖÅäÆ÷ÉÏ
-´´½¨ÃüÁî·ÖÅäÆ÷: **ID3D12Device::CreateCommandAllocator**  
-´´½¨ÃüÁîÁĞ±í: **ID3D12Device::CreateCommandList**  
-ÔÚµ÷ÓÃID3D12CommandQueue::ExecuteCommandListsÖ®ºó,¿ÉÒÔÍ¨¹ı**ID3D12GraphicsComandList::Reset**·½·¨,¸´ÓÃÃüÁîÁĞ±íÕ¼ÓÃµÄÏà¹Øµ×²ãÄÚ´æ(Ïà¹ØµÄÃüÁî·ÖÅäÆ÷ÈÔÔÚÎ¬»¤ÄÚ´æÖĞ±»ÃüÁî¶ÓÁĞÒıÓÃµÄÏµÁĞÃüÁî)  
-¸´ÓÃÃüÁî·ÖÅäÆ÷µÄÄÚ´æ(GPUÖ´ĞĞÍêÃüÁî·ÖÅäÆ÷µÄÃüÁî)**ID3D12CommandAllocator::Reset**  
-#### 4.2.2 CPUÓëGPU¼äµÄÍ¬²½
-´´½¨Î§À¸: **ID3D12Device::CreateFence**  
-#### 4.2.3 ×ÊÔ´×ª»»
-×ÊÔ´×ª»»ÆÁÕÏ½á¹¹Ìå**D3D12_RESOURCE_BARRIER**  
-### 4.3 ³õÊ¼»¯Direct3D
-#### 4.3.1 ´´½¨Éè±¸
-ÏÔÊ¾ÊÊÅäÆ÷(ÏÔ¿¨)**ID3D12Device**  
+æè¿°ç¬¦å †(å¯ä»¥çœ‹åšæè¿°ç¬¦æ•°ç»„)  
+#### 4.1.10 DirectXå›¾å½¢åŸºç¡€ç»“æ„
+DXGI: DirectX Graphics Infrastructure DirectXå›¾å½¢åŸºç¡€ç»“æ„: æä¾›é€šç”¨API  
+æ˜¾ç¤ºé€‚é…å™¨(æ˜¾å¡)IDXGI, æ˜¾ç¤ºè¾“å‡º(æ˜¾ç¤ºå™¨)IDXGIOutput
+### 4.2 CPUä¸GPUçš„äº¤äº’
+#### 4.2.1 å‘½ä»¤é˜Ÿåˆ—å’Œå‘½ä»¤åˆ—è¡¨
+GPUç»´æŠ¤å‘½ä»¤é˜Ÿåˆ—(command queue,æœ¬è´¨ä¸Šæ˜¯ç¯å½¢ç¼“å†²åŒº)**ID3D12CommandQueue**  
+CPUå¯ä»¥åˆ©ç”¨å‘½ä»¤åˆ—è¡¨(command list,å°è£…äº†ä¸€ç³»åˆ—å›¾å½¢æ¸²æŸ“å‘½ä»¤)**ID3D12GraphicsCommandList**å°†å‘½ä»¤æäº¤åˆ°è¿™ä¸ªé˜Ÿåˆ—ä¸­å»  
+å¡«å†™ç»“æ„ä½“æè¿°é˜Ÿåˆ—: **D3D12_COMMAND_QUEUE_DESC**  
+åˆ›å»ºé˜Ÿåˆ—: **ID3D12Device::CreateCommandQueue**  
+å°†å‘½ä»¤åˆ—è¡¨é‡Œçš„å‘½ä»¤æ·»åŠ åˆ°å‘½ä»¤é˜Ÿåˆ—: **ID3D12CommandQueue::ExecuteCommandLists**  
+å°†å‘½ä»¤åŠ å…¥å‘½ä»¤åˆ—è¡¨å,è°ƒç”¨ **ID3D12GraphicsCommandList::Close**  
+åœ¨è°ƒç”¨ ID3D12CommandQueue:: ExecuteCommandLists æäº¤å‘½ä»¤åˆ—è¡¨å‰,ä¸€å®šè¦å°†å…¶å…³é—­  
+å‘½ä»¤åˆ†é…å™¨(command allocator)**ID3D12CommandAllocator**,å†…å­˜ç®¡ç†ç±»æ¥å£  
+è®°å½•åœ¨å‘½ä»¤åˆ—è¡¨çš„å‘½ä»¤,å®é™…ä¸Šæ˜¯å‚¨å­˜åœ¨ä¸ä¹‹å…³è”çš„å‘½ä»¤åˆ†é…å™¨ä¸Š  
+åˆ›å»ºå‘½ä»¤åˆ†é…å™¨: **ID3D12Device::CreateCommandAllocator**  
+åˆ›å»ºå‘½ä»¤åˆ—è¡¨: **ID3D12Device::CreateCommandList**  
+åœ¨è°ƒç”¨ID3D12CommandQueue:: ExecuteCommandListsä¹‹å,å¯ä»¥é€šè¿‡**ID3D12GraphicsComandList::Reset**æ–¹æ³•,å¤ç”¨å‘½ä»¤åˆ—è¡¨å ç”¨çš„ç›¸å…³åº•å±‚å†…å­˜(ç›¸å…³çš„å‘½ä»¤åˆ†é…å™¨ä»åœ¨ç»´æŠ¤å†…å­˜ä¸­è¢«å‘½ä»¤é˜Ÿåˆ—å¼•ç”¨çš„ç³»åˆ—å‘½ä»¤)  
+å¤ç”¨å‘½ä»¤åˆ†é…å™¨çš„å†…å­˜(GPUæ‰§è¡Œå®Œå‘½ä»¤åˆ†é…å™¨çš„å‘½ä»¤)**ID3D12CommandAllocator::Reset**  
+#### 4.2.2 CPUä¸GPUé—´çš„åŒæ­¥
+åˆ›å»ºå›´æ : **ID3D12Device::CreateFence**  
+#### 4.2.3 èµ„æºè½¬æ¢
+èµ„æºè½¬æ¢å±éšœç»“æ„ä½“**D3D12_RESOURCE_BARRIER**  
+### 4.3 åˆå§‹åŒ–Direct3D
+#### 4.3.1 åˆ›å»ºè®¾å¤‡
+æ˜¾ç¤ºé€‚é…å™¨(æ˜¾å¡)**ID3D12Device**  
 **D3D12CreateDevice**
-#### 4.3.2 ´´½¨Î§À¸²¢»ñÈ¡ÃèÊö·ûµÄ´óĞ¡
-#### 4.3.3 ¼ì²â¶Ô4X MSAAÖÊÁ¿¼¶±ğµÄÖ§³Ö
-#### 4.3.4 ´´½¨ÃüÁî¶ÓÁĞºÍÃüÁîÁĞ±í
-#### 4.3.5 ÃèÊö²¢´´½¨½»»»Á´
-ÏÈÌîĞ´½á¹¹Ìå**DXGI_SWAP_CHAIN_DESC**,ÔÙµ÷ÓÃ**IDXGIFactory::CreateSwapChain**  
-#### 4.3.6 ´´½¨ÃèÊö·û¶Ñ
+#### 4.3.2 åˆ›å»ºå›´æ å¹¶è·å–æè¿°ç¬¦çš„å¤§å°
+#### 4.3.3 æ£€æµ‹å¯¹4X MSAAè´¨é‡çº§åˆ«çš„æ”¯æŒ
+#### 4.3.4 åˆ›å»ºå‘½ä»¤é˜Ÿåˆ—å’Œå‘½ä»¤åˆ—è¡¨
+#### 4.3.5 æè¿°å¹¶åˆ›å»ºäº¤æ¢é“¾
+å…ˆå¡«å†™ç»“æ„ä½“**DXGI_SWAP_CHAIN_DESC**,å†è°ƒç”¨**IDXGIFactory::CreateSwapChain**  
+#### 4.3.6 åˆ›å»ºæè¿°ç¬¦å †
 **ID3D12Device::CreateDescriptorHeap**  
-#### 4.3.7 ´´½¨äÖÈ¾Ä¿±êÊÓÍ¼(ÃèÊö·û)
-»ñÈ¡½»»»Á´ÖĞµÄ»º³åÇø×ÊÔ´**IDXGISwapChain::GetBuffer**  
-Îª»ñÈ¡µÄºóÌ¨»º³åÇø´´½¨äÖÈ¾Ä¿±êÊÓÍ¼**ID3D12Device::CreateRenderTargetView
-#### 4.3.8 ´´½¨Éî¶È/Ä£°å»º³åÇø¼°ÆäÊÓÍ¼
-ÌîĞ´**D3D12_RESOURCE_DESC**½á¹¹Ìå,**ID3D12Device::CreateCommittedResource**  
-#### 4.3.9 ÉèÖÃÊÓ¿Ú(ºóÌ¨»º³åÇøµÄ»æÖÆ·¶Î§)
-ÌîĞ´**D3D12_VIEWPORT**½á¹¹Ìå,**ID3D12GraphicsCommandList::RSSetViewports**  
-#### 4.3.10 ÉèÖÃ²Ã¼ô¾ØĞÎ
+#### 4.3.7 åˆ›å»ºæ¸²æŸ“ç›®æ ‡è§†å›¾(æè¿°ç¬¦)
+è·å–äº¤æ¢é“¾ä¸­çš„ç¼“å†²åŒºèµ„æº**IDXGISwapChain::GetBuffer**  
+ä¸ºè·å–çš„åå°ç¼“å†²åŒºåˆ›å»ºæ¸²æŸ“ç›®æ ‡è§†å›¾**ID3D12Device::CreateRenderTargetView**
+#### 4.3.8 åˆ›å»ºæ·±åº¦/æ¨¡æ¿ç¼“å†²åŒºåŠå…¶è§†å›¾
+å¡«å†™**D3D12_RESOURCE_DESC**ç»“æ„ä½“,**ID3D12Device::CreateCommittedResource**  
+#### 4.3.9 è®¾ç½®è§†å£(åå°ç¼“å†²åŒºçš„ç»˜åˆ¶èŒƒå›´)
+å¡«å†™**D3D12_VIEWPORT**ç»“æ„ä½“,**ID3D12GraphicsCommandList::RSSetViewports**  
+#### 4.3.10 è®¾ç½®è£å‰ªçŸ©å½¢
 **D3D12_RECT**, **ID3D12GraphicsCommandList::RSSetScissorRects**  
-#### ´´½¨´°¿ÚµÄÁ÷³Ì
-##### 1, WinMainº¯ÊıÖĞ,¸ù¾İÓ¦ÓÃ¾ä±úHINSTANCEÊµÀı»¯D3DApp(µÄ×ÓÀà)theApp  
-##### 2, ³õÊ¼»¯theApp.Initialize()°üÀ¨´´½¨´°¿Ú,³õÊ¼»¯DX  
-###### 2.1, ´´½¨´°¿Ú:ÌîĞ´WNDCLASS½á¹¹Ìå,×¢²á½á¹¹ÌåRegisterClass,´´½¨´°¿ÚCreateWindow,ShowWindow(),UpdateWindow()  
-###### 2.2, InitDirect3D()³õÊ¼»¯DX,²Î¿¼4.3½Ú,ÕâÀïµ½4.3.8  
-###### 2.3, µ÷ÓÃOnResize()  
-¸Ä±ä×ÊÔ´Ç°ÏÈFlush FlushCommandQueue()  
-ÖØÖÃÃüÁîÁĞ±í mCommandList->Reset()  
-ÊÍ·ÅÒªÖØĞÂ´´½¨µÄÖ®Ç°µÄ×ÊÔ´ mSwapChainBuffer[i].Reset() mDepthStencilBuffer.Reset()  
-resize½»»»Á´ mSwapChain->ResizeBuffers()  
-»ñÈ¡ÃèÊö·û¶Ñ¾ä±ú CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHeapHandle  
-»ñÈ¡½»»»Á´ÖĞµÄ»º³åÇø×ÊÔ´ mSwapChain->GetBuffer()  
-Îª»ñÈ¡µÄºóÌ¨»º³åÇø´´½¨äÖÈ¾Ä¿±êÊÓÍ¼ md3dDevice->CreateRenderTargetView(mSwapChainBuffer[i].Get(), nullptr, rtvHeapHandle)  
+#### ä»£ç : åˆ›å»ºçª—å£çš„æµç¨‹
+##### 1, WinMainå‡½æ•°ä¸­,æ ¹æ®åº”ç”¨å¥æŸ„HINSTANCEå®ä¾‹åŒ–D3DApp(çš„å­ç±»)theApp  
+##### 2, åˆå§‹åŒ–theApp.Initialize()åŒ…æ‹¬åˆ›å»ºçª—å£,åˆå§‹åŒ–DX  
+###### 2.1, åˆ›å»ºçª—å£:å¡«å†™WNDCLASSç»“æ„ä½“,æ³¨å†Œç»“æ„ä½“RegisterClass,åˆ›å»ºçª—å£CreateWindow,ShowWindow(),UpdateWindow()  
+###### 2.2, åˆå§‹åŒ–DX: InitDirect3D(),å‚è€ƒ4.3èŠ‚,è¿™é‡Œ4.3.1-4.3.8  
+###### 2.3, è°ƒç”¨OnResize()  
+æ”¹å˜èµ„æºå‰å…ˆFlush **FlushCommandQueue()**  
+é‡ç½®å‘½ä»¤åˆ—è¡¨ **mCommandList->Reset()**  
+é‡Šæ”¾è¦é‡æ–°åˆ›å»ºçš„ä¹‹å‰çš„èµ„æº **mSwapChainBuffer[i].Reset() mDepthStencilBuffer.Reset()**  
+resizeäº¤æ¢é“¾ **mSwapChain->ResizeBuffers()**  
+è·å–æè¿°ç¬¦å †å¥æŸ„ **CD3DX12_CPU_DESCRIPTOR_HANDLE** rtvHeapHandle  
+è·å–äº¤æ¢é“¾ä¸­çš„ç¼“å†²åŒºèµ„æº **mSwapChain->GetBuffer()**  
+ä¸ºè·å–çš„åå°ç¼“å†²åŒºåˆ›å»ºæ¸²æŸ“ç›®æ ‡è§†å›¾ **md3dDevice->CreateRenderTargetView(mSwapChainBuffer[i].Get(), nullptr, rtvHeapHandle)**  
 
-Éî¶È/Ä£°å»º³åÇøÃèÊö½á¹¹Ìå D3D12_RESOURCE_DESC depthStencilDesc  
-´´½¨Éî¶ÈÄ£°å»º³åÇø md3dDevice->CreateCommittedResource()  
-´´½¨DSV md3dDevice->CreateDepthStencilView()  
-½«×ÊÔ´´Ó³õÊ¼×´Ì¬×ª»»ÎªÉî¶È»º³å mCommandList->ResourceBarrier()  
-Ö´ĞĞ resize ÃüÁî mCommandList->Close() mCommandQueue->ExecuteCommandLists()  
-µÈ´ı resize Íê³É FlushCommandQueue()  
-¸üĞÂÊÓ¿ÚÎ»ÖÃ mScreenViewport, mScissorRect  
-##### 3, ÔËĞĞÓ¦ÓÃtheApp.Run()
+æ·±åº¦/æ¨¡æ¿ç¼“å†²åŒºæè¿°ç»“æ„ä½“ **D3D12_RESOURCE_DESC** depthStencilDesc  
+åˆ›å»ºæ·±åº¦æ¨¡æ¿ç¼“å†²åŒº **md3dDevice->CreateCommittedResource()**  
+åˆ›å»ºDSV **md3dDevice->CreateDepthStencilView()**  
+å°†èµ„æºä»åˆå§‹çŠ¶æ€è½¬æ¢ä¸ºæ·±åº¦ç¼“å†² **mCommandList->ResourceBarrier()**  
+æ‰§è¡Œ resize å‘½ä»¤ **mCommandList->Close() mCommandQueue->ExecuteCommandLists()**  
+ç­‰å¾… resize å®Œæˆ **FlushCommandQueue()**  
+æ›´æ–°è§†å£ä½ç½® mScreenViewport, mScissorRect  
+##### 3, è¿è¡Œåº”ç”¨theApp.Run()
+å¼€å¯æ¶ˆæ¯å¾ªç¯ä¹‹å‰,é‡ç½®æ¸¸æˆæ—¶é—´ **mTimer.Reset()**  
+å¦‚æœæœ‰Windowæ¶ˆæ¯,å¤„ç† if(**PeekMessage(&msg, 0, 0, 0, PM_REMOVE)**)  
+å¦åˆ™,å¤„ç†æ¸¸æˆé€»è¾‘ **Update(mTimer) Draw(mTimer)**  
+##### 4, Run()ä¸­æ¯å¸§è°ƒç”¨Draw()
+é‡å¤ä½¿ç”¨è®°å½•å‘½ä»¤çš„ç›¸å…³å†…å­˜ **mDirectCmdListAlloc->Reset()**  
+å¤ç”¨å‘½ä»¤åˆ—è¡¨åŠå…¶å†…å­˜ **mCommandList->Reset(mDirectCmdListAlloc.Get(), nullptr)**  
+è½¬æ¢èµ„æºçŠ¶æ€ **mCommandList->ResourceBarrier**  
+è®¾ç½®è§†å£å’Œè£å‰ªçŸ©å½¢,ä»–ä»¬éœ€è¦éšç€å‘½ä»¤åˆ—è¡¨çš„é‡ç½®è€Œé‡ç½® **mCommandList->RSSetViewports mCommandList->RSSetScissorRects**  
+åœ¨æ¯å¸§ä¸ºäº†åˆ·æ–°åœºæ™¯è€Œç»˜åˆ¶ä¹‹å‰,éœ€è¦æ¸…é™¤åå°ç¼“å†²åŒºå’Œæ·±åº¦ç¼“å†²åŒº,å°†æŒ‡å®šçš„æ¸²æŸ“ç›®æ ‡æ¸…ç†ä¸ºæŒ‡å®šçš„é¢œè‰²  
+**mCommandList->ClearRenderTargetView()**  
+æ¸…é™¤æ·±åº¦/æ¨¡æ¿ç¼“å†²åŒº **mCommandList->ClearDepthStencilView**  
+æŒ‡å®šè¦æ¸²æŸ“çš„ç¼“å†²åŒº **mCommandList->OMSetRenderTargets**  
+å†æ¬¡è½¬æ¢èµ„æºçŠ¶æ€ **mCommandList->ResourceBarrier**  
+å®Œæˆå‘½ä»¤è®°å½• **mCommandList->Close()**  
+å°†æ‰§è¡Œçš„å‘½ä»¤åˆ—è¡¨åŠ å…¥å‘½ä»¤é˜Ÿåˆ— **mCommandQueue->ExecuteCommandLists()**  
+äº¤æ¢åå°ç¼“å†²åŒºå’Œå‰å°ç¼“å†²åŒº **mSwapChain->Present(0, 0)**  
+ç­‰å¾…æ­¤å¸§çš„å‘½ä»¤å®Œæˆ **FlushCommandQueue()**  
