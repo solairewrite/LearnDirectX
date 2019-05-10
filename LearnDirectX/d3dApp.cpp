@@ -158,6 +158,7 @@ void D3DApp::OnResize()
 
 	mCurrBackBuffer = 0;
 
+	// 描述符堆句柄
 	CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHeapHandle(mRtvHeap->GetCPUDescriptorHandleForHeapStart());
 	for (UINT i = 0; i < SwapChainBufferCount; i++)
 	{

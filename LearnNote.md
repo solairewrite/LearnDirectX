@@ -55,4 +55,26 @@ CPU可以利用命令列表(command list,封装了一系列图形渲染命令)**ID3D12GraphicsComman
 #### 4.3.9 设置视口(后台缓冲区的绘制范围)
 填写**D3D12_VIEWPORT**结构体,**ID3D12GraphicsCommandList::RSSetViewports**  
 #### 4.3.10 设置裁剪矩形
-**D3D12_RECT**, **ID3D12GraphicsCommandList::RSSetScissorRects**
+**D3D12_RECT**, **ID3D12GraphicsCommandList::RSSetScissorRects**  
+#### 创建窗口的流程
+##### 1, WinMain函数中,根据应用句柄HINSTANCE实例化D3DApp(的子类)theApp  
+##### 2, 初始化theApp.Initialize()包括创建窗口,初始化DX  
+###### 2.1, 创建窗口:填写WNDCLASS结构体,注册结构体RegisterClass,创建窗口CreateWindow,ShowWindow(),UpdateWindow()  
+###### 2.2, InitDirect3D()初始化DX,参考4.3节,这里到4.3.8  
+###### 2.3, 调用OnResize()  
+改变资源前先Flush FlushCommandQueue()  
+重置命令列表 mCommandList->Reset()  
+释放要重新创建的之前的资源 mSwapChainBuffer[i].Reset() mDepthStencilBuffer.Reset()  
+resize交换链 mSwapChain->ResizeBuffers()  
+获取描述符堆句柄 CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHeapHandle  
+获取交换链中的缓冲区资源 mSwapChain->GetBuffer()  
+为获取的后台缓冲区创建渲染目标视图 md3dDevice->CreateRenderTargetView(mSwapChainBuffer[i].Get(), nullptr, rtvHeapHandle)  
+
+深度/模板缓冲区描述结构体 D3D12_RESOURCE_DESC depthStencilDesc  
+创建深度模板缓冲区 md3dDevice->CreateCommittedResource()  
+创建DSV md3dDevice->CreateDepthStencilView()  
+将资源从初始状态转换为深度缓冲 mCommandList->ResourceBarrier()  
+执行 resize 命令 mCommandList->Close() mCommandQueue->ExecuteCommandLists()  
+等待 resize 完成 FlushCommandQueue()  
+更新视口位置 mScreenViewport, mScissorRect  
+##### 3, 运行应用theApp.Run()
