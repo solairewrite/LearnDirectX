@@ -1,5 +1,4 @@
-﻿
-#include "d3dUtil.h"
+﻿#include "d3dUtil.h"
 #include <comdef.h>
 #include <fstream>
 
@@ -11,13 +10,14 @@ DxException::DxException(HRESULT hr, const std::wstring& functionName, const std
 	Filename(filename),
 	LineNumber(lineNumber)
 {
+
 }
 
 bool d3dUtil::IsKeyDown(int vkeyCode)
 {
 	return (GetAsyncKeyState(vkeyCode) & 0x8000) != 0;
 }
-
+// 离线将着色器编译到.cso(compiled shader object)文件,加载到程序中
 ComPtr<ID3DBlob> d3dUtil::LoadBinary(const std::wstring& filename)
 {
 	std::ifstream fin(filename, std::ios::binary);
@@ -35,11 +35,12 @@ ComPtr<ID3DBlob> d3dUtil::LoadBinary(const std::wstring& filename)
 	return blob;
 }
 
+// 将数据 内存->上传堆->常量缓存区(GPU)
 Microsoft::WRL::ComPtr<ID3D12Resource> d3dUtil::CreateDefaultBuffer(
 	ID3D12Device* device,
 	ID3D12GraphicsCommandList* cmdList,
 	const void* initData, // 泛型数据顶点缓冲区/索引缓冲区
-	UINT64 byteSize,
+	UINT64 byteSize, // 数据大小
 	Microsoft::WRL::ComPtr<ID3D12Resource>& uploadBuffer)
 {
 	ComPtr<ID3D12Resource> defaultBuffer;
@@ -63,12 +64,11 @@ Microsoft::WRL::ComPtr<ID3D12Resource> d3dUtil::CreateDefaultBuffer(
 		nullptr,
 		IID_PPV_ARGS(uploadBuffer.GetAddressOf())));
 
-
 	// Describe the data we want to copy into the default buffer. 描述希望复制到默认缓冲区中的数据
 	D3D12_SUBRESOURCE_DATA subResourceData = {};
-	subResourceData.pData = initData;
-	subResourceData.RowPitch = byteSize;
-	subResourceData.SlicePitch = subResourceData.RowPitch;
+	subResourceData.pData = initData; // 指向某个系统内存块的指针,其中有初始化缓冲区所用的数据
+	subResourceData.RowPitch = byteSize; // 对于缓冲区而言,此参数为想要复制数据的字节数
+	subResourceData.SlicePitch = subResourceData.RowPitch; // 对于缓冲区而言,此参数为想要复制数据的字节数
 
 	// 将数据复制到默认缓冲区的流程(Schedule)  
 	// 辅助函数 UpdateSubresources 会将CPU内存中的数据复制到位于中介位置的上传堆
@@ -82,26 +82,26 @@ Microsoft::WRL::ComPtr<ID3D12Resource> d3dUtil::CreateDefaultBuffer(
 	// 注意: 调用上述函数后,不能立即销毁uploadBuffer
 	// 因为命令列表中的复制操作可能未执行
 	// 调用者得知复制完成后,可以释放uploadBuffer
-
-
 	return defaultBuffer;
 }
 
 ComPtr<ID3DBlob> d3dUtil::CompileShader(
-	const std::wstring& filename,
-	const D3D_SHADER_MACRO* defines,
-	const std::string& entrypoint,
-	const std::string& target)
+	const std::wstring& filename,	// .hlsl文件路径
+	const D3D_SHADER_MACRO* defines,// 本书nullptr
+	const std::string& entrypoint,	// 着色器的入口函数名
+	const std::string& target)		// 指定着色器类型和版本的string
 {
 	UINT compileFlags = 0; // 如果处于调试模式,则使用调试标志
 #if defined(DEBUG) || defined(_DEBUG)  
-	compileFlags = D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION;
+	compileFlags = D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION; // 调试模式/跳过优化
 #endif
 
 	HRESULT hr = S_OK;
-
-	ComPtr<ID3DBlob> byteCode = nullptr;
-	ComPtr<ID3DBlob> errors;
+	// ID3DBlob类型描述一段普通的内存块,两个方法
+	// GetBufferPointer(),返回数据void*类型的指针,使用前要转换类型.
+	// GetBufferSize(),返回数据大小
+	ComPtr<ID3DBlob> byteCode = nullptr; // 储存编译好的着色器对象字节码
+	ComPtr<ID3DBlob> errors; // 如果编译报错,储存报错的字符串
 	hr = D3DCompileFromFile(filename.c_str(), defines, D3D_COMPILE_STANDARD_FILE_INCLUDE,
 		entrypoint.c_str(), target.c_str(), compileFlags, 0, &byteCode, &errors);
 	// 将错误信息输出到调试窗口

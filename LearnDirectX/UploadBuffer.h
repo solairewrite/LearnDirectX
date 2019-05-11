@@ -20,7 +20,7 @@ public:
 		// } D3D12_CONSTANT_BUFFER_VIEW_DESC;
 		if (isConstantBuffer)
 			mElementByteSize = d3dUtil::CalcConstantBufferByteSize(sizeof(T));
-
+		// 根据构造器中的device,得到mUploadBuffer
 		ThrowIfFailed(device->CreateCommittedResource(
 			&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD), // 上传堆
 			D3D12_HEAP_FLAG_NONE,
@@ -29,7 +29,8 @@ public:
 			nullptr,
 			IID_PPV_ARGS(&mUploadBuffer)));
 
-		ThrowIfFailed(mUploadBuffer->Map(0, nullptr, reinterpret_cast<void**>(&mMappedData))); // 获取指向想要更新资源数据的指针
+		// 获取指向想要更新资源数据的指针
+		ThrowIfFailed(mUploadBuffer->Map(0, nullptr, reinterpret_cast<void**>(&mMappedData)));
 
 		// 只要还会修改当前的资源,就不取消映射
 		// 在资源被GPU使用期间,不能向资源进行写操作(使用同步技术)
@@ -50,9 +51,10 @@ public:
 		return mUploadBuffer.Get();
 	}
 
+	// 将数据从系统内存复制到常量缓冲区
 	void CopyData(int elementIndex, const T& data)
 	{
-		memcpy(&mMappedData[elementIndex*mElementByteSize], &data, sizeof(T)); // 将数据从系统内存复制到常量缓冲区
+		memcpy(&mMappedData[elementIndex*mElementByteSize], &data, sizeof(T));
 	}
 
 private:

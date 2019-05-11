@@ -156,7 +156,7 @@ struct SubmeshGeometry
 	// 后续章节使用
 	DirectX::BoundingBox Bounds;
 };
-
+// 几何图形辅助结构体
 struct MeshGeometry
 {
 	// 几何体网格的名称,可以根据此名称找到它
@@ -174,10 +174,10 @@ struct MeshGeometry
 	Microsoft::WRL::ComPtr<ID3D12Resource> IndexBufferUploader = nullptr;
 
 	// 缓冲区数据
-	UINT VertexByteStride = 0;
-	UINT VertexBufferByteSize = 0;
+	UINT VertexByteStride = 0; // 单个顶点数据大小
+	UINT VertexBufferByteSize = 0; // 顶点数组大小
 	DXGI_FORMAT IndexFormat = DXGI_FORMAT_R16_UINT;
-	UINT IndexBufferByteSize = 0;
+	UINT IndexBufferByteSize = 0; // 索引数组大小
 
 	// 一个 MeshGeometry 结构体 可以储存一组顶点/缓冲区的多个几何体
 	// 使用下列容器来定义子网格结构体,就能单独绘制其中的子网格(单个几何体)
