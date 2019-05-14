@@ -22,6 +22,21 @@
     <Filter Include="Source Files\Framework">
       <UniqueIdentifier>{dfcc7267-57cc-4110-9a27-db15f41615e6}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Chapter7">
+      <UniqueIdentifier>{13fd0852-20e7-4936-b09b-2b031efc6449}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Chapter7">
+      <UniqueIdentifier>{315919fa-bf83-4a1e-b0a3-2cefcfc77b26}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Shaders">
+      <UniqueIdentifier>{8e07fddc-2179-48c2-a4cd-638c52edfb61}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Shaders\Chapter6">
+      <UniqueIdentifier>{54fe2eac-31b7-428c-9cb7-2ac4028583d0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Shaders\Chapter7">
+      <UniqueIdentifier>{ca4e38ab-3601-464f-85de-1c65aa277309}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="LearnDirectX.cpp">
@@ -47,6 +62,12 @@
     </ClCompile>
     <ClCompile Include="MathHelper.cpp">
       <Filter>Source Files\Framework</Filter>
+    </ClCompile>
+    <ClCompile Include="FrameResource.cpp">
+      <Filter>Source Files\Chapter7</Filter>
+    </ClCompile>
+    <ClCompile Include="ShapesApp.cpp">
+      <Filter>Source Files\Chapter7</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -74,8 +95,16 @@
     <ClInclude Include="UploadBuffer.h">
       <Filter>Header Files\Framework</Filter>
     </ClInclude>
+    <ClInclude Include="FrameResource.h">
+      <Filter>Header Files\Chapter7</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Shaders\color.hlsl" />
+    <None Include="Shaders\Chapter6\color.hlsl">
+      <Filter>Shaders\Chapter6</Filter>
+    </None>
+    <None Include="Shaders\Chapter7\color.hlsl">
+      <Filter>Shaders\Chapter7</Filter>
+    </None>
   </ItemGroup>
 </Project>

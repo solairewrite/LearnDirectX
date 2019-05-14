@@ -1,6 +1,6 @@
+// 第6章 彩色立方体
 // 报错: error X3000: Illegal character in shader file
 // 解决: 关闭UTF-8插件,貌似shader编码格式只能为ANSI?
-
 
 
 // 将常量缓冲区资源绑定到常量缓冲区(cbuffer)寄存器槽0
