@@ -14,7 +14,7 @@ struct ObjectConstants
 struct PassConstants
 {
 	DirectX::XMFLOAT4X4 View = MathHelper::Identity4x4();
-	DirectX::XMFLOAT4X4 InvView = MathHelper::Identity4x4();
+	DirectX::XMFLOAT4X4 InvView = MathHelper::Identity4x4(); // Inverse
 	DirectX::XMFLOAT4X4 Proj = MathHelper::Identity4x4();
 	DirectX::XMFLOAT4X4 InvProj = MathHelper::Identity4x4();
 	DirectX::XMFLOAT4X4 ViewProj = MathHelper::Identity4x4();
