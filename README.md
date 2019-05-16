@@ -5,4 +5,5 @@
 ## 参考
 [Github项目DXAppendixA: 为使用DX而创建Windows应用程序所需的最简代码](https://github.com/solairewrite/DXAppendixA)  
 ## Tips
-VS2017安装插件后,可以Alt+Space调出命令行
+VS2017安装插件后,可以Alt+Space调出命令行  
+Ctrl+G: 跳转指定行  
