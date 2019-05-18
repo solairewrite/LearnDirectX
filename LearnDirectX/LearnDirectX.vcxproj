@@ -166,6 +166,9 @@
     <ClInclude Include="UploadBuffer.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="Notes\第4章 Direct3D的初始化.md" />
+    <None Include="Notes\第5章 渲染流水线.md" />
+    <None Include="Notes\第6章 利用Direct3D绘制几何体.md" />
     <None Include="Shaders\Chapter7\color.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Compute</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">4.0</ShaderModel>

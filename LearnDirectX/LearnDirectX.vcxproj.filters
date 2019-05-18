@@ -37,6 +37,9 @@
     <Filter Include="Shaders\Chapter7">
       <UniqueIdentifier>{ca4e38ab-3601-464f-85de-1c65aa277309}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Notes">
+      <UniqueIdentifier>{48900a57-9977-449b-83e8-fb1771d7a85c}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="LearnDirectX.cpp">
@@ -105,6 +108,15 @@
     </None>
     <None Include="Shaders\Chapter7\color.hlsl">
       <Filter>Shaders\Chapter7</Filter>
+    </None>
+    <None Include="Notes\第4章 Direct3D的初始化.md">
+      <Filter>Notes</Filter>
+    </None>
+    <None Include="Notes\第5章 渲染流水线.md">
+      <Filter>Notes</Filter>
+    </None>
+    <None Include="Notes\第6章 利用Direct3D绘制几何体.md">
+      <Filter>Notes</Filter>
     </None>
   </ItemGroup>
 </Project>
