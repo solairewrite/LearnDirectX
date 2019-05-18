@@ -1,4 +1,4 @@
-﻿#include "d3dUtil.h"
+﻿#include "../Public/d3dUtil.h"
 #include <comdef.h>
 #include <fstream>
 

@@ -7,3 +7,4 @@
 ## Tips
 VS2017安装插件后,可以Alt+Space调出命令行  
 Ctrl+G: 跳转指定行  
+#include \"\"文件结构是以当前文件夹开始的,比如\"../Public/xxx.h\"  

@@ -1,4 +1,4 @@
-﻿#include "d3dApp.h"
+﻿#include "../Public/d3dApp.h"
 #include <DirectXColors.h> // using namespace DirectX
 
 using namespace DirectX; // Colors::LightSteelBlue

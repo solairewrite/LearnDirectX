@@ -3,11 +3,11 @@
 // if (GetAsyncKeyState('1') & 0x8000) 改为: if (GetAsyncKeyState('1'))
 // opaquePsoDesc.RasterizerState.FillMode = D3D12_FILL_MODE_WIREFRAME; 改为 D3D12_FILL_MODE_SOLID
 
-#include "d3dApp.h"
-#include "MathHelper.h"
-#include "UploadBuffer.h"
-#include "GeometryGenerator.h"
-#include "FrameResource.h"
+#include "../Public/d3dApp.h"
+#include "../Public/MathHelper.h"
+#include "../Public/UploadBuffer.h"
+#include "../Public/GeometryGenerator.h"
+#include "../Public/FrameResource.h"
 
 using Microsoft::WRL::ComPtr;
 using namespace DirectX;

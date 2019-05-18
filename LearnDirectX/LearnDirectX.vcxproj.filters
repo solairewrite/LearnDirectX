@@ -1,33 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="Source Files">
-      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
-      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
-    </Filter>
-    <Filter Include="Header Files">
-      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
-      <Extensions>h;hh;hpp;hxx;hm;inl;inc;ipp;xsd</Extensions>
-    </Filter>
-    <Filter Include="Resource Files">
-      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
-      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
-    </Filter>
-    <Filter Include="Source Files\Chapter6">
-      <UniqueIdentifier>{f5464723-521f-4633-8d29-d6073d610e91}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\Framework">
-      <UniqueIdentifier>{3641f41b-5aa4-4a23-ba1d-f6339d38770a}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\Framework">
-      <UniqueIdentifier>{dfcc7267-57cc-4110-9a27-db15f41615e6}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\Chapter7">
-      <UniqueIdentifier>{13fd0852-20e7-4936-b09b-2b031efc6449}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\Chapter7">
-      <UniqueIdentifier>{315919fa-bf83-4a1e-b0a3-2cefcfc77b26}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Shaders">
       <UniqueIdentifier>{8e07fddc-2179-48c2-a4cd-638c52edfb61}</UniqueIdentifier>
     </Filter>
@@ -40,66 +13,87 @@
     <Filter Include="Notes">
       <UniqueIdentifier>{48900a57-9977-449b-83e8-fb1771d7a85c}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Public">
+      <UniqueIdentifier>{f02cc2f2-4eca-44c6-947d-a59080a3aeb2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Private">
+      <UniqueIdentifier>{bdfb52f7-f4f7-48e6-ba52-f9e877ac6112}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Private\Chapter6">
+      <UniqueIdentifier>{7e3de0ae-9be6-4bd4-a157-5e271abf248c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Private\Chapter7">
+      <UniqueIdentifier>{d1585679-a603-45ed-812d-0c318bc0457b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Private\Framework">
+      <UniqueIdentifier>{dc9c1a87-0075-4726-9b2f-fe33a0bb4304}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Public\Chapter7">
+      <UniqueIdentifier>{a8e5adf9-f154-4876-bf25-06f5773c556c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Public\Framework">
+      <UniqueIdentifier>{8360bb8b-de90-490a-a96a-a6a064e9a65c}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="LearnDirectX.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="Private\BoxApp.cpp">
+      <Filter>Private\Chapter6</Filter>
     </ClCompile>
-    <ClCompile Include="BoxApp.cpp">
-      <Filter>Source Files\Chapter6</Filter>
+    <ClCompile Include="Private\FrameResource.cpp">
+      <Filter>Private\Chapter7</Filter>
     </ClCompile>
-    <ClCompile Include="d3dApp.cpp">
-      <Filter>Source Files\Framework</Filter>
+    <ClCompile Include="Private\ShapesApp.cpp">
+      <Filter>Private\Chapter7</Filter>
     </ClCompile>
-    <ClCompile Include="d3dUtil.cpp">
-      <Filter>Source Files\Framework</Filter>
+    <ClCompile Include="Private\d3dApp.cpp">
+      <Filter>Private\Framework</Filter>
     </ClCompile>
-    <ClCompile Include="DDSTextureLoader.cpp">
-      <Filter>Source Files\Framework</Filter>
+    <ClCompile Include="Private\d3dUtil.cpp">
+      <Filter>Private\Framework</Filter>
     </ClCompile>
-    <ClCompile Include="GameTimer.cpp">
-      <Filter>Source Files\Framework</Filter>
+    <ClCompile Include="Private\DDSTextureLoader.cpp">
+      <Filter>Private\Framework</Filter>
     </ClCompile>
-    <ClCompile Include="GeometryGenerator.cpp">
-      <Filter>Source Files\Framework</Filter>
+    <ClCompile Include="Private\GameTimer.cpp">
+      <Filter>Private\Framework</Filter>
     </ClCompile>
-    <ClCompile Include="MathHelper.cpp">
-      <Filter>Source Files\Framework</Filter>
+    <ClCompile Include="Private\GeometryGenerator.cpp">
+      <Filter>Private\Framework</Filter>
     </ClCompile>
-    <ClCompile Include="FrameResource.cpp">
-      <Filter>Source Files\Chapter7</Filter>
+    <ClCompile Include="Private\LearnDirectX.cpp">
+      <Filter>Private\Framework</Filter>
     </ClCompile>
-    <ClCompile Include="ShapesApp.cpp">
-      <Filter>Source Files\Chapter7</Filter>
+    <ClCompile Include="Private\MathHelper.cpp">
+      <Filter>Private\Framework</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="d3dApp.h">
-      <Filter>Header Files\Framework</Filter>
+    <ClInclude Include="Public\FrameResource.h">
+      <Filter>Public\Chapter7</Filter>
     </ClInclude>
-    <ClInclude Include="d3dUtil.h">
-      <Filter>Header Files\Framework</Filter>
+    <ClInclude Include="Public\d3dApp.h">
+      <Filter>Public\Framework</Filter>
     </ClInclude>
-    <ClInclude Include="d3dx12.h">
-      <Filter>Header Files\Framework</Filter>
+    <ClInclude Include="Public\d3dUtil.h">
+      <Filter>Public\Framework</Filter>
     </ClInclude>
-    <ClInclude Include="DDSTextureLoader.h">
-      <Filter>Header Files\Framework</Filter>
+    <ClInclude Include="Public\d3dx12.h">
+      <Filter>Public\Framework</Filter>
     </ClInclude>
-    <ClInclude Include="GameTimer.h">
-      <Filter>Header Files\Framework</Filter>
+    <ClInclude Include="Public\DDSTextureLoader.h">
+      <Filter>Public\Framework</Filter>
     </ClInclude>
-    <ClInclude Include="GeometryGenerator.h">
-      <Filter>Header Files\Framework</Filter>
+    <ClInclude Include="Public\GameTimer.h">
+      <Filter>Public\Framework</Filter>
     </ClInclude>
-    <ClInclude Include="MathHelper.h">
-      <Filter>Header Files\Framework</Filter>
+    <ClInclude Include="Public\GeometryGenerator.h">
+      <Filter>Public\Framework</Filter>
     </ClInclude>
-    <ClInclude Include="UploadBuffer.h">
-      <Filter>Header Files\Framework</Filter>
+    <ClInclude Include="Public\MathHelper.h">
+      <Filter>Public\Framework</Filter>
     </ClInclude>
-    <ClInclude Include="FrameResource.h">
-      <Filter>Header Files\Chapter7</Filter>
+    <ClInclude Include="Public\UploadBuffer.h">
+      <Filter>Public\Framework</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

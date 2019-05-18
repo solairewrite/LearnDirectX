@@ -1,4 +1,4 @@
-﻿#include "d3dApp.h"
+﻿#include "../Public/d3dApp.h"
 #include <windowsx.h> // GET_X_LPARAM
 
 using Microsoft::WRL::ComPtr;

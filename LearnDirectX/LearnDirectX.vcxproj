@@ -143,27 +143,27 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="BoxApp.cpp" />
-    <ClCompile Include="d3dApp.cpp" />
-    <ClCompile Include="d3dUtil.cpp" />
-    <ClCompile Include="DDSTextureLoader.cpp" />
-    <ClCompile Include="FrameResource.cpp" />
-    <ClCompile Include="GameTimer.cpp" />
-    <ClCompile Include="GeometryGenerator.cpp" />
-    <ClCompile Include="LearnDirectX.cpp" />
-    <ClCompile Include="MathHelper.cpp" />
-    <ClCompile Include="ShapesApp.cpp" />
+    <ClCompile Include="Private\BoxApp.cpp" />
+    <ClCompile Include="Private\d3dApp.cpp" />
+    <ClCompile Include="Private\d3dUtil.cpp" />
+    <ClCompile Include="Private\DDSTextureLoader.cpp" />
+    <ClCompile Include="Private\FrameResource.cpp" />
+    <ClCompile Include="Private\GameTimer.cpp" />
+    <ClCompile Include="Private\GeometryGenerator.cpp" />
+    <ClCompile Include="Private\LearnDirectX.cpp" />
+    <ClCompile Include="Private\MathHelper.cpp" />
+    <ClCompile Include="Private\ShapesApp.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="d3dApp.h" />
-    <ClInclude Include="d3dUtil.h" />
-    <ClInclude Include="d3dx12.h" />
-    <ClInclude Include="DDSTextureLoader.h" />
-    <ClInclude Include="FrameResource.h" />
-    <ClInclude Include="GameTimer.h" />
-    <ClInclude Include="GeometryGenerator.h" />
-    <ClInclude Include="MathHelper.h" />
-    <ClInclude Include="UploadBuffer.h" />
+    <ClInclude Include="Public\d3dApp.h" />
+    <ClInclude Include="Public\d3dUtil.h" />
+    <ClInclude Include="Public\d3dx12.h" />
+    <ClInclude Include="Public\DDSTextureLoader.h" />
+    <ClInclude Include="Public\FrameResource.h" />
+    <ClInclude Include="Public\GameTimer.h" />
+    <ClInclude Include="Public\GeometryGenerator.h" />
+    <ClInclude Include="Public\MathHelper.h" />
+    <ClInclude Include="Public\UploadBuffer.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Notes\第4章 Direct3D的初始化.md" />

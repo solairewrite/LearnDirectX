@@ -9,9 +9,9 @@
 // 右键color.hlsl文件 Properties -> General -> Item Type: Do not participate in build
 // 原因: VS HLSL编译器默认入口文件是main,而shader的入口文件可以自定义
 
-#include "d3dApp.h"
-#include "MathHelper.h"
-#include "UploadBuffer.h"
+#include "../Public/d3dApp.h"
+#include "../Public/MathHelper.h"
+#include "../Public/UploadBuffer.h"
 
 using Microsoft::WRL::ComPtr;
 using namespace DirectX; // XMFLOAT3
