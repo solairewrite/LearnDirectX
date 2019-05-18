@@ -115,26 +115,26 @@ mTimer.Tick()
 &emsp;XMStoreFloat4x4(&objConstants.WorldViewProj, XMMatrixTranspose(worldViewProj))  
 &emsp;mObjectCB->CopyData(0, objConstants)  
 ##### Draw(mTimer)
-mDirectCmdListAlloc->Reset()  
-mCommandList->Reset(mDirectCmdListAlloc.Get(), mPSO.Get())  
-mCommandList->RSSetViewports(1, &mScreenViewport)  
-mCommandList->RSSetScissorRects(1, &mScissorRect)  
-mCommandList->ResourceBarrier()  
-mCommandList->ClearRenderTargetView()  
-mCommandList->ClearDepthStencilView()  
-指定将要渲染的目标缓冲区 **mCommandList->OMSetRenderTargets(1, &CurrentBackBufferView(), true, &DepthStencilView())**  
-ID3D12DescriptorHeap* descriptorHeaps[] = { mCbvHeap.Get() }  
-mCommandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps)  
-设置根签名 **mCommandList->SetGraphicsRootSignature(mRootSignature.Get())**  
-输入装配顶点缓存 **mCommandList->IASetVertexBuffers(0, 1, &mBoxGeo->VertexBufferView())**  
-mCommandList->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST)  
-令描述符表与渲染流水线相绑定 **mCommandList->SetGraphicsRootDescriptorTable(0, mCbvHeap->GetGPUDescriptorHandleForHeapStart())**  
-使用索引进行绘制 **mCommandList->DrawIndexedInstanced(
+&emsp;mDirectCmdListAlloc->Reset()  
+&emsp;mCommandList->Reset(mDirectCmdListAlloc.Get(), mPSO.Get())  
+&emsp;mCommandList->RSSetViewports(1, &mScreenViewport)  
+&emsp;mCommandList->RSSetScissorRects(1, &mScissorRect)  
+&emsp;mCommandList->ResourceBarrier()  
+&emsp;mCommandList->ClearRenderTargetView()  
+&emsp;mCommandList->ClearDepthStencilView()  
+&emsp;指定将要渲染的目标缓冲区 **mCommandList->OMSetRenderTargets(1, &CurrentBackBufferView(), true, &DepthStencilView())**  
+&emsp;ID3D12DescriptorHeap* descriptorHeaps[] = { mCbvHeap.Get() }  
+&emsp;mCommandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps)  
+&emsp;设置根签名 **mCommandList->SetGraphicsRootSignature(mRootSignature.Get())**  
+&emsp;输入装配顶点缓存 **mCommandList->IASetVertexBuffers(0, 1, &mBoxGeo->VertexBufferView())**  
+&emsp;mCommandList->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST)  
+&emsp;令描述符表与渲染流水线相绑定 **mCommandList->SetGraphicsRootDescriptorTable(0, mCbvHeap->GetGPUDescriptorHandleForHeapStart())**  
+&emsp;使用索引进行绘制 **mCommandList->DrawIndexedInstanced(
 		mBoxGeo->DrawArgs["box"].IndexCount,
 		1, 0, 0, 0)**  
-mCommandList->ResourceBarrier()  
-完成命令的记录 mCommandList->Close()  
-向命令队列添加命令列表 ID3D12CommandList* cmdsLists[] = { mCommandList.Get() }  
-**mCommandQueue->ExecuteCommandLists(_countof(cmdsLists), cmdsLists)**
-交换后台缓冲区与前台缓冲区 mSwapChain->Present(0, 0)  
-等待绘制此帧的命令执行完毕 **FlushCommandQueue()**  
+&emsp;mCommandList->ResourceBarrier()  
+&emsp;完成命令的记录 mCommandList->Close()  
+&emsp;向命令队列添加命令列表 ID3D12CommandList* cmdsLists[] = { mCommandList.Get() }  
+&emsp;**mCommandQueue->ExecuteCommandLists(_countof(cmdsLists), cmdsLists)**  
+&emsp;交换后台缓冲区与前台缓冲区 mSwapChain->Present(0, 0)  
+&emsp;等待绘制此帧的命令执行完毕 **FlushCommandQueue()**  

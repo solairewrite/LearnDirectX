@@ -93,32 +93,32 @@ private:
 };
 
 // 程序入口
-int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
-	_In_ LPSTR lpCmdLine, _In_ int nShowCmd)
-{
-	// 调试版本开启运行时内存检测
-#if defined(DEBUG) || defined(_DEBUG)
-	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
-#endif
-
-	try
-	{
-		// 根据应用句柄hInstance实例化BoxApp(D3DApp的子类)
-		BoxApp theApp(hInstance);
-		// 初始化,包括:创建窗口,初始化DX,调用OnResize()
-		if (!theApp.Initialize())
-			return 0;
-
-		// 重置游戏时间,如果有Windows消息,处理消息.否则,处理游戏逻辑Update(),Draw()
-		// 这里直接调用基类实现
-		return theApp.Run();
-	}
-	catch (DxException e)
-	{
-		MessageBox(nullptr, e.ToString().c_str(), L"HR Failed", MB_OK);
-		return 0;
-	}
-}
+//int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
+//	_In_ LPSTR lpCmdLine, _In_ int nShowCmd)
+//{
+//	// 调试版本开启运行时内存检测
+//#if defined(DEBUG) || defined(_DEBUG)
+//	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
+//#endif
+//
+//	try
+//	{
+//		// 根据应用句柄hInstance实例化BoxApp(D3DApp的子类)
+//		BoxApp theApp(hInstance);
+//		// 初始化,包括:创建窗口,初始化DX,调用OnResize()
+//		if (!theApp.Initialize())
+//			return 0;
+//
+//		// 重置游戏时间,如果有Windows消息,处理消息.否则,处理游戏逻辑Update(),Draw()
+//		// 这里直接调用基类实现
+//		return theApp.Run();
+//	}
+//	catch (DxException e)
+//	{
+//		MessageBox(nullptr, e.ToString().c_str(), L"HR Failed", MB_OK);
+//		return 0;
+//	}
+//}
 
 BoxApp::BoxApp(HINSTANCE hInstance)
 	:D3DApp(hInstance)

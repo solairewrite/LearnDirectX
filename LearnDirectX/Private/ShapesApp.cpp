@@ -119,28 +119,28 @@ private:
 	POINT mLastMousePos;
 };
 
-//int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
-//	_In_ LPSTR lpCmdLine, _In_ int nShowCmd)
-//{
-//	// 启用运行时内存检测
-//#if defined(DEBUG)| defined(_DEBUG)
-//	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
-//#endif
-//
-//	try
-//	{
-//		ShapesApp theApp(hInstance);
-//		if (!theApp.Initialize())
-//			return 0;
-//
-//		return theApp.Run();
-//	}
-//	catch (DxException& e)
-//	{
-//		MessageBox(nullptr, e.ToString().c_str(), L"HR Failed", MB_OK);
-//		return 0;
-//	}
-//}
+int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
+	_In_ LPSTR lpCmdLine, _In_ int nShowCmd)
+{
+	// 启用运行时内存检测
+#if defined(DEBUG)| defined(_DEBUG)
+	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
+#endif
+
+	try
+	{
+		ShapesApp theApp(hInstance);
+		if (!theApp.Initialize())
+			return 0;
+
+		return theApp.Run();
+	}
+	catch (DxException& e)
+	{
+		MessageBox(nullptr, e.ToString().c_str(), L"HR Failed", MB_OK);
+		return 0;
+	}
+}
 
 ShapesApp::ShapesApp(HINSTANCE hInstance)
 	: D3DApp(hInstance)
@@ -189,6 +189,7 @@ void ShapesApp::OnResize()
 	XMMATRIX P = XMMatrixPerspectiveFovLH(0.25 * MathHelper::Pi, AspectRatio(), 1.0f, 1000.0f);
 	XMStoreFloat4x4(&mProj, P);
 }
+
 // CPU端处理第n帧
 void ShapesApp::Update(const GameTimer& gt)
 {
@@ -199,7 +200,7 @@ void ShapesApp::Update(const GameTimer& gt)
 	mCurrFrameResourceIndex = (mCurrFrameResourceIndex + 1) % gNumFrameResources;
 	mCurrFrameResource = mFrameResources[mCurrFrameResourceIndex].get();
 
-	// GPU端是否已执行完处理当前帧资源的所有命令
+	// 检查GPU端是否已执行完处理当前帧资源的所有命令
 	// 如果还没有就令CPU等待,直到GPU完成命令的执行,并抵达这个围栏点
 	if (mCurrFrameResource->Fence != 0 && mFence->GetCompletedValue() < mCurrFrameResource->Fence)
 	{
@@ -396,7 +397,8 @@ void ShapesApp::UpdateMainPassCB(const GameTimer& gt)
 	auto currPassCB = mCurrFrameResource->PassCB.get();
 	currPassCB->CopyData(0, mMainPassCB);
 }
-// 创建空的描述符堆,制定了大小
+
+// 创建空的描述符堆,制定了大小,修改了mCbvHeap
 void ShapesApp::BuildDescriptorHeaps()
 {
 	UINT objCount = (UINT)mOpaqueRitems.size();
@@ -416,6 +418,7 @@ void ShapesApp::BuildDescriptorHeaps()
 	ThrowIfFailed(md3dDevice->CreateDescriptorHeap(&cbvHeapDesc,
 		IID_PPV_ARGS(&mCbvHeap)));
 }
+
 // 创建描述符堆具体细节
 void ShapesApp::BuildConstantBufferViews()
 {
@@ -468,6 +471,7 @@ void ShapesApp::BuildConstantBufferViews()
 	}
 }
 
+// 修改了mRootSignature
 void ShapesApp::BuildRootSignature()
 {
 	CD3DX12_DESCRIPTOR_RANGE cbvTable0; // 描述符表
@@ -506,6 +510,7 @@ void ShapesApp::BuildRootSignature()
 		IID_PPV_ARGS(mRootSignature.GetAddressOf())));
 }
 
+// 修改了mShaders, mInputLayout
 void ShapesApp::BuildShadersAndInputLayout()
 {
 	mShaders["standardVS"] = d3dUtil::CompileShader(L"Shaders\\Chapter7\\color.hlsl", nullptr, "VS", "vs_5_1");
@@ -517,6 +522,7 @@ void ShapesApp::BuildShadersAndInputLayout()
 		{"COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0}, // 12是POSITION所占的大小
 	};
 }
+
 // 创建几何体缓冲区,缓存绘制调用所需参数值,绘制物体的具体过程
 void ShapesApp::BuildShapeGeometry()
 {
@@ -634,6 +640,7 @@ void ShapesApp::BuildShapeGeometry()
 	mGeometries[geo->Name] = std::move(geo);
 }
 
+// 修改了mPSOs
 void ShapesApp::BuildPSOs()
 {
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC opaquePsoDesc;
@@ -671,7 +678,7 @@ void ShapesApp::BuildPSOs()
 	ThrowIfFailed(md3dDevice->CreateGraphicsPipelineState(&opaqueWireframePsoDesc, IID_PPV_ARGS(&mPSOs["opaque_wireframe"])));
 }
 
-// 创建帧资源
+// 创建帧资源,修改了mFrameResources
 void ShapesApp::BuildFrameResources()
 {
 	for (int i = 0; i < gNumFrameResources; ++i)
@@ -681,7 +688,8 @@ void ShapesApp::BuildFrameResources()
 			1, (UINT)mAllRitems.size()));
 	}
 }
-// 构建渲染物体,一个box,多个sphere...
+
+// 构建渲染物体,一个box,多个sphere...,修改了mAllRitems, mOpaqueRitems
 void ShapesApp::BuildRenderItems()
 {
 	auto boxRitem = std::make_unique<RenderItem>();
