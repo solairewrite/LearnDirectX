@@ -60,4 +60,81 @@ PSO: Pipeline State Object, **ID3D12PipelineState**
 填写**D3D12_GRAPHICS_PIPELINE_STATE_DESC**结构体  
 创建PSO: **ID3D12Device::CreateGraphicsPipelineState()**  
 ## 示例代码
-#### 1.
+#### 1, 实例化D3DApp子类BoxApp theApp(hInstance)
+#### 2, theApp.Initialize()
+基类初始化**D3DApp::Initialize()**  
+重置命令列表**mCommandList->Reset(mDirectCmdListAlloc.Get(), nullptr)**  
+##### BuildDescriptorHeaps() // 创建描述符堆 mCbvHeap  
+&emsp;D3D12_DESCRIPTOR_HEAP_DESC cbvHeapDesc  
+&emsp;md3dDevice->CreateDescriptorHeap(&cbvHeapDesc, IID_PPV_ARGS(&mCbvHeap))  
+##### BuildConstantBuffers() // 创建常量缓冲区 mCbvHeap(相关)  
+&emsp;D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc  
+&emsp;cbvDesc.BufferLocation=GetGPUVirtualAddress()+i*size(第i个物体)  
+&emsp;md3dDevice->CreateConstantBufferView(
+		&cbvDesc,
+		mCbvHeap->GetCPUDescriptorHandleForHeapStart())  
+##### BuildRootSignature() // 创建根签名 mRootSignature
+  
+&emsp;CD3DX12_ROOT_PARAMETER[]  
+&emsp;CD3DX12_ROOT_SIGNATURE_DESC  
+&emsp;D3D12SerializeRootSignature()  
+&emsp;md3dDevice->CreateRootSignature()  
+##### BuildShadersAndInputLayout() // 创建着色器和输入布局 mInputLayout, mvsByteCode, mpsByteCode  
+&emsp;顶点着色器字节码 mvsByteCode=CompileShader()  
+&emsp;像素着色器字节码 mpsByteCode=CompileShader()  
+&emsp;输入布局描述,对应顶点结构体的属性(顺序相同),也对着色器输入签名(字符串相同) mInputLayout  
+##### BuildBoxGeometry() // 创建Box几何体 mBoxGeo->DrawArgs["box"] 
+&emsp;顶点数组 vertices  
+&emsp;索引数组 indices  
+&emsp;几何图形辅助结构体 mBoxGeo = std::make_unique\<MeshGeometry\>()  
+&emsp;创建Blob类型的顶点数组 D3DCreateBlob(vbByteSize, &mBoxGeo->VertexBufferCPU)  
+&emsp;将顶点数组复制到内存 CopyMemory(mBoxGeo->VertexBufferCPU->GetBufferPointer(), vertices.data(), vbByteSize)  
+&emsp;创建Blob类型的索引数组 D3DCreateBlob(ibByteSize, &mBoxGeo->IndexBufferCPU)  
+&emsp;将索引数组复制到内存 CopyMemory(mBoxGeo->IndexBufferCPU->GetBufferPointer(), indices.data&emsp;(), ibByteSize)  
+&emsp;将顶点数组从内存复制到上传堆,再从上传堆复制到GPU常量缓冲区  
+&emsp;mBoxGeo->VertexBufferGPU = d3dUtil :: CreateDefaultBuffer()  
+&emsp;mBoxGeo->IndexBufferGPU = d3dUtil :: CreateDefaultBuffer()  
+&emsp;SubmeshGeometry submesh  
+&emsp;mBoxGeo->DrawArgs["box"] = submesh  
+##### BuildPSO() // 创建流水线状态对象 mPSO
+&emsp;D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc  
+&emsp;md3dDevice->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&mPSO))  
+  
+执行初始化命令**mCommandList->Close()**  
+ID3D12CommandList* cmdsLists[] = { mCommandList.Get() }  
+**mCommandQueue->ExecuteCommandLists(_countof(cmdsLists), cmdsLists)**  
+等待初始化完成**FlushCommandQueue()**
+#### 3, theApp.Run()
+开启消息循环之前,重置游戏时间 mTimer.Reset()  
+while (msg.message != WM_QUIT)  
+如果有Window消息,处理 if (PeekMessage(&msg, 0, 0, 0, PM_REMOVE))  
+否则,处理游戏逻辑 else  
+mTimer.Tick()  
+##### Update(mTimer)
+&emsp;每帧更新常量缓存区的转换矩阵  
+&emsp;XMStoreFloat4x4(&objConstants.WorldViewProj, XMMatrixTranspose(worldViewProj))  
+&emsp;mObjectCB->CopyData(0, objConstants)  
+##### Draw(mTimer)
+mDirectCmdListAlloc->Reset()  
+mCommandList->Reset(mDirectCmdListAlloc.Get(), mPSO.Get())  
+mCommandList->RSSetViewports(1, &mScreenViewport)  
+mCommandList->RSSetScissorRects(1, &mScissorRect)  
+mCommandList->ResourceBarrier()  
+mCommandList->ClearRenderTargetView()  
+mCommandList->ClearDepthStencilView()  
+指定将要渲染的目标缓冲区 **mCommandList->OMSetRenderTargets(1, &CurrentBackBufferView(), true, &DepthStencilView())**  
+ID3D12DescriptorHeap* descriptorHeaps[] = { mCbvHeap.Get() }  
+mCommandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps)  
+设置根签名 **mCommandList->SetGraphicsRootSignature(mRootSignature.Get())**  
+输入装配顶点缓存 **mCommandList->IASetVertexBuffers(0, 1, &mBoxGeo->VertexBufferView())**  
+mCommandList->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST)  
+令描述符表与渲染流水线相绑定 **mCommandList->SetGraphicsRootDescriptorTable(0, mCbvHeap->GetGPUDescriptorHandleForHeapStart())**  
+使用索引进行绘制 **mCommandList->DrawIndexedInstanced(
+		mBoxGeo->DrawArgs["box"].IndexCount,
+		1, 0, 0, 0)**  
+mCommandList->ResourceBarrier()  
+完成命令的记录 mCommandList->Close()  
+向命令队列添加命令列表 ID3D12CommandList* cmdsLists[] = { mCommandList.Get() }  
+**mCommandQueue->ExecuteCommandLists(_countof(cmdsLists), cmdsLists)**
+交换后台缓冲区与前台缓冲区 mSwapChain->Present(0, 0)  
+等待绘制此帧的命令执行完毕 **FlushCommandQueue()**  
