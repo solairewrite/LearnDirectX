@@ -150,11 +150,14 @@
     <ClCompile Include="Private\FrameResource.cpp" />
     <ClCompile Include="Private\GameTimer.cpp" />
     <ClCompile Include="Private\GeometryGenerator.cpp" />
+    <ClCompile Include="Private\LandAndWavesApp.cpp" />
     <ClCompile Include="Private\LearnDirectX.cpp" />
     <ClCompile Include="Private\MathHelper.cpp" />
     <ClCompile Include="Private\ShapesApp.cpp" />
+    <ClCompile Include="Private\Waves.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Public\BoxApp.h" />
     <ClInclude Include="Public\d3dApp.h" />
     <ClInclude Include="Public\d3dUtil.h" />
     <ClInclude Include="Public\d3dx12.h" />
@@ -163,7 +166,9 @@
     <ClInclude Include="Public\GameTimer.h" />
     <ClInclude Include="Public\GeometryGenerator.h" />
     <ClInclude Include="Public\MathHelper.h" />
+    <ClInclude Include="Public\ShapesApp.h" />
     <ClInclude Include="Public\UploadBuffer.h" />
+    <ClInclude Include="Public\Waves.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Notes\第4章 Direct3D的初始化.md" />

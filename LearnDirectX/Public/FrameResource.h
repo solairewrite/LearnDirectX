@@ -43,6 +43,7 @@ struct FrameResource
 public:
 
 	FrameResource(ID3D12Device* device, UINT passCount, UINT objectCount);
+	FrameResource(ID3D12Device* device, UINT passCount, UINT objectCount, UINT waveVertCount);
 	FrameResource(const FrameResource& rhs) = delete;
 	FrameResource& operator=(const FrameResource& rhs) = delete;
 	~FrameResource();
@@ -55,6 +56,8 @@ public:
 	// 所以每帧都要有自己的常量缓冲区
 	std::unique_ptr<UploadBuffer<PassConstants>> PassCB = nullptr; // 过程常量缓冲区
 	std::unique_ptr<UploadBuffer<ObjectConstants>> ObjectCB = nullptr; // 物体常量缓冲区
+
+	std::unique_ptr<UploadBuffer<Vertex>> WavesVB = nullptr;
 
 	// 通过围栏值将命令标记到此围栏点
 	// 这使我们可以检查到GPU是否还在引用这些资源

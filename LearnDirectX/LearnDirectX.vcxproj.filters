@@ -34,6 +34,9 @@
     <Filter Include="Public\Framework">
       <UniqueIdentifier>{8360bb8b-de90-490a-a96a-a6a064e9a65c}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Public\Chapter6">
+      <UniqueIdentifier>{c91a67fb-3677-4183-9f52-d0b665ee462d}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Private\BoxApp.cpp">
@@ -66,6 +69,12 @@
     <ClCompile Include="Private\MathHelper.cpp">
       <Filter>Private\Framework</Filter>
     </ClCompile>
+    <ClCompile Include="Private\LandAndWavesApp.cpp">
+      <Filter>Private\Chapter7</Filter>
+    </ClCompile>
+    <ClCompile Include="Private\Waves.cpp">
+      <Filter>Private\Chapter7</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Public\FrameResource.h">
@@ -94,6 +103,15 @@
     </ClInclude>
     <ClInclude Include="Public\UploadBuffer.h">
       <Filter>Public\Framework</Filter>
+    </ClInclude>
+    <ClInclude Include="Public\Waves.h">
+      <Filter>Public\Chapter7</Filter>
+    </ClInclude>
+    <ClInclude Include="Public\ShapesApp.h">
+      <Filter>Public\Chapter7</Filter>
+    </ClInclude>
+    <ClInclude Include="Public\BoxApp.h">
+      <Filter>Public\Chapter6</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
