@@ -9,7 +9,7 @@
 #include <cassert>
 
 using namespace DirectX;
-// m:行数, n:列数, dx:方格边长, dt:DeltaTine
+// m:行数, n:列数, dx:方格边长, dt:更新时间频率
 Waves::Waves(int m, int n, float dx, float dt, float speed, float damping)
 {
 	mNumRows = m;
@@ -84,4 +84,90 @@ float Waves::Width() const
 float Waves::Depth() const
 {
 	return mNumRows * mSpatialStep;
+}
+
+void Waves::Update(float dt)
+{
+	static float t = 0;
+
+	// 累加时间
+	t += dt;
+
+	// 只在特定的时间点更新模拟
+	if (t >= mTimeStep)
+	{
+		// Only update interior points; we use zero boundary conditions.
+		// 下面的没看懂
+		concurrency::parallel_for(1, mNumRows - 1, [this](int i)
+			//for(int i = 1; i < mNumRows-1; ++i)
+		{
+			for (int j = 1; j < mNumCols - 1; ++j)
+			{
+				// After this update we will be discarding the old previous
+				// buffer, so overwrite that buffer with the new update.
+				// Note how we can do this inplace (read/write to same element) 
+				// because we won't need prev_ij again and the assignment happens last.
+
+				// Note j indexes x and i indexes z: h(x_j, z_i, t_k)
+				// Moreover, our +z axis goes "down"; this is just to 
+				// keep consistent with our row indices going down.
+
+				mPrevSolution[i*mNumCols + j].y =
+					mK1 * mPrevSolution[i*mNumCols + j].y +
+					mK2 * mCurrSolution[i*mNumCols + j].y +
+					mK3 * (mCurrSolution[(i + 1)*mNumCols + j].y +
+						mCurrSolution[(i - 1)*mNumCols + j].y +
+						mCurrSolution[i*mNumCols + j + 1].y +
+						mCurrSolution[i*mNumCols + j - 1].y);
+			}
+		});
+
+		// We just overwrote the previous buffer with the new data, so
+		// this data needs to become the current solution and the old
+		// current solution becomes the new previous solution.
+		std::swap(mPrevSolution, mCurrSolution);
+
+		t = 0.0f; // reset time
+
+		//
+		// Compute normals using finite difference scheme.
+		//
+		concurrency::parallel_for(1, mNumRows - 1, [this](int i)
+			//for(int i = 1; i < mNumRows - 1; ++i)
+		{
+			for (int j = 1; j < mNumCols - 1; ++j)
+			{
+				float l = mCurrSolution[i*mNumCols + j - 1].y;
+				float r = mCurrSolution[i*mNumCols + j + 1].y;
+				float t = mCurrSolution[(i - 1)*mNumCols + j].y;
+				float b = mCurrSolution[(i + 1)*mNumCols + j].y;
+				mNormals[i*mNumCols + j].x = -r + l;
+				mNormals[i*mNumCols + j].y = 2.0f*mSpatialStep;
+				mNormals[i*mNumCols + j].z = b - t;
+
+				XMVECTOR n = XMVector3Normalize(XMLoadFloat3(&mNormals[i*mNumCols + j]));
+				XMStoreFloat3(&mNormals[i*mNumCols + j], n);
+
+				mTangentX[i*mNumCols + j] = XMFLOAT3(2.0f*mSpatialStep, r - l, 0.0f);
+				XMVECTOR T = XMVector3Normalize(XMLoadFloat3(&mTangentX[i*mNumCols + j]));
+				XMStoreFloat3(&mTangentX[i*mNumCols + j], T);
+			}
+		});
+	}
+}
+
+void Waves::Disturb(int i, int j, float magnitude)
+{
+	// 不扰动边界
+	assert(i > 1 && i < mNumRows - 2);
+	assert(j > 1 && j < mNumCols - 2);
+
+	float halfMag = 0.5f*magnitude;
+
+	// 扰动第ij个顶点和它的邻居
+	mCurrSolution[i*mNumCols + j].y += magnitude;
+	mCurrSolution[i*mNumCols + j + 1].y += halfMag;
+	mCurrSolution[i*mNumCols + j - 1].y += halfMag;
+	mCurrSolution[(i + 1)*mNumCols + j].y += halfMag;
+	mCurrSolution[(i - 1)*mNumCols + j].y += halfMag;
 }

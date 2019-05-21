@@ -51,7 +51,7 @@ private:
 	float mK2 = 0.0f;
 	float mK3 = 0.0f;
 
-	float mTimeStep = 0.0f; // DeltaTime
+	float mTimeStep = 0.0f; // 更新时间频率
 	float mSpatialStep = 0.0f; // grid的边长,Spatial:空间
 
 	std::vector<DirectX::XMFLOAT3> mPrevSolution; // 上一帧的顶点位置数组
