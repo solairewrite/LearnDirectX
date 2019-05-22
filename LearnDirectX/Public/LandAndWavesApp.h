@@ -96,6 +96,7 @@ private:
 
 	std::vector<D3D12_INPUT_ELEMENT_DESC> mInputLayout;
 
+	// 水面渲染项目
 	RenderItem* mWavesRitem = nullptr;
 
 	// 所有渲染项目的列表

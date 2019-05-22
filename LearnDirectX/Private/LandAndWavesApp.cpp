@@ -45,6 +45,8 @@ bool LandAndWavesApp::Initialize()
 
 	// 为了准备初始化命令,重置命令列表
 	ThrowIfFailed(mCommandList->Reset(mDirectCmdListAlloc.Get(), nullptr));
+
+	// 创建波浪,为 mWaves赋值
 	// 行数, 列数, 方格边长, 更新时间频率, 速度, 阻尼
 	mWaves = std::make_unique<Waves>(128, 128, 1.0f, 0.03f, 4.0f, 0.2f);
 
@@ -190,6 +192,7 @@ void LandAndWavesApp::OnMouseMove(WPARAM btnState, int x, int y)
 	mLastMousePos.y = y;
 }
 
+// 修改了 mIsWireframe
 void LandAndWavesApp::OnKeyboardInput(const GameTimer& gt)
 {
 	if (GetAsyncKeyState('1') & 0x8000)
@@ -198,6 +201,7 @@ void LandAndWavesApp::OnKeyboardInput(const GameTimer& gt)
 		mIsWireframe = false;
 }
 
+// 修改了 mView
 void LandAndWavesApp::UpdateCamera(const GameTimer& gt)
 {
 	mEyePos.x = mRadius * sinf(mPhi)*cosf(mTheta);
@@ -212,6 +216,7 @@ void LandAndWavesApp::UpdateCamera(const GameTimer& gt)
 	XMStoreFloat4x4(&mView, view);
 }
 
+// 将 mCurrFrameResource 和其它帧资源的 ObjectCB 更新为 mAllRitems 的 World
 void LandAndWavesApp::UpdateObjectCBs(const GameTimer& gt)
 {
 	auto currObjectCB = mCurrFrameResource->ObjectCB.get();
@@ -234,6 +239,7 @@ void LandAndWavesApp::UpdateObjectCBs(const GameTimer& gt)
 	}
 }
 
+// 修改了 mMainPassCB, mCurrFrameResource->PassCB
 void LandAndWavesApp::UpdateMainPassCB(const GameTimer& gt)
 {
 	XMMATRIX view = XMLoadFloat4x4(&mView);
@@ -263,6 +269,7 @@ void LandAndWavesApp::UpdateMainPassCB(const GameTimer& gt)
 }
 
 // 每一帧模拟波浪,更新顶点缓冲区
+// 修改了 mWaves, mCurrFrameResource->WavesVB, mWavesRitem->Geo->VertexBufferGPU
 void LandAndWavesApp::UpdateWaves(const GameTimer& gt)
 {
 	// 每0.25s,生成一个随机波浪
@@ -294,7 +301,7 @@ void LandAndWavesApp::UpdateWaves(const GameTimer& gt)
 		currWavesVB->CopyData(i, v);
 	}
 
-	// 将波浪渲染项的动态顶点缓冲区设置到当前帧的顶点缓冲区
+	// 将波浪渲染项的 动态顶点缓冲区 设置到 当前帧的顶点缓冲区
 	mWavesRitem->Geo->VertexBufferGPU = currWavesVB->Resource();
 }
 
@@ -424,8 +431,10 @@ void LandAndWavesApp::BuildLandGeometry()
 	mGeometries["landGeo"] = std::move(geo);
 }
 
+// 设置wave的网格体 mGeometries["waterGeo"]->DrawArgs["grid"]
 void LandAndWavesApp::BuildWavesGeometryBuffers()
 {
+	// 创建临时索引数组 indices
 	std::vector<std::uint16_t> indices(3 * mWaves->TriangleCount()); // 每个面3个顶点
 	assert(mWaves->VertexCount() < 0x0000ffff);
 
@@ -452,13 +461,16 @@ void LandAndWavesApp::BuildWavesGeometryBuffers()
 	UINT vbByteSize = mWaves->VertexCount() * sizeof(Vertex);
 	UINT ibByteSize = (UINT)indices.size() * sizeof(std::uint16_t);
 
+	// 创建临时 MeshGeometry geo
 	auto geo = std::make_unique<MeshGeometry>();
+	// 设置geo的Name waterGeo
 	geo->Name = "waterGeo";
 
 	// 动态设置
 	geo->VertexBufferCPU = nullptr;
 	geo->VertexBufferGPU = nullptr;
 
+	// 将geo的顶点数组赋值为刚刚创建的indices
 	ThrowIfFailed(D3DCreateBlob(ibByteSize, &geo->IndexBufferCPU));
 	CopyMemory(geo->IndexBufferCPU->GetBufferPointer(), indices.data(), ibByteSize);
 
@@ -470,16 +482,21 @@ void LandAndWavesApp::BuildWavesGeometryBuffers()
 	geo->IndexFormat = DXGI_FORMAT_R16_UINT;
 	geo->IndexBufferByteSize = ibByteSize;
 
+	// 创建临时 SubmeshGeometry submesh
+	// 设置submeah 的 顶点偏移和索引偏移,这里只绘制wave,所以都为0
 	SubmeshGeometry submesh;
 	submesh.IndexCount = (UINT)indices.size();
 	submesh.StartIndexLocation = 0;
 	submesh.BaseVertexLocation = 0;
 
+	// 设置 geo->DrawArgs["grid"](单独绘制的网格体) = submesh
 	geo->DrawArgs["grid"] = submesh;
 
+	// 设置 mGeometries["landGeo"] = geo
 	mGeometries["waterGeo"] = std::move(geo);
 }
 
+// 设置 mPSOs["opaque"], mPSOs["opaque_wireframe"]
 void LandAndWavesApp::BuildPSOs()
 {
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC opaquePsoDesc;
@@ -516,41 +533,51 @@ void LandAndWavesApp::BuildPSOs()
 	ThrowIfFailed(md3dDevice->CreateGraphicsPipelineState(&opaqueWireframePsoDesc, IID_PPV_ARGS(&mPSOs["opaque_wireframe"])));
 }
 
+// 修改 mFrameResources
 void LandAndWavesApp::BuildFrameResources()
 {
-	for (int i=0;i<gNumFrameResources;++i)
+	for (int i = 0; i < gNumFrameResources; ++i)
 	{
 		mFrameResources.push_back(std::make_unique<FrameResource>(md3dDevice.Get(),
 			1, (UINT)mAllRitems.size(), mWaves->VertexCount()));
 	}
 }
 
+// 修改了 mWavesRitem, mRitemLayer, mAllRitems
 void LandAndWavesApp::BuildRenderItems()
 {
+	// 创建临时 RenderItem wavesRitem
 	auto wavesRitem = std::make_unique<RenderItem>();
 	wavesRitem->World = MathHelper::Identity4x4();
 	wavesRitem->ObjCBIndex = 0;
+	// 设置 wavesRitem->Geo = mGeometries["waterGeo"]
 	wavesRitem->Geo = mGeometries["waterGeo"].get();
 	wavesRitem->PrimitiveType = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
 	wavesRitem->IndexCount = wavesRitem->Geo->DrawArgs["grid"].IndexCount;
 	wavesRitem->StartIndexLocation = wavesRitem->Geo->DrawArgs["grid"].StartIndexLocation;
 	wavesRitem->BaseVertexLocation = wavesRitem->Geo->DrawArgs["grid"].BaseVertexLocation;
 
+	// 为 mWavesRitem 赋值为刚创建的 wavesRitem
 	mWavesRitem = wavesRitem.get();
 
+	// 为 mRitemLayer[0] push_back 刚创建的 wavesRitem
 	mRitemLayer[(int)RenderLayer::Opaque].push_back(wavesRitem.get());
 
+	// 创建临时 RenderItem gridRitem
 	auto gridRitem = std::make_unique<RenderItem>();
 	gridRitem->World = MathHelper::Identity4x4();
 	gridRitem->ObjCBIndex = 1;
+	// 设置 gridRitem->Geo = mGeometries["landGeo"]
 	gridRitem->Geo = mGeometries["landGeo"].get();
 	gridRitem->PrimitiveType = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
 	gridRitem->IndexCount = gridRitem->Geo->DrawArgs["grid"].IndexCount;
 	gridRitem->StartIndexLocation = gridRitem->Geo->DrawArgs["grid"].StartIndexLocation;
 	gridRitem->BaseVertexLocation = gridRitem->Geo->DrawArgs["grid"].BaseVertexLocation;
 
+	// 为 mRitemLayer[0] push_back 刚创建的 gridRitem ?? 这里没搞懂std::vector的逻辑
 	mRitemLayer[(int)RenderLayer::Opaque].push_back(gridRitem.get());
 
+	// mAllRitems 添加 wavesRitem 和 gridRitem
 	mAllRitems.push_back(std::move(wavesRitem));
 	mAllRitems.push_back(std::move(gridRitem));
 }
@@ -570,9 +597,11 @@ void LandAndWavesApp::DrawRenderItems(ID3D12GraphicsCommandList* cmdList, const 
 		cmdList->IASetIndexBuffer(&ri->Geo->IndexBufferView());
 		cmdList->IASetPrimitiveTopology(ri->PrimitiveType);
 
+		// 获取物体常量缓冲区地址
 		D3D12_GPU_VIRTUAL_ADDRESS objCBAddress = objectCB->GetGPUVirtualAddress();
 		objCBAddress += ri->ObjCBIndex*objCBByteSize;
 
+		// 设置常量缓冲区视图
 		cmdList->SetGraphicsRootConstantBufferView(0, objCBAddress);
 
 		cmdList->DrawIndexedInstanced(ri->IndexCount, 1, ri->StartIndexLocation, ri->BaseVertexLocation, 0);
