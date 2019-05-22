@@ -1,15 +1,12 @@
-
-
-
-
-#include "../Public/Waves.h"
+ï»¿#include "../Public/Waves.h"
 #include <ppl.h>
 #include <algorithm>
 #include <vector>
 #include <cassert>
 
 using namespace DirectX;
-// m:ĞĞÊı, n:ÁĞÊı, dx:·½¸ñ±ß³¤, dt:¸üĞÂÊ±¼äÆµÂÊ
+
+// m:è¡Œæ•°, n:åˆ—æ•°, dx:æ–¹æ ¼è¾¹é•¿, dt:æ›´æ–°æ—¶é—´é¢‘ç‡
 Waves::Waves(int m, int n, float dx, float dt, float speed, float damping)
 {
 	mNumRows = m;
@@ -27,19 +24,19 @@ Waves::Waves(int m, int n, float dx, float dt, float speed, float damping)
 	mK2 = (4.0f - 8.0f*e) / d;
 	mK3 = (2.0f*e) / d;
 
-	mPrevSolution.resize(m*n); // std::vector³õÊ¼»¯ÔªËØ¸öÊı
+	mPrevSolution.resize(m*n); // std::vectoråˆå§‹åŒ–å…ƒç´ ä¸ªæ•°
 	mCurrSolution.resize(m*n);
 	mNormals.resize(m*n);
 	mTangentX.resize(m*n);
 
-	// ÔÚÏµÍ³ÄÚ´æÖĞÉú³Égrid¶¥µã
+	// åœ¨ç³»ç»Ÿå†…å­˜ä¸­ç”Ÿæˆgridé¡¶ç‚¹
 
 	float halfWidth = (n - 1)*dx*0.5f;
 	float halfDepth = (m - 1)*dx*0.5f;
-	for (int i = 0; i < m; ++i) // i:ĞĞÊı
+	for (int i = 0; i < m; ++i) // i:è¡Œæ•°
 	{
 		float z = halfDepth - i * dx;
-		for (int j = 0; j < n; j++) // j:ÁĞÊı
+		for (int j = 0; j < n; j++) // j:åˆ—æ•°
 		{
 			float x = -halfWidth + j * dx;
 
@@ -90,14 +87,14 @@ void Waves::Update(float dt)
 {
 	static float t = 0;
 
-	// ÀÛ¼ÓÊ±¼ä
+	// ç´¯åŠ æ—¶é—´
 	t += dt;
 
-	// Ö»ÔÚÌØ¶¨µÄÊ±¼äµã¸üĞÂÄ£Äâ
+	// åªåœ¨ç‰¹å®šçš„æ—¶é—´ç‚¹æ›´æ–°æ¨¡æ‹Ÿ
 	if (t >= mTimeStep)
 	{
 		// Only update interior points; we use zero boundary conditions.
-		// ÏÂÃæµÄÃ»¿´¶®
+		// ä¸‹é¢çš„æ²¡çœ‹æ‡‚
 		concurrency::parallel_for(1, mNumRows - 1, [this](int i)
 			//for(int i = 1; i < mNumRows-1; ++i)
 		{
@@ -158,13 +155,13 @@ void Waves::Update(float dt)
 
 void Waves::Disturb(int i, int j, float magnitude)
 {
-	// ²»ÈÅ¶¯±ß½ç
+	// ä¸æ‰°åŠ¨è¾¹ç•Œ
 	assert(i > 1 && i < mNumRows - 2);
 	assert(j > 1 && j < mNumCols - 2);
 
 	float halfMag = 0.5f*magnitude;
 
-	// ÈÅ¶¯µÚij¸ö¶¥µãºÍËüµÄÁÚ¾Ó
+	// æ‰°åŠ¨ç¬¬ijä¸ªé¡¶ç‚¹å’Œå®ƒçš„é‚»å±…
 	mCurrSolution[i*mNumCols + j].y += magnitude;
 	mCurrSolution[i*mNumCols + j + 1].y += halfMag;
 	mCurrSolution[i*mNumCols + j - 1].y += halfMag;

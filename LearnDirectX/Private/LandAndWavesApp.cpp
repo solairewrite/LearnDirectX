@@ -298,6 +298,7 @@ void LandAndWavesApp::UpdateWaves(const GameTimer& gt)
 	mWavesRitem->Geo->VertexBufferGPU = currWavesVB->Resource();
 }
 
+// 修改了 mRootSignature
 void LandAndWavesApp::BuildRootSignature()
 {
 	CD3DX12_ROOT_PARAMETER slotRootParameter[2];
@@ -325,6 +326,7 @@ void LandAndWavesApp::BuildRootSignature()
 		IID_PPV_ARGS(mRootSignature.GetAddressOf())));
 }
 
+// 修改了 mShaders, mInputLayout
 void LandAndWavesApp::BuildShadersAndInputLayout()
 {
 	mShaders["standardVS"] = d3dUtil::CompileShader(L"Shaders\\Chapter7\\color.hlsl", nullptr, "VS", "vs_5_0");
@@ -337,13 +339,16 @@ void LandAndWavesApp::BuildShadersAndInputLayout()
 	};
 }
 
+// 设置land的网格体 mGeometries["landGeo"]->DrawArgs["grid"]
+// mGeometries是一个MeshGeometry的map
+// MeshGeometry->DrawArgs(用于绘制的网格体)是一个SubmeshGeometry的map
 void LandAndWavesApp::BuildLandGeometry()
 {
 	GeometryGenerator geoGen;
+	// 创建50行*50列的grid
 	GeometryGenerator::MeshData grid = geoGen.CreateGrid(160.0f, 160.0f, 50, 50);
 
-	// 截取我们感兴趣的顶点,对每个顶点应用高度函数
-	// 颜色取决于顶点高度
+	// 创建临时顶点数组 vertices,对每个顶点应用高度函数,再根据高度设置颜色
 	std::vector<Vertex> vertices(grid.Vertices.size());
 	for (size_t i = 0; i < grid.Vertices.size(); ++i)
 	{
@@ -354,39 +359,38 @@ void LandAndWavesApp::BuildLandGeometry()
 		// 顶点颜色取决于高度
 		if (vertices[i].Pos.y < -10.0f)
 		{
-			// 沙滩色
-			vertices[i].Color = XMFLOAT4(1.0f, 0.96f, 0.62f, 1.0f);
+			vertices[i].Color = XMFLOAT4(1.0f, 0.96f, 0.62f, 1.0f); // 沙滩色
 		}
 		else if (vertices[i].Pos.y < 5.0f)
 		{
-			// 浅黄绿色
-			vertices[i].Color = XMFLOAT4(0.48f, 0.77f, 0.46f, 1.0f);
+			vertices[i].Color = XMFLOAT4(0.48f, 0.77f, 0.46f, 1.0f); // 浅黄绿色
 		}
 		else if (vertices[i].Pos.y < 12.0f)
 		{
-			// 深黄绿色
-			vertices[i].Color = XMFLOAT4(0.1f, 0.48f, 0.19f, 1.0f);
+			vertices[i].Color = XMFLOAT4(0.1f, 0.48f, 0.19f, 1.0f); // 深黄绿色
 		}
 		else if (vertices[i].Pos.y < 20.0f)
 		{
-			// 深棕色
-			vertices[i].Color = XMFLOAT4(0.45f, 0.39f, 0.34f, 1.0f);
+			vertices[i].Color = XMFLOAT4(0.45f, 0.39f, 0.34f, 1.0f); // 深棕色
 		}
 		else
 		{
-			// 白雪
-			vertices[i].Color = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
+			vertices[i].Color = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f); // 白雪
 		}
 	}
 
 	const UINT vbByteSize = (UINT)vertices.size() * sizeof(Vertex);
 
+	// 创建临时索引数组 indices
 	std::vector<std::uint16_t> indices = grid.GetIndices16();
 	const UINT ibByteSize = (UINT)indices.size() * sizeof(std::uint16_t);
 
+	// 创建临时变量 MeshGeometry geo
+	// 设置 geo 的Name landGeo
 	auto geo = std::make_unique<MeshGeometry>();
 	geo->Name = "landGeo";
 
+	// 将geo的顶点数组和索引数组赋值为刚刚创建的 vertices, indices
 	ThrowIfFailed(D3DCreateBlob(vbByteSize, &geo->VertexBufferCPU));
 	CopyMemory(geo->VertexBufferCPU->GetBufferPointer(), vertices.data(), vbByteSize);
 
@@ -404,13 +408,19 @@ void LandAndWavesApp::BuildLandGeometry()
 	geo->IndexFormat = DXGI_FORMAT_R16_UINT;
 	geo->IndexBufferByteSize = ibByteSize;
 
+	// 创建临时变量 SubmeshGeometry submesh
+	// 设置 submeah 的 顶点偏移和索引偏移,这里只绘制land,所以都为0
 	SubmeshGeometry submesh;
 	submesh.IndexCount = (UINT)indices.size();
 	submesh.StartIndexLocation = 0;
 	submesh.BaseVertexLocation = 0;
 
+	// 设置 geo->DrawArgs["grid"](单独绘制的网格体) = submesh 
 	geo->DrawArgs["grid"] = submesh;
 
+	// 设置 mGeometries["landGeo"] = geo
+	// mGeometries是一个MeshGeometry的map
+	// MeshGeometry->DrawArgs(用于绘制的网格体)是一个SubmeshGeometry的map
 	mGeometries["landGeo"] = std::move(geo);
 }
 

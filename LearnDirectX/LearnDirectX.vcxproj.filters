@@ -133,7 +133,10 @@
     <None Include="Notes\第6章 利用Direct3D绘制几何体.md">
       <Filter>Notes</Filter>
     </None>
-    <None Include="Notes\第7章 利用Direct3D绘制几何体(续).md">
+    <None Include="Notes\第7章 利用Direct3D绘制几何体%28续%29-Shapes.md">
+      <Filter>Notes</Filter>
+    </None>
+    <None Include="Notes\第7章 利用Direct3D绘制几何体(续)-LandAndWaves.md">
       <Filter>Notes</Filter>
     </None>
   </ItemGroup>

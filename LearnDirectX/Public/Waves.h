@@ -1,10 +1,5 @@
-// Ä£Äâ²¨ÀËµÄ¼ÆËã,¿Í»§ĞèÒª½«½â¾ö·½°¸¸´ÖÆµ½¶¥µã»º³åÇø
-// Õâ¸öÀàÖ»¼ÆËã,²»»æÖÆ
-
-
-
-
-
+ï»¿// æ¨¡æ‹Ÿæ³¢æµªçš„è®¡ç®—,å®¢æˆ·éœ€è¦å°†è§£å†³æ–¹æ¡ˆå¤åˆ¶åˆ°é¡¶ç‚¹ç¼“å†²åŒº
+// è¿™ä¸ªç±»åªè®¡ç®—,ä¸ç»˜åˆ¶
 
 #ifndef WAVES_H
 #define WAVES_H
@@ -27,37 +22,37 @@ public:
 	float Width() const;
 	float Depth() const;
 
-	// ·µ»ØµÚi¸ögrid pointµÄÎ»ÖÃ
+	// è¿”å›ç¬¬iä¸ªgrid pointçš„ä½ç½®
 	const DirectX::XMFLOAT3& Position(int i) const { return mCurrSolution[i]; }
 
-	// ·µ»ØµÚi¸ögrid pointµÄ·¨Ïß
+	// è¿”å›ç¬¬iä¸ªgrid pointçš„æ³•çº¿
 	const DirectX::XMFLOAT3& Normal(int i) const { return mNormals[i]; }
 
-	// ·µ»ØµÚi¸ögrid pointµÄ¾Ö²¿xÖáµÄunit tangent vector
+	// è¿”å›ç¬¬iä¸ªgrid pointçš„å±€éƒ¨xè½´çš„unit tangent vector
 	const DirectX::XMFLOAT3& TangetX(int i) const { return mTangentX[i]; }
 
 	void Update(float dt);
 	void Disturb(int i, int j, float magnitude);
 
 private:
-	int mNumRows = 0; // ĞĞÊı
-	int mNumCols = 0; // ÁĞÊı
+	int mNumRows = 0; // è¡Œæ•°
+	int mNumCols = 0; // åˆ—æ•°
 
-	int mVertexCount = 0; // ¶¥µãÊı
-	int mTriangleCount = 0; // gridÈı½ÇĞÎÊı
+	int mVertexCount = 0; // é¡¶ç‚¹æ•°
+	int mTriangleCount = 0; // gridä¸‰è§’å½¢æ•°
 
-	// Ô¤ÏÈ¼ÆËãÄ£Äâ³£Êı
+	// é¢„å…ˆè®¡ç®—æ¨¡æ‹Ÿå¸¸æ•°
 	float mK1 = 0.0f;
 	float mK2 = 0.0f;
 	float mK3 = 0.0f;
 
-	float mTimeStep = 0.0f; // ¸üĞÂÊ±¼äÆµÂÊ
-	float mSpatialStep = 0.0f; // gridµÄ±ß³¤,Spatial:¿Õ¼ä
+	float mTimeStep = 0.0f; // æ›´æ–°æ—¶é—´é¢‘ç‡
+	float mSpatialStep = 0.0f; // gridçš„è¾¹é•¿,Spatial:ç©ºé—´
 
-	std::vector<DirectX::XMFLOAT3> mPrevSolution; // ÉÏÒ»Ö¡µÄ¶¥µãÎ»ÖÃÊı×é
-	std::vector<DirectX::XMFLOAT3> mCurrSolution; // µ±Ç°Ö¡µÄ¶¥µãÎ»ÖÃÊı×é
-	std::vector<DirectX::XMFLOAT3> mNormals; // ·¨ÏßÊı×é
-	std::vector<DirectX::XMFLOAT3> mTangentX; // TabgetXÊı×é
+	std::vector<DirectX::XMFLOAT3> mPrevSolution; // ä¸Šä¸€å¸§çš„é¡¶ç‚¹ä½ç½®æ•°ç»„
+	std::vector<DirectX::XMFLOAT3> mCurrSolution; // å½“å‰å¸§çš„é¡¶ç‚¹ä½ç½®æ•°ç»„
+	std::vector<DirectX::XMFLOAT3> mNormals; // æ³•çº¿æ•°ç»„
+	std::vector<DirectX::XMFLOAT3> mTangentX; // TabgetXæ•°ç»„
 };
 
 #endif // WAVES_H
