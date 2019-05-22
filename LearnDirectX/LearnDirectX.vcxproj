@@ -165,6 +165,7 @@
     <ClInclude Include="Public\FrameResource.h" />
     <ClInclude Include="Public\GameTimer.h" />
     <ClInclude Include="Public\GeometryGenerator.h" />
+    <ClInclude Include="Public\LandAndWavesApp.h" />
     <ClInclude Include="Public\MathHelper.h" />
     <ClInclude Include="Public\ShapesApp.h" />
     <ClInclude Include="Public\UploadBuffer.h" />

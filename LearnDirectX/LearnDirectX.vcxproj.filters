@@ -113,6 +113,9 @@
     <ClInclude Include="Public\BoxApp.h">
       <Filter>Public\Chapter6</Filter>
     </ClInclude>
+    <ClInclude Include="Public\LandAndWavesApp.h">
+      <Filter>Public\Chapter7</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\Chapter6\color.hlsl">
