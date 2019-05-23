@@ -1,7 +1,3 @@
-//***************************************************************************************
-// Waves.cpp by Frank Luna (C) 2011 All Rights Reserved.
-//***************************************************************************************
-
 #include "Waves.h"
 #include <ppl.h>
 #include <algorithm>
@@ -32,8 +28,7 @@ Waves::Waves(int m, int n, float dx, float dt, float speed, float damping)
 	mNormals.resize(m*n);
 	mTangentX.resize(m*n);
 
-	// Generate grid vertices in system memory.
-
+	// 内存中创建grid顶点
 	float halfWidth = (n - 1)*dx*0.5f;
 	float halfDepth = (m - 1)*dx*0.5f;
 	for (int i = 0; i < m; ++i)
@@ -53,6 +48,7 @@ Waves::Waves(int m, int n, float dx, float dt, float speed, float damping)
 
 Waves::~Waves()
 {
+
 }
 
 int Waves::RowCount()const
@@ -89,13 +85,13 @@ void Waves::Update(float dt)
 {
 	static float t = 0;
 
-	// Accumulate time.
+	// 累加时间
 	t += dt;
 
-	// Only update the simulation at the specified time step.
+	// 只在特定的时间间隔更新模拟
 	if (t >= mTimeStep)
 	{
-		// Only update interior points; we use zero boundary conditions.
+		// 只更新内部点,使用0边界条件,没看懂
 		concurrency::parallel_for(1, mNumRows - 1, [this](int i)
 			//for(int i = 1; i < mNumRows-1; ++i)
 		{
@@ -109,7 +105,6 @@ void Waves::Update(float dt)
 				// Note j indexes x and i indexes z: h(x_j, z_i, t_k)
 				// Moreover, our +z axis goes "down"; this is just to 
 				// keep consistent with our row indices going down.
-
 				mPrevSolution[i*mNumCols + j].y =
 					mK1 * mPrevSolution[i*mNumCols + j].y +
 					mK2 * mCurrSolution[i*mNumCols + j].y +
@@ -120,16 +115,11 @@ void Waves::Update(float dt)
 			}
 		});
 
-		// We just overwrote the previous buffer with the new data, so
-		// this data needs to become the current solution and the old
-		// current solution becomes the new previous solution.
 		std::swap(mPrevSolution, mCurrSolution);
 
-		t = 0.0f; // reset time
+		t = 0.0f; // 重置时间
 
-		//
-		// Compute normals using finite difference scheme.
-		//
+		// 使用有限的不同scheme计算法线
 		concurrency::parallel_for(1, mNumRows - 1, [this](int i)
 			//for(int i = 1; i < mNumRows - 1; ++i)
 		{
@@ -156,17 +146,16 @@ void Waves::Update(float dt)
 
 void Waves::Disturb(int i, int j, float magnitude)
 {
-	// Don't disturb boundaries.
+	// 不扰动边界
 	assert(i > 1 && i < mNumRows - 2);
 	assert(j > 1 && j < mNumCols - 2);
 
 	float halfMag = 0.5f*magnitude;
 
-	// Disturb the ijth vertex height and its neighbors.
+	// 扰动[ij]顶点的高度和它的邻居
 	mCurrSolution[i*mNumCols + j].y += magnitude;
 	mCurrSolution[i*mNumCols + j + 1].y += halfMag;
 	mCurrSolution[i*mNumCols + j - 1].y += halfMag;
 	mCurrSolution[(i + 1)*mNumCols + j].y += halfMag;
 	mCurrSolution[(i - 1)*mNumCols + j].y += halfMag;
 }
-
