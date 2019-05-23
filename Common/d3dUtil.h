@@ -215,12 +215,12 @@ struct MeshGeometry
 // 描述光源,可表示方向光源,点光源,聚光灯
 struct Light
 {
-	DirectX::XMFLOAT3 Strength = { 0.5f, 0.5f, 0.5f }; // 光源颜色
-	float FalloffStart = 1.0f;                          // point/spot light only 点光源/聚光灯
-	DirectX::XMFLOAT3 Direction = { 0.0f, -1.0f, 0.0f };// directional/spot light only 方向光源/聚光灯
-	float FalloffEnd = 10.0f;                           // point/spot light only 点光源/聚光灯
-	DirectX::XMFLOAT3 Position = { 0.0f, 0.0f, 0.0f };  // point/spot light only 点光源/聚光灯
-	float SpotPower = 64.0f;                            // spot light only 聚光灯
+	DirectX::XMFLOAT3 Strength = { 0.5f, 0.5f, 0.5f };	// 光源颜色
+	float FalloffStart = 1.0f;							// 适用于: 点光源/聚光灯
+	DirectX::XMFLOAT3 Direction = { 0.0f, -1.0f, 0.0f };// 适用于: 方向光源/聚光灯
+	float FalloffEnd = 10.0f;							// 适用于: 点光源/聚光灯
+	DirectX::XMFLOAT3 Position = { 0.0f, 0.0f, 0.0f };	// 适用于: 点光源/聚光灯
+	float SpotPower = 64.0f;							// 适用于: 聚光灯
 };
 
 #define MaxLights 16
