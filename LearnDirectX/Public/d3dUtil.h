@@ -212,53 +212,54 @@ struct MeshGeometry
 	}
 };
 
+// 描述光源,可表示方向光源,点光源,聚光灯
 struct Light
 {
-	DirectX::XMFLOAT3 Strength = { 0.5f, 0.5f, 0.5f };
-	float FalloffStart = 1.0f;                          // point/spot light only
-	DirectX::XMFLOAT3 Direction = { 0.0f, -1.0f, 0.0f };// directional/spot light only
-	float FalloffEnd = 10.0f;                           // point/spot light only
-	DirectX::XMFLOAT3 Position = { 0.0f, 0.0f, 0.0f };  // point/spot light only
-	float SpotPower = 64.0f;                            // spot light only
+	DirectX::XMFLOAT3 Strength = { 0.5f, 0.5f, 0.5f }; // 光源颜色
+	float FalloffStart = 1.0f;                          // point/spot light only 点光源/聚光灯
+	DirectX::XMFLOAT3 Direction = { 0.0f, -1.0f, 0.0f };// directional/spot light only 方向光源/聚光灯
+	float FalloffEnd = 10.0f;                           // point/spot light only 点光源/聚光灯
+	DirectX::XMFLOAT3 Position = { 0.0f, 0.0f, 0.0f };  // point/spot light only 点光源/聚光灯
+	float SpotPower = 64.0f;                            // spot light only 聚光灯
 };
 
 #define MaxLights 16
 
 struct MaterialConstants
 {
-	DirectX::XMFLOAT4 DiffuseAlbedo = { 1.0f, 1.0f, 1.0f, 1.0f };
-	DirectX::XMFLOAT3 FresnelR0 = { 0.01f, 0.01f, 0.01f };
+	DirectX::XMFLOAT4 DiffuseAlbedo = { 1.0f, 1.0f, 1.0f, 1.0f }; // 漫反射系数
+	DirectX::XMFLOAT3 FresnelR0 = { 0.01f, 0.01f, 0.01f }; // 镜面反射系数
 	float Roughness = 0.25f;
 
-	// Used in texture mapping.
+	// Used in texture mapping. 纹理贴图中用到
 	DirectX::XMFLOAT4X4 MatTransform = MathHelper::Identity4x4();
 };
 
-// Simple struct to represent a material for our demos.  A production 3D engine
+// Simple struct to represent a material for our demos.  A production 3D engine // 演示程序中表示材质的简单结构体
 // would likely create a class hierarchy of Materials.
 struct Material
 {
-	// Unique material name for lookup.
+	// Unique material name for lookup. 用于查找材质的唯一对应名称
 	std::string Name;
 
-	// Index into constant buffer corresponding to this material.
+	// Index into constant buffer corresponding to this material. 这个材质的常量缓冲区索引
 	int MatCBIndex = -1;
 
-	// Index into SRV heap for diffuse texture.
+	// Index into SRV heap for diffuse texture. 漫反射纹理在SRV堆中的索引(第9章 纹理贴图)
 	int DiffuseSrvHeapIndex = -1;
 
-	// Index into SRV heap for normal texture.
+	// Index into SRV heap for normal texture. 法线纹理在SRV堆中的索引
 	int NormalSrvHeapIndex = -1;
 
-	// Dirty flag indicating the material has changed and we need to update the constant buffer.
-	// Because we have a material constant buffer for each FrameResource, we have to apply the
+	// Dirty flag indicating the material has changed and we need to update the constant buffer. 脏标志,表示材质变动,需要更新常量缓冲区
+	// Because we have a material constant buffer for each FrameResource, we have to apply the 由于每个帧资源都有一个材质缓冲区,所以必须对每个帧资源都进行更新
 	// update to each FrameResource.  Thus, when we modify a material we should set 
 	// NumFramesDirty = gNumFrameResources so that each frame resource gets the update.
 	int NumFramesDirty = gNumFrameResources;
 
-	// Material constant buffer data used for shading.
-	DirectX::XMFLOAT4 DiffuseAlbedo = { 1.0f, 1.0f, 1.0f, 1.0f };
-	DirectX::XMFLOAT3 FresnelR0 = { 0.01f, 0.01f, 0.01f };
+	// Material constant buffer data used for shading. 用于着色的材质常量缓冲区数据
+	DirectX::XMFLOAT4 DiffuseAlbedo = { 1.0f, 1.0f, 1.0f, 1.0f }; // 漫反射反照率
+	DirectX::XMFLOAT3 FresnelR0 = { 0.01f, 0.01f, 0.01f }; // 材质属性,影响镜面反射
 	float Roughness = .25f;
 	DirectX::XMFLOAT4X4 MatTransform = MathHelper::Identity4x4();
 };

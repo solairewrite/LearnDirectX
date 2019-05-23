@@ -66,9 +66,10 @@ public:
 			1.0f);
 	}
 
+	// 计算逆转置矩阵 B=(A-1)T
 	static DirectX::XMMATRIX InverseTranspose(DirectX::CXMMATRIX M)
 	{
-		// Inverse-transpose is just applied to normals.  So zero out 
+		// Inverse-transpose is just applied to normals.  So zero out // 把转换行归零,这样它就不会进入逆转置计算了
 		// translation row so that it doesn't get into our inverse-transpose
 		// calculation--we don't want the inverse-transpose of the translation.
 		DirectX::XMMATRIX A = M;
