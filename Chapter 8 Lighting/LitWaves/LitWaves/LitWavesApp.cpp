@@ -1,3 +1,5 @@
+// 上下左右调整光源位置
+
 #include "LitWavesApp.h"
 #include "../../../Common/GeometryGenerator.h"
 
