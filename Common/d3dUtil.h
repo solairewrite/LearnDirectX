@@ -144,8 +144,7 @@ public:
 
 // 利用 SubmeshGeometry 来定义 MeshGeometry 中储存的单个几何体
 // 此结构体适用于将多个几何体数据储存于一个顶点缓冲区和一个索引缓冲区的情况
-// 它提供了对存于顶点缓冲区和索引缓冲区中的单个几何体进行绘制所需的数据和偏移量 
-// 可以据此来实现图6.3中描绘的技术
+// 它提供了对存于顶点缓冲区和索引缓冲区中的单个几何体进行绘制所需的数据和偏移量
 struct SubmeshGeometry
 {
 	UINT IndexCount = 0;
@@ -181,7 +180,6 @@ struct MeshGeometry
 
 	// 一个 MeshGeometry 结构体 可以储存一组顶点/缓冲区的多个几何体
 	// 使用下列容器来定义子网格结构体,就能单独绘制其中的子网格(单个几何体)
-	// 
 	std::unordered_map<std::string, SubmeshGeometry> DrawArgs;
 
 	D3D12_VERTEX_BUFFER_VIEW VertexBufferView()const
@@ -229,7 +227,7 @@ struct MaterialConstants
 {
 	DirectX::XMFLOAT4 DiffuseAlbedo = { 1.0f, 1.0f, 1.0f, 1.0f }; // 漫反射系数
 	DirectX::XMFLOAT3 FresnelR0 = { 0.01f, 0.01f, 0.01f }; // 镜面反射系数
-	float Roughness = 0.25f;
+	float Roughness = 0.25f; // 粗糙度
 
 	// 纹理贴图中用到
 	DirectX::XMFLOAT4X4 MatTransform = MathHelper::Identity4x4();

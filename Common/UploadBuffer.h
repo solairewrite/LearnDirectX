@@ -13,14 +13,10 @@ public:
 
 		// 常量缓冲区的大小为 256 bytes 的整数倍
 		// 因为硬盘只能按 m*256B的偏移量和n*256B的数据长度 查看常量数据 
-		// 
-		// typedef struct D3D12_CONSTANT_BUFFER_VIEW_DESC {
-		// UINT64 OffsetInBytes; // multiple of 256
-		// UINT   SizeInBytes;   // multiple of 256
-		// } D3D12_CONSTANT_BUFFER_VIEW_DESC;
 		if (isConstantBuffer)
 			mElementByteSize = d3dUtil::CalcConstantBufferByteSize(sizeof(T));
-		// 根据构造器中的device,得到mUploadBuffer
+
+		// 根据构造器中的device,更新mUploadBuffer
 		ThrowIfFailed(device->CreateCommittedResource(
 			&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD), // 上传堆
 			D3D12_HEAP_FLAG_NONE,
@@ -29,7 +25,7 @@ public:
 			nullptr,
 			IID_PPV_ARGS(&mUploadBuffer)));
 
-		// 获取指向想要更新资源数据的指针
+		// 获取指向想要更新资源数据的指针,修改了mMappedData
 		ThrowIfFailed(mUploadBuffer->Map(0, nullptr, reinterpret_cast<void**>(&mMappedData)));
 
 		// 只要还会修改当前的资源,就不取消映射
