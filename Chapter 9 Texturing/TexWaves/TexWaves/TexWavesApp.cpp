@@ -185,11 +185,11 @@ bool TexWavesApp::Initialize()
 	if (!D3DApp::Initialize())
 		return false;
 
-	// Reset the command list to prep for initialization commands.
+
 	ThrowIfFailed(mCommandList->Reset(mDirectCmdListAlloc.Get(), nullptr));
 
-	// Get the increment size of a descriptor in this heap type.  This is hardware specific, 
-	// so we have to query this information.
+
+
 	mCbvSrvDescriptorSize = md3dDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
 	mWaves = std::make_unique<Waves>(128, 128, 1.0f, 0.03f, 4.0f, 0.2f);
@@ -206,12 +206,12 @@ bool TexWavesApp::Initialize()
 	BuildFrameResources();
 	BuildPSOs();
 
-	// Execute the initialization commands.
-	ThrowIfFailed(mCommandList->Close());
-	ID3D12CommandList* cmdsLists[] = { mCommandList.Get() };
-	mCommandQueue->ExecuteCommandLists(_countof(cmdsLists), cmdsLists);
 
-	// Wait until initialization is complete.
+	ThrowIfFailed(mCommandList->Close());
+	ID3D12CommandList* cmdLists[] = { mCommandList.Get() };
+	mCommandQueue->ExecuteCommandLists(_countof(cmdLists), cmdLists);
+
+
 	FlushCommandQueue();
 
 	return true;
@@ -221,7 +221,7 @@ void TexWavesApp::OnResize()
 {
 	D3DApp::OnResize();
 
-	// The window resized, so update the aspect ratio and recompute the projection matrix.
+
 	XMMATRIX P = XMMatrixPerspectiveFovLH(0.25f*MathHelper::Pi, AspectRatio(), 1.0f, 1000.0f);
 	XMStoreFloat4x4(&mProj, P);
 }
@@ -231,12 +231,12 @@ void TexWavesApp::Update(const GameTimer& gt)
 	OnKeyboardInput(gt);
 	UpdateCamera(gt);
 
-	// Cycle through the circular frame resource array.
+
 	mCurrFrameResourceIndex = (mCurrFrameResourceIndex + 1) % gNumFrameResources;
 	mCurrFrameResource = mFrameResources[mCurrFrameResourceIndex].get();
 
-	// Has the GPU finished processing the commands of the current frame resource?
-	// If not, wait until the GPU has completed commands up to this fence point.
+
+
 	if (mCurrFrameResource->Fence != 0 && mFence->GetCompletedValue() < mCurrFrameResource->Fence)
 	{
 		HANDLE eventHandle = CreateEventEx(nullptr, false, false, EVENT_ALL_ACCESS);
