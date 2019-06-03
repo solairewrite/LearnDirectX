@@ -10,6 +10,6 @@ Ctrl+G: 跳转指定行
 #include \"\"文件结构是以当前文件夹开始的,比如\"../Public/xxx.h\"  
 报错: unresolved external symbol _main referenced in function "int _cdecl invovke _main(void)"  
 可能是因为创建了控制台程序,DX要创建窗口程序  
-解决方法  
-1,进入project->setting->c/c++, 在category中选择preprocessor,在processor definitions中删除_CONSOLE, 添加_WINDOWS  
-2,进入project->setting->Link, 在Project options中将 /subsystem:console改为/subsystem:windows.  
+解决方法:配置项目属性  
+1,C/C++ -> Preprocessor -> Processor Definitions: 删除_CONSOLE, 添加_WINDOWS  
+2,Linker -> All Options -> Subsystem: Windows  
