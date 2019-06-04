@@ -95,4 +95,18 @@
       <Filter>Shaders</Filter>
     </None>
   </ItemGroup>
+  <ItemGroup>
+    <Image Include="..\..\..\Textures\grass.dds">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\..\..\Textures\water1.dds">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\..\..\Textures\WoodCrate01.dds">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\..\..\Textures\WoodCrate02.dds">
+      <Filter>Resource Files</Filter>
+    </Image>
+  </ItemGroup>
 </Project>

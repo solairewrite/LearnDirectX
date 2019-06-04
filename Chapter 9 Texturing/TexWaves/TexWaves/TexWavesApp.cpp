@@ -379,17 +379,17 @@ void TexWavesApp::UpdateCamera(const GameTimer& gt)
 
 void TexWavesApp::AnimateMaterials(const GameTimer& gt)
 {
-	// Scroll the water material texture coordinates.
+	// 滚动水材质的纹理坐标
 	auto waterMat = mMaterials["water"].get();
 
 	float& tu = waterMat->MatTransform(3, 0);
 	float& tv = waterMat->MatTransform(3, 1);
 
-	tu += 0.1f * gt.DeltaTime();
-	tv += 0.02f * gt.DeltaTime();
+	tu += 0.1f*gt.DeltaTime();
+	tv += 0.02f*gt.DeltaTime();
 
 	if (tu >= 1.0f)
-		tu -= 1.0f;
+		tu -= 0.1f;
 
 	if (tv >= 1.0f)
 		tv -= 1.0f;
@@ -397,7 +397,7 @@ void TexWavesApp::AnimateMaterials(const GameTimer& gt)
 	waterMat->MatTransform(3, 0) = tu;
 	waterMat->MatTransform(3, 1) = tv;
 
-	// Material has changed, so need to update cbuffer.
+
 	waterMat->NumFramesDirty = gNumFrameResources;
 }
 
