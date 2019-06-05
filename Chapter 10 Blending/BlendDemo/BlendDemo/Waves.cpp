@@ -1,7 +1,3 @@
-//***************************************************************************************
-// Waves.cpp by Frank Luna (C) 2011 All Rights Reserved.
-//***************************************************************************************
-
 #include "Waves.h"
 #include <ppl.h>
 #include <algorithm>
@@ -32,14 +28,13 @@ Waves::Waves(int m, int n, float dx, float dt, float speed, float damping)
 	mNormals.resize(m*n);
 	mTangentX.resize(m*n);
 
-	// Generate grid vertices in system memory.
-
+	// 在内存中生成 grid 顶点
 	float halfWidth = (n - 1)*dx*0.5f;
 	float halfDepth = (m - 1)*dx*0.5f;
-	for (int i = 0; i < m; ++i)
+	for (int i=0; i<m; ++i)
 	{
 		float z = halfDepth - i * dx;
-		for (int j = 0; j < n; ++j)
+		for (int j=0; j<n; ++j)
 		{
 			float x = -halfWidth + j * dx;
 
@@ -53,34 +48,35 @@ Waves::Waves(int m, int n, float dx, float dt, float speed, float damping)
 
 Waves::~Waves()
 {
+
 }
 
-int Waves::RowCount()const
+int Waves::RowCount() const
 {
 	return mNumRows;
 }
 
-int Waves::ColumnCount()const
+int Waves::ColumnCount() const
 {
 	return mNumCols;
 }
 
-int Waves::VertexCount()const
+int Waves::VertexCount() const
 {
 	return mVertexCount;
 }
 
-int Waves::TriangleCount()const
+int Waves::TriangleCount() const
 {
 	return mTriangleCount;
 }
 
-float Waves::Width()const
+float Waves::Width() const
 {
 	return mNumCols * mSpatialStep;
 }
 
-float Waves::Depth()const
+float Waves::Depth() const
 {
 	return mNumRows * mSpatialStep;
 }
@@ -89,17 +85,15 @@ void Waves::Update(float dt)
 {
 	static float t = 0;
 
-	// Accumulate time.
 	t += dt;
 
-	// Only update the simulation at the specified time step.
-	if (t >= mTimeStep)
+	if (t>=mTimeStep)
 	{
 		// Only update interior points; we use zero boundary conditions.
 		concurrency::parallel_for(1, mNumRows - 1, [this](int i)
-			//for(int i = 1; i < mNumRows-1; ++i)
+		//for(int i = 1; i < mNumRows-1; ++i)
 		{
-			for (int j = 1; j < mNumCols - 1; ++j)
+			for (int j=1; j<mNumCols-1; ++j)
 			{
 				// After this update we will be discarding the old previous
 				// buffer, so overwrite that buffer with the new update.
@@ -125,15 +119,13 @@ void Waves::Update(float dt)
 		// current solution becomes the new previous solution.
 		std::swap(mPrevSolution, mCurrSolution);
 
-		t = 0.0f; // reset time
+		t = 0.0f;
 
-		//
 		// Compute normals using finite difference scheme.
-		//
 		concurrency::parallel_for(1, mNumRows - 1, [this](int i)
-			//for(int i = 1; i < mNumRows - 1; ++i)
+		//for(int i = 1; i < mNumRows - 1; ++i)
 		{
-			for (int j = 1; j < mNumCols - 1; ++j)
+			for (int j=1; j<mNumCols-1; ++j)
 			{
 				float l = mCurrSolution[i*mNumCols + j - 1].y;
 				float r = mCurrSolution[i*mNumCols + j + 1].y;
@@ -169,4 +161,3 @@ void Waves::Disturb(int i, int j, float magnitude)
 	mCurrSolution[(i + 1)*mNumCols + j].y += halfMag;
 	mCurrSolution[(i - 1)*mNumCols + j].y += halfMag;
 }
-

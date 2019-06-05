@@ -162,6 +162,7 @@
     <ClInclude Include="..\..\..\Common\GeometryGenerator.h" />
     <ClInclude Include="..\..\..\Common\MathHelper.h" />
     <ClInclude Include="..\..\..\Common\UploadBuffer.h" />
+    <ClInclude Include="BlendApp.h" />
     <ClInclude Include="FrameResource.h" />
     <ClInclude Include="Waves.h" />
   </ItemGroup>

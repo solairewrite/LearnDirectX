@@ -83,6 +83,9 @@
     <ClInclude Include="Waves.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="BlendApp.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\LightingUtil.hlsl">

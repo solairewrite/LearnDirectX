@@ -13,3 +13,8 @@ Ctrl+G: 跳转指定行
 解决方法:配置项目属性  
 1,C/C++ -> Preprocessor -> Processor Definitions: 删除_CONSOLE, 添加_WINDOWS  
 2,Linker -> All Options -> Subsystem: Windows  
+## 激励
+学编程最重要的就是实践,就是写代码,看别人写的代码,再写代码.  
+你看再多的书,不写代码,你还是不会编程.  
+但是写代码也要讲究方法循序渐进,不能刚学了几天语法,就像写个操作系统什么的.  
+树立这种不切实际的目标只会让你的自信受到严重打击迷失自我  
