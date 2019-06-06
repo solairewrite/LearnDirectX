@@ -339,27 +339,27 @@ void BlendApp::OnMouseMove(WPARAM btnState, int x, int y)
 {
 	if ((btnState & MK_LBUTTON) != 0)
 	{
-		// Make each pixel correspond to a quarter of a degree.
+
 		float dx = XMConvertToRadians(0.25f*static_cast<float>(x - mLastMousePos.x));
 		float dy = XMConvertToRadians(0.25f*static_cast<float>(y - mLastMousePos.y));
 
-		// Update angles based on input to orbit camera around box.
+
 		mTheta += dx;
 		mPhi += dy;
 
-		// Restrict the angle mPhi.
+
 		mPhi = MathHelper::Clamp(mPhi, 0.1f, MathHelper::Pi - 0.1f);
 	}
 	else if ((btnState & MK_RBUTTON) != 0)
 	{
-		// Make each pixel correspond to 0.2 unit in the scene.
+
 		float dx = 0.2f*static_cast<float>(x - mLastMousePos.x);
 		float dy = 0.2f*static_cast<float>(y - mLastMousePos.y);
 
-		// Update the camera radius based on input.
+
 		mRadius += dx - dy;
 
-		// Restrict the radius.
+
 		mRadius = MathHelper::Clamp(mRadius, 5.0f, 150.0f);
 	}
 
@@ -373,12 +373,12 @@ void BlendApp::OnKeyboardInput(const GameTimer& gt)
 
 void BlendApp::UpdateCamera(const GameTimer& gt)
 {
-	// Convert Spherical to Cartesian coordinates.
+
 	mEyePos.x = mRadius * sinf(mPhi)*cosf(mTheta);
 	mEyePos.z = mRadius * sinf(mPhi)*sinf(mTheta);
 	mEyePos.y = mRadius * cosf(mPhi);
 
-	// Build the view matrix.
+
 	XMVECTOR pos = XMVectorSet(mEyePos.x, mEyePos.y, mEyePos.z, 1.0f);
 	XMVECTOR target = XMVectorZero();
 	XMVECTOR up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
@@ -392,11 +392,11 @@ void BlendApp::AnimateMaterials(const GameTimer& gt)
 	// Scroll the water material texture coordinates.
 	auto waterMat = mMaterials["water"].get();
 
-	float& tu = waterMat->MatTransform(3, 0);
+	float& tu = waterMat->MatTransform(3, 0); // 4x4¾ØÕóµÄ[3,0]
 	float& tv = waterMat->MatTransform(3, 1);
 
-	tu += 0.1f * gt.DeltaTime();
-	tv += 0.02f * gt.DeltaTime();
+	tu += 0.1f*gt.DeltaTime();
+	tv += 0.02f*gt.DeltaTime();
 
 	if (tu >= 1.0f)
 		tu -= 1.0f;
@@ -407,7 +407,7 @@ void BlendApp::AnimateMaterials(const GameTimer& gt)
 	waterMat->MatTransform(3, 0) = tu;
 	waterMat->MatTransform(3, 1) = tv;
 
-	// Material has changed, so need to update cbuffer.
+
 	waterMat->NumFramesDirty = gNumFrameResources;
 }
 
@@ -416,8 +416,8 @@ void BlendApp::UpdateObjectCBs(const GameTimer& gt)
 	auto currObjectCB = mCurrFrameResource->ObjectCB.get();
 	for (auto& e : mAllRitems)
 	{
-		// Only update the cbuffer data if the constants have changed.  
-		// This needs to be tracked per frame resource.
+
+
 		if (e->NumFramesDirty > 0)
 		{
 			XMMATRIX world = XMLoadFloat4x4(&e->World);
@@ -429,7 +429,7 @@ void BlendApp::UpdateObjectCBs(const GameTimer& gt)
 
 			currObjectCB->CopyData(e->ObjCBIndex, objConstants);
 
-			// Next FrameResource need to be updated too.
+
 			e->NumFramesDirty--;
 		}
 	}
@@ -438,10 +438,10 @@ void BlendApp::UpdateObjectCBs(const GameTimer& gt)
 void BlendApp::UpdateMaterialCBs(const GameTimer& gt)
 {
 	auto currMaterialCB = mCurrFrameResource->MaterialCB.get();
-	for (auto& e : mMaterials)
+	for (auto& e: mMaterials)
 	{
-		// Only update the cbuffer data if the constants have changed.  If the cbuffer
-		// data changes, it needs to be updated for each FrameResource.
+
+
 		Material* mat = e.second.get();
 		if (mat->NumFramesDirty > 0)
 		{
@@ -455,7 +455,7 @@ void BlendApp::UpdateMaterialCBs(const GameTimer& gt)
 
 			currMaterialCB->CopyData(mat->MatCBIndex, matConstants);
 
-			// Next FrameResource need to be updated too.
+
 			mat->NumFramesDirty--;
 		}
 	}
