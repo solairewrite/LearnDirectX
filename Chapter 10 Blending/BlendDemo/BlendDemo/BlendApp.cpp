@@ -483,14 +483,14 @@ void BlendApp::UpdateMainPassCB(const GameTimer& gt)
 	mMainPassCB.NearZ = 1.0f;
 	mMainPassCB.FarZ = 1000.0f;
 	mMainPassCB.TotalTime = gt.TotalTime();
-	mMainPassCB.DeltaTime = gt.DeltaTime();
-	mMainPassCB.AmbientLight = { 0.25f, 0.25f, 0.35f, 1.0f };
-	mMainPassCB.Lights[0].Direction = { 0.57735f, -0.57735f, 0.57735f };
-	mMainPassCB.Lights[0].Strength = { 0.9f, 0.9f, 0.8f };
-	mMainPassCB.Lights[1].Direction = { -0.57735f, -0.57735f, 0.57735f };
-	mMainPassCB.Lights[1].Strength = { 0.3f, 0.3f, 0.3f };
-	mMainPassCB.Lights[2].Direction = { 0.0f, -0.707f, -0.707f };
-	mMainPassCB.Lights[2].Strength = { 0.15f, 0.15f, 0.15f };
+	mMainPassCB.DeltaTime = gt.TotalTime();
+	mMainPassCB.AmbientLight = { 0.25f,0.25f,0.35f,1.0f };
+	mMainPassCB.Lights[0].Direction = { 0.57735f,-0.57735f,0.57735f };
+	mMainPassCB.Lights[0].Strength = { 0.9f,0.9f,0.8f };
+	mMainPassCB.Lights[1].Direction = { -0.57735f,-0.57735f,0.57735f };
+	mMainPassCB.Lights[1].Strength = { 0.3f,0.3f,0.3f };
+	mMainPassCB.Lights[2].Direction = { 0.0f,-0.707f,-0.707f };
+	mMainPassCB.Lights[2].Strength = { 0.15f,0.15f,0.15f };
 
 	auto currPassCB = mCurrFrameResource->PassCB.get();
 	currPassCB->CopyData(0, mMainPassCB);
@@ -512,12 +512,12 @@ void BlendApp::UpdateWaves(const GameTimer& gt)
 		mWaves->Disturb(i, j, r);
 	}
 
-	// Update the wave simulation.
+
 	mWaves->Update(gt.DeltaTime());
 
 	// Update the wave vertex buffer with the new solution.
 	auto currWavesVB = mCurrFrameResource->WavesVB.get();
-	for (int i = 0; i < mWaves->VertexCount(); ++i)
+	for (int i=0; i < mWaves->VertexCount(); ++i)
 	{
 		Vertex v;
 
@@ -567,20 +567,20 @@ void BlendApp::LoadTextures()
 void BlendApp::BuildRootSignature()
 {
 	CD3DX12_DESCRIPTOR_RANGE texTable;
-	texTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0);
+	texTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0); // baseShaderRegister 0
 
-	// Root parameter can be a table, root descriptor or root constants.
+
 	CD3DX12_ROOT_PARAMETER slotRootParameter[4];
 
-	// Perfomance TIP: Order from most frequent to least frequent.
+
 	slotRootParameter[0].InitAsDescriptorTable(1, &texTable, D3D12_SHADER_VISIBILITY_PIXEL);
-	slotRootParameter[1].InitAsConstantBufferView(0);
+	slotRootParameter[1].InitAsConstantBufferView(0); // shaderRegister 0
 	slotRootParameter[2].InitAsConstantBufferView(1);
 	slotRootParameter[3].InitAsConstantBufferView(2);
 
 	auto staticSamplers = GetStaticSamplers();
 
-	// A root signature is an array of root parameters.
+
 	CD3DX12_ROOT_SIGNATURE_DESC rootSigDesc(4, slotRootParameter,
 		(UINT)staticSamplers.size(), staticSamplers.data(),
 		D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
@@ -606,23 +606,23 @@ void BlendApp::BuildRootSignature()
 
 void BlendApp::BuildDescriptorHeaps()
 {
-	//
-	// Create the SRV heap.
-	//
+
+
+	// Create the SRV heap
 	D3D12_DESCRIPTOR_HEAP_DESC srvHeapDesc = {};
 	srvHeapDesc.NumDescriptors = 3;
 	srvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
 	srvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 	ThrowIfFailed(md3dDevice->CreateDescriptorHeap(&srvHeapDesc, IID_PPV_ARGS(&mSrvDescriptorHeap)));
 
-	//
+
+
 	// Fill out the heap with actual descriptors.
-	//
 	CD3DX12_CPU_DESCRIPTOR_HANDLE hDescriptor(mSrvDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
 
 	auto grassTex = mTextures["grassTex"]->Resource;
 	auto waterTex = mTextures["waterTex"]->Resource;
-	auto fenceTex = mTextures["fenceTex"]->Resource;
+	auto fenceTex = mTextures["fenceTEx"]->Resource;
 
 	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
 	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
@@ -630,19 +630,6 @@ void BlendApp::BuildDescriptorHeaps()
 	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
 	srvDesc.Texture2D.MostDetailedMip = 0;
 	srvDesc.Texture2D.MipLevels = -1;
-	md3dDevice->CreateShaderResourceView(grassTex.Get(), &srvDesc, hDescriptor);
-
-	// next descriptor
-	hDescriptor.Offset(1, mCbvSrvDescriptorSize);
-
-	srvDesc.Format = waterTex->GetDesc().Format;
-	md3dDevice->CreateShaderResourceView(waterTex.Get(), &srvDesc, hDescriptor);
-
-	// next descriptor
-	hDescriptor.Offset(1, mCbvSrvDescriptorSize);
-
-	srvDesc.Format = fenceTex->GetDesc().Format;
-	md3dDevice->CreateShaderResourceView(fenceTex.Get(), &srvDesc, hDescriptor);
 }
 
 void BlendApp::BuildShadersAndInputLayout()
