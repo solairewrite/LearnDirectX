@@ -622,7 +622,7 @@ void BlendApp::BuildDescriptorHeaps()
 
 	auto grassTex = mTextures["grassTex"]->Resource;
 	auto waterTex = mTextures["waterTex"]->Resource;
-	auto fenceTex = mTextures["fenceTEx"]->Resource;
+	auto fenceTex = mTextures["fenceTex"]->Resource;
 
 	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
 	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
@@ -630,32 +630,45 @@ void BlendApp::BuildDescriptorHeaps()
 	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
 	srvDesc.Texture2D.MostDetailedMip = 0;
 	srvDesc.Texture2D.MipLevels = -1;
+	md3dDevice->CreateShaderResourceView(grassTex.Get(), &srvDesc, hDescriptor);
+
+	// next descriptor
+	hDescriptor.Offset(1, mCbvSrvDescriptorSize);
+
+	srvDesc.Format = waterTex->GetDesc().Format;
+	md3dDevice->CreateShaderResourceView(waterTex.Get(), &srvDesc, hDescriptor);
+
+	// next descriptor
+	hDescriptor.Offset(1, mCbvSrvDescriptorSize);
+
+	srvDesc.Format = fenceTex->GetDesc().Format;
+	md3dDevice->CreateShaderResourceView(fenceTex.Get(), &srvDesc, hDescriptor);
 }
 
 void BlendApp::BuildShadersAndInputLayout()
 {
 	const D3D_SHADER_MACRO defines[] =
 	{
-		"FOG", "1",
-		NULL, NULL
+		"FOG","1",
+		NULL,NULL
 	};
 
 	const D3D_SHADER_MACRO alphaTestDefines[] =
 	{
-		"FOG", "1",
-		"ALPHA_TEST", "1",
-		NULL, NULL
+		"FOG","1",
+		"ALPHA_TEST","1",
+		NULL,NULL
 	};
 
 	mShaders["standardVS"] = d3dUtil::CompileShader(L"Shaders\\Default.hlsl", nullptr, "VS", "vs_5_0");
 	mShaders["opaquePS"] = d3dUtil::CompileShader(L"Shaders\\Default.hlsl", defines, "PS", "ps_5_0");
 	mShaders["alphaTestedPS"] = d3dUtil::CompileShader(L"Shaders\\Default.hlsl", alphaTestDefines, "PS", "ps_5_0");
 
-	mInputLayout =
+	mInputLayout = 
 	{
-		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 24, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		{"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
+		{"NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
+		{"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 24, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
 	};
 }
 
@@ -664,14 +677,14 @@ void BlendApp::BuildLandGeometry()
 	GeometryGenerator geoGen;
 	GeometryGenerator::MeshData grid = geoGen.CreateGrid(160.0f, 160.0f, 50, 50);
 
-	//
-	// Extract the vertex elements we are interested and apply the height function to
-	// each vertex.  In addition, color the vertices based on their height so we have
-	// sandy looking beaches, grassy low hills, and snow mountain peaks.
-	//
+
+
+
+
+
 
 	std::vector<Vertex> vertices(grid.Vertices.size());
-	for (size_t i = 0; i < grid.Vertices.size(); ++i)
+	for (size_t i=0; i<grid.Vertices.size(); ++i)
 	{
 		auto& p = grid.Vertices[i].Position;
 		vertices[i].Pos = p;
@@ -717,16 +730,16 @@ void BlendApp::BuildLandGeometry()
 
 void BlendApp::BuildWavesGeometry()
 {
-	std::vector<std::uint16_t> indices(3 * mWaves->TriangleCount()); // 3 indices per face
+	std::vector<std::uint16_t> indices(3 * mWaves->TriangleCount());
 	assert(mWaves->VertexCount() < 0x0000ffff);
-
-	// Iterate over each quad.
+	
+	// Iterate over each quad
 	int m = mWaves->RowCount();
 	int n = mWaves->ColumnCount();
 	int k = 0;
-	for (int i = 0; i < m - 1; ++i)
+	for (int i=0; i<m-1; ++i)
 	{
-		for (int j = 0; j < n - 1; ++j)
+		for (int j=0; j<n-1; ++j)
 		{
 			indices[k] = i * n + j;
 			indices[k + 1] = i * n + j + 1;
@@ -736,7 +749,7 @@ void BlendApp::BuildWavesGeometry()
 			indices[k + 4] = i * n + j + 1;
 			indices[k + 5] = (i + 1)*n + j + 1;
 
-			k += 6; // next quad
+			k += 6;
 		}
 	}
 
@@ -746,7 +759,7 @@ void BlendApp::BuildWavesGeometry()
 	auto geo = std::make_unique<MeshGeometry>();
 	geo->Name = "waterGeo";
 
-	// Set dynamically.
+
 	geo->VertexBufferCPU = nullptr;
 	geo->VertexBufferGPU = nullptr;
 
@@ -777,7 +790,7 @@ void BlendApp::BuildBoxGeometry()
 	GeometryGenerator::MeshData box = geoGen.CreateBox(8.0f, 8.0f, 8.0f, 3);
 
 	std::vector<Vertex> vertices(box.Vertices.size());
-	for (size_t i = 0; i < box.Vertices.size(); ++i)
+	for (size_t i=0; i<box.Vertices.size(); ++i)
 	{
 		auto& p = box.Vertices[i].Position;
 		vertices[i].Pos = p;
@@ -811,7 +824,7 @@ void BlendApp::BuildBoxGeometry()
 	geo->IndexBufferByteSize = ibByteSize;
 
 	SubmeshGeometry submesh;
-	submesh.IndexCount = (UINT)indices.size();
+	submesh.IndexCount = (UINT)indices.data();
 	submesh.StartIndexLocation = 0;
 	submesh.BaseVertexLocation = 0;
 
