@@ -1,153 +1,5 @@
 #include "BlendApp.h"
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
 	_In_ LPSTR lpCmdLine, _In_ int nShowCmd)
 {
@@ -188,10 +40,7 @@ bool BlendApp::Initialize()
 	if (!D3DApp::Initialize())
 		return false;
 
-
 	ThrowIfFailed(mCommandList->Reset(mDirectCmdListAlloc.Get(), nullptr));
-
-
 
 	mCbvSrvDescriptorSize = md3dDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 	// Waves(int m, int n, float dx, float dt, float speed, float damping);
@@ -209,11 +58,9 @@ bool BlendApp::Initialize()
 	BuildFrameResources(); // 赋值空的 mFrameResources
 	BuildPSOs(); // 赋值 mPSOs["opaque"] 等, md3dDevice->CreateGraphicsPipelineState
 
-	
 	ThrowIfFailed(mCommandList->Close());
 	ID3D12CommandList* cmdLists[] = { mCommandList.Get() };
 	mCommandQueue->ExecuteCommandLists(_countof(cmdLists), cmdLists);
-
 
 	FlushCommandQueue();
 
@@ -224,7 +71,6 @@ void BlendApp::OnResize()
 {
 	D3DApp::OnResize();
 
-
 	XMMATRIX P = XMMatrixPerspectiveFovLH(0.25f*MathHelper::Pi, AspectRatio(), 1.0f, 1000.0f);
 	XMStoreFloat4x4(&mProj, P);
 }
@@ -234,11 +80,8 @@ void BlendApp::Update(const GameTimer& gt)
 	OnKeyboardInput(gt);
 	UpdateCamera(gt);
 
-
 	mCurrFrameResourceIndex = (mCurrFrameResourceIndex + 1) % gNumFrameResources;
 	mCurrFrameResource = mFrameResources[mCurrFrameResourceIndex].get();
-
-
 
 	if (mCurrFrameResource->Fence != 0 && mFence->GetCompletedValue() < mCurrFrameResource->Fence)
 	{
@@ -259,25 +102,18 @@ void BlendApp::Draw(const GameTimer& gt)
 {
 	auto cmdListAlloc = mCurrFrameResource->CmdListAlloc;
 
-
-
 	ThrowIfFailed(cmdListAlloc->Reset());
-
-
 
 	ThrowIfFailed(mCommandList->Reset(cmdListAlloc.Get(), mPSOs["opaque"].Get()));
 
 	mCommandList->RSSetViewports(1, &mScreenViewport);
 	mCommandList->RSSetScissorRects(1, &mScissorRect);
 
-
 	mCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(CurrentBackBuffer(),
 		D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
 
-
 	mCommandList->ClearRenderTargetView(CurrentBackBufferView(), (float*)&mMainPassCB.FogColor, 0, nullptr);
 	mCommandList->ClearDepthStencilView(DepthStencilView(), D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
-
 
 	mCommandList->OMSetRenderTargets(1, &CurrentBackBufferView(), true, &DepthStencilView());
 	// BuildDescriptorHeaps() 赋值 mSrvDescriptorHeap
@@ -297,7 +133,6 @@ void BlendApp::Draw(const GameTimer& gt)
 	mCommandList->SetPipelineState(mPSOs["transparent"].Get());
 	DrawRenderItems(mCommandList.Get(), mRitemLayer[(int)RenderLayer::Transparent]);
 
-
 	mCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(CurrentBackBuffer(),
 		D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
 
@@ -308,13 +143,11 @@ void BlendApp::Draw(const GameTimer& gt)
 	ID3D12CommandList* cmdLists[] = { mCommandList.Get() };
 	mCommandQueue->ExecuteCommandLists(_countof(cmdLists), cmdLists);
 
-
 	ThrowIfFailed(mSwapChain->Present(0, 0));
 	mCurrBackBuffer = (mCurrBackBuffer + 1) % SwapChainBufferCount;
 
 	// Advance the fence value to mark commands up to this fence point.
 	mCurrFrameResource->Fence = ++mCurrentFence;
-
 
 	// Add an instruction to the command queue to set a new fence point. 
 	// Because we are on the GPU timeline, the new fence point won't be 
@@ -339,26 +172,20 @@ void BlendApp::OnMouseMove(WPARAM btnState, int x, int y)
 {
 	if ((btnState & MK_LBUTTON) != 0)
 	{
-
 		float dx = XMConvertToRadians(0.25f*static_cast<float>(x - mLastMousePos.x));
 		float dy = XMConvertToRadians(0.25f*static_cast<float>(y - mLastMousePos.y));
 
-
 		mTheta += dx;
 		mPhi += dy;
-
 
 		mPhi = MathHelper::Clamp(mPhi, 0.1f, MathHelper::Pi - 0.1f);
 	}
 	else if ((btnState & MK_RBUTTON) != 0)
 	{
-
 		float dx = 0.2f*static_cast<float>(x - mLastMousePos.x);
 		float dy = 0.2f*static_cast<float>(y - mLastMousePos.y);
 
-
 		mRadius += dx - dy;
-
 
 		mRadius = MathHelper::Clamp(mRadius, 5.0f, 150.0f);
 	}
@@ -369,15 +196,14 @@ void BlendApp::OnMouseMove(WPARAM btnState, int x, int y)
 
 void BlendApp::OnKeyboardInput(const GameTimer& gt)
 {
+
 }
 
 void BlendApp::UpdateCamera(const GameTimer& gt)
 {
-
 	mEyePos.x = mRadius * sinf(mPhi)*cosf(mTheta);
 	mEyePos.z = mRadius * sinf(mPhi)*sinf(mTheta);
 	mEyePos.y = mRadius * cosf(mPhi);
-
 
 	XMVECTOR pos = XMVectorSet(mEyePos.x, mEyePos.y, mEyePos.z, 1.0f);
 	XMVECTOR target = XMVectorZero();
@@ -407,7 +233,6 @@ void BlendApp::AnimateMaterials(const GameTimer& gt)
 	waterMat->MatTransform(3, 0) = tu;
 	waterMat->MatTransform(3, 1) = tv;
 
-
 	waterMat->NumFramesDirty = gNumFrameResources;
 }
 
@@ -416,8 +241,6 @@ void BlendApp::UpdateObjectCBs(const GameTimer& gt)
 	auto currObjectCB = mCurrFrameResource->ObjectCB.get();
 	for (auto& e : mAllRitems)
 	{
-
-
 		if (e->NumFramesDirty > 0)
 		{
 			XMMATRIX world = XMLoadFloat4x4(&e->World);
@@ -429,7 +252,6 @@ void BlendApp::UpdateObjectCBs(const GameTimer& gt)
 
 			currObjectCB->CopyData(e->ObjCBIndex, objConstants);
 
-
 			e->NumFramesDirty--;
 		}
 	}
@@ -438,10 +260,8 @@ void BlendApp::UpdateObjectCBs(const GameTimer& gt)
 void BlendApp::UpdateMaterialCBs(const GameTimer& gt)
 {
 	auto currMaterialCB = mCurrFrameResource->MaterialCB.get();
-	for (auto& e: mMaterials)
+	for (auto& e : mMaterials)
 	{
-
-
 		Material* mat = e.second.get();
 		if (mat->NumFramesDirty > 0)
 		{
@@ -454,7 +274,6 @@ void BlendApp::UpdateMaterialCBs(const GameTimer& gt)
 			XMStoreFloat4x4(&matConstants.MatTransform, XMMatrixTranspose(matTransform));
 
 			currMaterialCB->CopyData(mat->MatCBIndex, matConstants);
-
 
 			mat->NumFramesDirty--;
 		}
@@ -512,12 +331,11 @@ void BlendApp::UpdateWaves(const GameTimer& gt)
 		mWaves->Disturb(i, j, r);
 	}
 
-
 	mWaves->Update(gt.DeltaTime());
 
 	// Update the wave vertex buffer with the new solution.
 	auto currWavesVB = mCurrFrameResource->WavesVB.get();
-	for (int i=0; i < mWaves->VertexCount(); ++i)
+	for (int i = 0; i < mWaves->VertexCount(); ++i)
 	{
 		Vertex v;
 
@@ -569,9 +387,7 @@ void BlendApp::BuildRootSignature()
 	CD3DX12_DESCRIPTOR_RANGE texTable;
 	texTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0); // baseShaderRegister 0
 
-
 	CD3DX12_ROOT_PARAMETER slotRootParameter[4];
-
 
 	slotRootParameter[0].InitAsDescriptorTable(1, &texTable, D3D12_SHADER_VISIBILITY_PIXEL);
 	slotRootParameter[1].InitAsConstantBufferView(0); // shaderRegister 0
@@ -579,7 +395,6 @@ void BlendApp::BuildRootSignature()
 	slotRootParameter[3].InitAsConstantBufferView(2);
 
 	auto staticSamplers = GetStaticSamplers();
-
 
 	CD3DX12_ROOT_SIGNATURE_DESC rootSigDesc(4, slotRootParameter,
 		(UINT)staticSamplers.size(), staticSamplers.data(),
@@ -606,16 +421,12 @@ void BlendApp::BuildRootSignature()
 
 void BlendApp::BuildDescriptorHeaps()
 {
-
-
 	// Create the SRV heap
 	D3D12_DESCRIPTOR_HEAP_DESC srvHeapDesc = {};
 	srvHeapDesc.NumDescriptors = 3;
 	srvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
 	srvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 	ThrowIfFailed(md3dDevice->CreateDescriptorHeap(&srvHeapDesc, IID_PPV_ARGS(&mSrvDescriptorHeap)));
-
-
 
 	// Fill out the heap with actual descriptors.
 	CD3DX12_CPU_DESCRIPTOR_HANDLE hDescriptor(mSrvDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
@@ -664,7 +475,7 @@ void BlendApp::BuildShadersAndInputLayout()
 	mShaders["opaquePS"] = d3dUtil::CompileShader(L"Shaders\\Default.hlsl", defines, "PS", "ps_5_0");
 	mShaders["alphaTestedPS"] = d3dUtil::CompileShader(L"Shaders\\Default.hlsl", alphaTestDefines, "PS", "ps_5_0");
 
-	mInputLayout = 
+	mInputLayout =
 	{
 		{"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
 		{"NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
@@ -677,14 +488,8 @@ void BlendApp::BuildLandGeometry()
 	GeometryGenerator geoGen;
 	GeometryGenerator::MeshData grid = geoGen.CreateGrid(160.0f, 160.0f, 50, 50);
 
-
-
-
-
-
-
 	std::vector<Vertex> vertices(grid.Vertices.size());
-	for (size_t i=0; i<grid.Vertices.size(); ++i)
+	for (size_t i = 0; i < grid.Vertices.size(); ++i)
 	{
 		auto& p = grid.Vertices[i].Position;
 		vertices[i].Pos = p;
@@ -732,14 +537,14 @@ void BlendApp::BuildWavesGeometry()
 {
 	std::vector<std::uint16_t> indices(3 * mWaves->TriangleCount());
 	assert(mWaves->VertexCount() < 0x0000ffff);
-	
+
 	// Iterate over each quad
 	int m = mWaves->RowCount();
 	int n = mWaves->ColumnCount();
 	int k = 0;
-	for (int i=0; i<m-1; ++i)
+	for (int i = 0; i < m - 1; ++i)
 	{
-		for (int j=0; j<n-1; ++j)
+		for (int j = 0; j < n - 1; ++j)
 		{
 			indices[k] = i * n + j;
 			indices[k + 1] = i * n + j + 1;
@@ -758,7 +563,6 @@ void BlendApp::BuildWavesGeometry()
 
 	auto geo = std::make_unique<MeshGeometry>();
 	geo->Name = "waterGeo";
-
 
 	geo->VertexBufferCPU = nullptr;
 	geo->VertexBufferGPU = nullptr;
@@ -790,7 +594,7 @@ void BlendApp::BuildBoxGeometry()
 	GeometryGenerator::MeshData box = geoGen.CreateBox(8.0f, 8.0f, 8.0f, 3);
 
 	std::vector<Vertex> vertices(box.Vertices.size());
-	for (size_t i=0; i<box.Vertices.size(); ++i)
+	for (size_t i = 0; i < box.Vertices.size(); ++i)
 	{
 		auto& p = box.Vertices[i].Position;
 		vertices[i].Pos = p;
@@ -837,11 +641,9 @@ void BlendApp::BuildPSOs()
 {
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC opaquePsoDesc;
 
-	//
-	// PSO for opaque objects.
-	//
+	// PSO for opaque objects
 	ZeroMemory(&opaquePsoDesc, sizeof(D3D12_GRAPHICS_PIPELINE_STATE_DESC));
-	opaquePsoDesc.InputLayout = { mInputLayout.data(), (UINT)mInputLayout.size() };
+	opaquePsoDesc.InputLayout = { mInputLayout.data(),(UINT)mInputLayout.size() };
 	opaquePsoDesc.pRootSignature = mRootSignature.Get();
 	opaquePsoDesc.VS =
 	{
@@ -861,35 +663,29 @@ void BlendApp::BuildPSOs()
 	opaquePsoDesc.NumRenderTargets = 1;
 	opaquePsoDesc.RTVFormats[0] = mBackBufferFormat;
 	opaquePsoDesc.SampleDesc.Count = m4xMsaaState ? 4 : 1;
-	opaquePsoDesc.SampleDesc.Quality = m4xMsaaState ? (m4xMsaaQuality - 1) : 0;
+	opaquePsoDesc.SampleDesc.Quality = m4xMsaaState ? (m4xMsaaState - 1) : 0;
 	opaquePsoDesc.DSVFormat = mDepthStencilFormat;
 	ThrowIfFailed(md3dDevice->CreateGraphicsPipelineState(&opaquePsoDesc, IID_PPV_ARGS(&mPSOs["opaque"])));
 
-	//
 	// PSO for transparent objects
-	//
-
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC transparentPsoDesc = opaquePsoDesc;
 
-	D3D12_RENDER_TARGET_BLEND_DESC transparencyBlendDesc;
-	transparencyBlendDesc.BlendEnable = true;
-	transparencyBlendDesc.LogicOpEnable = false;
-	transparencyBlendDesc.SrcBlend = D3D12_BLEND_SRC_ALPHA;
-	transparencyBlendDesc.DestBlend = D3D12_BLEND_INV_SRC_ALPHA;
-	transparencyBlendDesc.BlendOp = D3D12_BLEND_OP_ADD;
-	transparencyBlendDesc.SrcBlendAlpha = D3D12_BLEND_ONE;
-	transparencyBlendDesc.DestBlendAlpha = D3D12_BLEND_ZERO;
-	transparencyBlendDesc.BlendOpAlpha = D3D12_BLEND_OP_ADD;
-	transparencyBlendDesc.LogicOp = D3D12_LOGIC_OP_NOOP;
-	transparencyBlendDesc.RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
+	D3D12_RENDER_TARGET_BLEND_DESC transaprentBlendDesc;
+	transaprentBlendDesc.BlendEnable = true;
+	transaprentBlendDesc.LogicOpEnable = false;
+	transaprentBlendDesc.SrcBlend = D3D12_BLEND_SRC_ALPHA;
+	transaprentBlendDesc.DestBlend = D3D12_BLEND_INV_SRC_ALPHA;
+	transaprentBlendDesc.BlendOp = D3D12_BLEND_OP_ADD;
+	transaprentBlendDesc.SrcBlendAlpha = D3D12_BLEND_ONE;
+	transaprentBlendDesc.DestBlendAlpha = D3D12_BLEND_ZERO;
+	transaprentBlendDesc.BlendOpAlpha = D3D12_BLEND_OP_ADD;
+	transaprentBlendDesc.LogicOp = D3D12_LOGIC_OP_NOOP;
+	transaprentBlendDesc.RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
 
-	transparentPsoDesc.BlendState.RenderTarget[0] = transparencyBlendDesc;
+	transparentPsoDesc.BlendState.RenderTarget[0] = transaprentBlendDesc;
 	ThrowIfFailed(md3dDevice->CreateGraphicsPipelineState(&transparentPsoDesc, IID_PPV_ARGS(&mPSOs["transparent"])));
 
-	//
 	// PSO for alpha tested objects
-	//
-
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC alphaTestedPsoDesc = opaquePsoDesc;
 	alphaTestedPsoDesc.PS =
 	{
@@ -919,8 +715,6 @@ void BlendApp::BuildMaterials()
 	grass->FresnelR0 = XMFLOAT3(0.01f, 0.01f, 0.01f);
 	grass->Roughness = 0.125f;
 
-	// This is not a good water material definition, but we do not have all the rendering
-	// tools we need (transparency, environment reflection), so we fake it for now.
 	auto water = std::make_unique<Material>();
 	water->Name = "water";
 	water->MatCBIndex = 1;
@@ -989,7 +783,7 @@ void BlendApp::BuildRenderItems()
 	mAllRitems.push_back(std::move(boxRitem));
 }
 
-void BlendApp::DrawRenderItems(ID3D12GraphicsCommandList* cmdList, const std::vector<RenderItem*>& ritems)
+void BlendApp::DrawRenderItems(ID3D12GraphicsCommandList* cmdList, const std::vector<RenderItem *>& ritems)
 {
 	UINT objCBByteSize = d3dUtil::CalcConstantBufferByteSize(sizeof(ObjectConstants));
 	UINT matCBByteSize = d3dUtil::CalcConstantBufferByteSize(sizeof(MaterialConstants));
@@ -997,7 +791,6 @@ void BlendApp::DrawRenderItems(ID3D12GraphicsCommandList* cmdList, const std::ve
 	auto objectCB = mCurrFrameResource->ObjectCB->Resource();
 	auto matCB = mCurrFrameResource->MaterialCB->Resource();
 
-	// For each render item...
 	for (size_t i = 0; i < ritems.size(); ++i)
 	{
 		auto ri = ritems[i];
@@ -1077,14 +870,13 @@ std::array<const CD3DX12_STATIC_SAMPLER_DESC, 6> BlendApp::GetStaticSamplers()
 		anisotropicWrap, anisotropicClamp };
 }
 
-float BlendApp::GetHillsHeight(float x, float z)const
+float BlendApp::GetHillsHeight(float x, float z) const
 {
 	return 0.3f*(z*sinf(0.1f*x) + x * cosf(0.1f*z));
 }
 
-XMFLOAT3 BlendApp::GetHillsNormal(float x, float z)const
+XMFLOAT3 BlendApp::GetHillsNormal(float x, float z) const
 {
-	// n = (-df/dx, 1, -df/dz)
 	XMFLOAT3 n(
 		-0.03f*z*cosf(0.1f*x) - 0.3f*cosf(0.1f*z),
 		1.0f,
