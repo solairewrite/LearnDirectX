@@ -21,7 +21,7 @@
     <Filter Include="Models">
       <UniqueIdentifier>{86f392ff-1c50-4218-8765-354d1d48cc4d}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Testures">
+    <Filter Include="Textures">
       <UniqueIdentifier>{5cc5b3e0-fb92-4695-a257-63cc3c633faf}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
@@ -79,6 +79,9 @@
     <ClInclude Include="FrameResource.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="StencilApp.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Text Include="Models\skull.txt">
@@ -95,16 +98,16 @@
   </ItemGroup>
   <ItemGroup>
     <Image Include="..\..\..\Textures\checkboard.dds">
-      <Filter>Testures</Filter>
+      <Filter>Textures</Filter>
     </Image>
     <Image Include="..\..\..\Textures\bricks3.dds">
-      <Filter>Testures</Filter>
+      <Filter>Textures</Filter>
     </Image>
     <Image Include="..\..\..\Textures\ice.dds">
-      <Filter>Testures</Filter>
+      <Filter>Textures</Filter>
     </Image>
     <Image Include="..\..\..\Textures\white1x1.dds">
-      <Filter>Testures</Filter>
+      <Filter>Textures</Filter>
     </Image>
   </ItemGroup>
 </Project>

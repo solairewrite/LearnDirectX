@@ -162,6 +162,7 @@
     <ClInclude Include="..\..\..\Common\MathHelper.h" />
     <ClInclude Include="..\..\..\Common\UploadBuffer.h" />
     <ClInclude Include="FrameResource.h" />
+    <ClInclude Include="StencilApp.h" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="Models\skull.txt" />
