@@ -196,11 +196,11 @@ bool StencilApp::Initialize()
 
 	mCbvSrvDescriptorSize = md3dDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
-	LoadTextures();
-	BuildRootSignature();
-	BuildDescriptorHeaps();
-	BuildShadersAndInputLayout();
-	BuildRoomGeometry();
+	LoadTextures(); // 载入贴图存入 mTextures
+	BuildRootSignature(); // 初始化空的 mRootSignature
+	BuildDescriptorHeaps(); // 创建SRV heap 存入 mSrvDescriptorHeap,将贴图信息 mTextures 放进 mSrvDescriptorHeap
+	BuildShadersAndInputLayout(); // 载入着色器函数存入 mShaders, 初始化 mInputLayout 对应 Vertex 结构体的3个属性: 位置,法线,纹理坐标
+	BuildRoomGeometry(); // 手动书写顶点数组和索引数组,存入 mGeometries["roomGeo"]->DrawArgs["floor","wall","mirror"]
 	BuildSkullGeometry();
 	BuildMaterials();
 	BuildRenderItems();
@@ -567,7 +567,7 @@ void StencilApp::LoadTextures()
 		mCommandList.Get(), bricksTex->Filename.c_str(),
 		bricksTex->Resource, bricksTex->UploadHeap));
 
-	auto checkboardTex = std::make_unique<Texture>();
+	auto checkboardTex = std::make_unique<Texture>(); // checkboard: 棋盘
 	checkboardTex->Name = "checkboardTex";
 	checkboardTex->Filename = L"../../../Textures/checkboard.dds";
 	ThrowIfFailed(DirectX::CreateDDSTextureFromFile12(md3dDevice.Get(),
@@ -597,25 +597,25 @@ void StencilApp::LoadTextures()
 void StencilApp::BuildRootSignature()
 {
 	CD3DX12_DESCRIPTOR_RANGE texTable;
-	texTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0);
+	texTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0); // baseShaderRegister:0
 
-	// Root parameter can be a table, root descriptor or root constants.
+
 	CD3DX12_ROOT_PARAMETER slotRootParameter[4];
 
-	// Perfomance TIP: Order from most frequent to least frequent.
+
 	slotRootParameter[0].InitAsDescriptorTable(1, &texTable, D3D12_SHADER_VISIBILITY_PIXEL);
-	slotRootParameter[1].InitAsConstantBufferView(0);
+	slotRootParameter[1].InitAsConstantBufferView(0); // shaderRegister:0
 	slotRootParameter[2].InitAsConstantBufferView(1);
 	slotRootParameter[3].InitAsConstantBufferView(2);
 
 	auto staticSamplers = GetStaticSamplers();
 
-	// A root signature is an array of root parameters.
+
 	CD3DX12_ROOT_SIGNATURE_DESC rootSigDesc(4, slotRootParameter,
 		(UINT)staticSamplers.size(), staticSamplers.data(),
 		D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 
-	// create a root signature with a single slot which points to a descriptor range consisting of a single constant buffer
+
 	ComPtr<ID3DBlob> serializedRootSig = nullptr;
 	ComPtr<ID3DBlob> errorBlob = nullptr;
 	HRESULT hr = D3D12SerializeRootSignature(&rootSigDesc, D3D_ROOT_SIGNATURE_VERSION_1,
@@ -636,18 +636,18 @@ void StencilApp::BuildRootSignature()
 
 void StencilApp::BuildDescriptorHeaps()
 {
-	//
-	// Create the SRV heap.
-	//
+
+
+	// Create the SRV heap
 	D3D12_DESCRIPTOR_HEAP_DESC srvHeapDesc = {};
 	srvHeapDesc.NumDescriptors = 4;
 	srvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
 	srvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 	ThrowIfFailed(md3dDevice->CreateDescriptorHeap(&srvHeapDesc, IID_PPV_ARGS(&mSrvDescriptorHeap)));
 
-	//
-	// Fill out the heap with actual descriptors.
-	//
+
+
+	// Fill out the heap with actual descriptors
 	CD3DX12_CPU_DESCRIPTOR_HANDLE hDescriptor(mSrvDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
 
 	auto bricksTex = mTextures["bricksTex"]->Resource;
@@ -686,15 +686,15 @@ void StencilApp::BuildShadersAndInputLayout()
 {
 	const D3D_SHADER_MACRO defines[] =
 	{
-		"FOG", "1",
-		NULL, NULL
+		"FOG","1",
+		NULL,NULL
 	};
 
 	const D3D_SHADER_MACRO alphaTestDefines[] =
 	{
-		"FOG", "1",
-		"ALPHA_TEST", "1",
-		NULL, NULL
+		"FOG","1",
+		"ALPHA_TEST","1",
+		NULL,NULL
 	};
 
 	mShaders["standardVS"] = d3dUtil::CompileShader(L"Shaders\\Default.hlsl", nullptr, "VS", "vs_5_0");
@@ -703,9 +703,9 @@ void StencilApp::BuildShadersAndInputLayout()
 
 	mInputLayout =
 	{
-		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 24, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		{"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
+		{"NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
+		{"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 24, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
 	};
 }
 
@@ -724,7 +724,7 @@ void StencilApp::BuildRoomGeometry()
 //  /   Floor      /
 // /--------------/
 
-	std::array<Vertex, 20> vertices =
+	std::array<Vertex, 20> vertices = // Pos, Normal, TexC
 	{
 		// Floor: Observe we tile texture coordinates.
 		Vertex(-3.5f, 0.0f, -10.0f, 0.0f, 1.0f, 0.0f, 0.0f, 4.0f), // 0 
@@ -784,7 +784,7 @@ void StencilApp::BuildRoomGeometry()
 
 	SubmeshGeometry wallSubmesh;
 	wallSubmesh.IndexCount = 18;
-	wallSubmesh.StartIndexLocation = 6;
+	wallSubmesh.StartIndexLocation = 6; // 前面的floor有6个index
 	wallSubmesh.BaseVertexLocation = 0;
 
 	SubmeshGeometry mirrorSubmesh;
