@@ -202,7 +202,7 @@ bool StencilApp::Initialize()
 	BuildShadersAndInputLayout(); // 读取 .hlsl 着色器存入 mShaders, 初始化 mInputLayout 对应 Vertex 结构体的 Pos, Normal, TexC
 	BuildRoomGeometry(); // 手写顶点数组和索引数组,存入 mGeometries["roomGeo"]->DrawArgs["floor","wall","mirror"]
 	BuildSkullGeometry(); // 读取骷髅顶点, 存入mGeometries["skullGeo"]->DrawArgs["skull"]
-	BuildMaterials();
+	BuildMaterials(); // 手写各材质的属性(主要是漫反射和镜面反射),存入 mMaterials
 	BuildRenderItems();
 	BuildFrameResources();
 	BuildPSOs();
@@ -1060,10 +1060,10 @@ void StencilApp::BuildMaterials()
 {
 	auto bricks = std::make_unique<Material>();
 	bricks->Name = "bricks";
-	bricks->MatCBIndex = 0;
-	bricks->DiffuseSrvHeapIndex = 0;
-	bricks->DiffuseAlbedo = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
-	bricks->FresnelR0 = XMFLOAT3(0.05f, 0.05f, 0.05f);
+	bricks->MatCBIndex = 0; // 这个材质的常量缓冲区索引
+	bricks->DiffuseSrvHeapIndex = 0; // 漫反射纹理在SRV堆中的索引
+	bricks->DiffuseAlbedo = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f); // 漫反射反照率
+	bricks->FresnelR0 = XMFLOAT3(0.05f, 0.05f, 0.05f); // 镜面反射属性
 	bricks->Roughness = 0.25f;
 
 	auto checkertile = std::make_unique<Material>();
