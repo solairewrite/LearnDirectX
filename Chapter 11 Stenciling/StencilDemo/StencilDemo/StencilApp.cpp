@@ -196,12 +196,12 @@ bool StencilApp::Initialize()
 
 	mCbvSrvDescriptorSize = md3dDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
-	LoadTextures(); // 载入贴图存入 mTextures
+	LoadTextures(); // 读取 .dds 贴图文件存入 mTextures
 	BuildRootSignature(); // 初始化空的 mRootSignature
-	BuildDescriptorHeaps(); // 创建SRV heap 存入 mSrvDescriptorHeap,将贴图信息 mTextures 放进 mSrvDescriptorHeap
-	BuildShadersAndInputLayout(); // 载入着色器函数存入 mShaders, 初始化 mInputLayout 对应 Vertex 结构体的3个属性: 位置,法线,纹理坐标
-	BuildRoomGeometry(); // 手动书写顶点数组和索引数组,存入 mGeometries["roomGeo"]->DrawArgs["floor","wall","mirror"]
-	BuildSkullGeometry();
+	BuildDescriptorHeaps(); // 创建 SRV heap 存入 mSrvDescriptorHeap,将贴图信息 mTextures 放进 mSrvDescriptorHeap
+	BuildShadersAndInputLayout(); // 读取 .hlsl 着色器存入 mShaders, 初始化 mInputLayout 对应 Vertex 结构体的 Pos, Normal, TexC
+	BuildRoomGeometry(); // 手写顶点数组和索引数组,存入 mGeometries["roomGeo"]->DrawArgs["floor","wall","mirror"]
+	BuildSkullGeometry(); // 读取骷髅顶点, 存入mGeometries["skullGeo"]->DrawArgs["skull"]
 	BuildMaterials();
 	BuildRenderItems();
 	BuildFrameResources();
@@ -836,23 +836,23 @@ void StencilApp::BuildSkullGeometry()
 	UINT tcount = 0;
 	std::string ignore;
 
-	fin >> ignore >> vcount;
-	fin >> ignore >> tcount;
-	fin >> ignore >> ignore >> ignore >> ignore;
+	fin >> ignore >> vcount; // 文件内容: VertexCount: 31076\n
+	fin >> ignore >> tcount; // TriangleCount: 60339\n
+	fin >> ignore >> ignore >> ignore >> ignore; // VertexList (pos, normal)\n{\n
 
 	std::vector<Vertex> vertices(vcount);
-	for (UINT i = 0; i < vcount; ++i)
+	for (UINT i=0; i<vcount; ++i)
 	{
 		fin >> vertices[i].Pos.x >> vertices[i].Pos.y >> vertices[i].Pos.z;
 		fin >> vertices[i].Normal.x >> vertices[i].Normal.y >> vertices[i].Normal.z;
 
-		// Model does not have texture coordinates, so just zero them out.
-		vertices[i].TexC = { 0.0f, 0.0f };
+
+		vertices[i].TexC = { 0.0f,0.0f };
 	}
 
-	fin >> ignore;
-	fin >> ignore;
-	fin >> ignore;
+	fin >> ignore; // }\n
+	fin >> ignore; // TriangleList\n
+	fin >> ignore; // {\n
 
 	std::vector<std::int32_t> indices(3 * tcount);
 	for (UINT i = 0; i < tcount; ++i)
@@ -862,9 +862,9 @@ void StencilApp::BuildSkullGeometry()
 
 	fin.close();
 
-	//
-	// Pack the indices of all the meshes into one index buffer.
-	//
+
+
+
 
 	const UINT vbByteSize = (UINT)vertices.size() * sizeof(Vertex);
 
