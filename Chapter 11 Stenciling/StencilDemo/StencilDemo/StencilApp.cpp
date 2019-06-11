@@ -202,9 +202,9 @@ bool StencilApp::Initialize()
 	BuildShadersAndInputLayout(); // 读取 .hlsl 着色器存入 mShaders, 初始化 mInputLayout 对应 Vertex 结构体的 Pos, Normal, TexC
 	BuildRoomGeometry(); // 手写顶点数组和索引数组,存入 mGeometries["roomGeo"]->DrawArgs["floor","wall","mirror"]
 	BuildSkullGeometry(); // 读取骷髅顶点, 存入mGeometries["skullGeo"]->DrawArgs["skull"]
-	BuildMaterials(); // 手写各材质的属性(主要是漫反射和镜面反射),存入 mMaterials
-	BuildRenderItems();
-	BuildFrameResources();
+	BuildMaterials(); // 手写各材质的属性(主要是漫反射和镜面反射),存入 mMaterials["bricks","checkertile","icemirror","skullMat","shadowMat"]
+	BuildRenderItems(); // 创建RenderItem,主要属性: World,TexTransform,Mat,Geo顶点 // 不同的渲染项目先加入不同的mRitemLayer[theIndex]中(mRitemLayer是二维数组),最后全部加入mAllRitems
+	BuildFrameResources(); // 初始化空的 mFrameResources
 	BuildPSOs();
 
 
@@ -841,7 +841,7 @@ void StencilApp::BuildSkullGeometry()
 	fin >> ignore >> ignore >> ignore >> ignore; // VertexList (pos, normal)\n{\n
 
 	std::vector<Vertex> vertices(vcount);
-	for (UINT i=0; i<vcount; ++i)
+	for (UINT i = 0; i < vcount; ++i)
 	{
 		fin >> vertices[i].Pos.x >> vertices[i].Pos.y >> vertices[i].Pos.z;
 		fin >> vertices[i].Normal.x >> vertices[i].Normal.y >> vertices[i].Normal.z;
@@ -904,11 +904,11 @@ void StencilApp::BuildPSOs()
 {
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC opaquePsoDesc;
 
-	//
-	// PSO for opaque objects.
-	//
+
+
+	// PSO for opaque objects
 	ZeroMemory(&opaquePsoDesc, sizeof(D3D12_GRAPHICS_PIPELINE_STATE_DESC));
-	opaquePsoDesc.InputLayout = { mInputLayout.data(), (UINT)mInputLayout.size() };
+	opaquePsoDesc.InputLayout = { mInputLayout.data(),(UINT)mInputLayout.size() };
 	opaquePsoDesc.pRootSignature = mRootSignature.Get();
 	opaquePsoDesc.VS =
 	{
@@ -1052,7 +1052,7 @@ void StencilApp::BuildFrameResources()
 	for (int i = 0; i < gNumFrameResources; ++i)
 	{
 		mFrameResources.push_back(std::make_unique<FrameResource>(md3dDevice.Get(),
-			2, (UINT)mAllRitems.size(), (UINT)mMaterials.size()));
+			2, (UINT)mAllRitems.size(), (UINT)mMaterials.size())); // passCount: 2
 	}
 }
 
@@ -1110,7 +1110,7 @@ void StencilApp::BuildRenderItems()
 	auto floorRitem = std::make_unique<RenderItem>();
 	floorRitem->World = MathHelper::Identity4x4();
 	floorRitem->TexTransform = MathHelper::Identity4x4();
-	floorRitem->ObjCBIndex = 0;
+	floorRitem->ObjCBIndex = 0; // 递增
 	floorRitem->Mat = mMaterials["checkertile"].get();
 	floorRitem->Geo = mGeometries["roomGeo"].get();
 	floorRitem->PrimitiveType = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
@@ -1144,14 +1144,14 @@ void StencilApp::BuildRenderItems()
 	mSkullRitem = skullRitem.get();
 	mRitemLayer[(int)RenderLayer::Opaque].push_back(skullRitem.get());
 
-	// Reflected skull will have different world matrix, so it needs to be its own render item.
+	// 镜像骷髅有不同的世界矩阵,所以它需要自己的渲染项
 	auto reflectedSkullRitem = std::make_unique<RenderItem>();
 	*reflectedSkullRitem = *skullRitem;
 	reflectedSkullRitem->ObjCBIndex = 3;
 	mReflectedSkullRitem = reflectedSkullRitem.get();
 	mRitemLayer[(int)RenderLayer::Reflected].push_back(reflectedSkullRitem.get());
 
-	// Shadowed skull will have different world matrix, so it needs to be its own render item.
+	// 骷髅影子有不同的世界矩阵,需要自己的渲染项
 	auto shadowedSkullRitem = std::make_unique<RenderItem>();
 	*shadowedSkullRitem = *skullRitem;
 	shadowedSkullRitem->ObjCBIndex = 4;

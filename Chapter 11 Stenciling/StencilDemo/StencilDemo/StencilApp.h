@@ -37,11 +37,11 @@ struct RenderItem
 
 enum class RenderLayer : int
 {
-	Opaque = 0,
-	Mirrors,
-	Reflected,
-	Transparent,
-	Shadow,
+	Opaque = 0, // floor, wall, skull
+	Mirrors, // mirror
+	Reflected, // reflectedSkull
+	Transparent, // mirror
+	Shadow, // shadowedSkull
 	Count
 };
 
