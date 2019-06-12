@@ -53,8 +53,6 @@ struct Vertex
 	DirectX::XMFLOAT2 TexC;
 };
 
-
-
 struct FrameResource
 {
 public:

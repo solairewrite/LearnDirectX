@@ -198,14 +198,14 @@ bool StencilApp::Initialize()
 
 	LoadTextures(); // 读取 .dds 贴图文件存入 mTextures
 	BuildRootSignature(); // 初始化空的 mRootSignature
-	BuildDescriptorHeaps(); // 创建 SRV heap 存入 mSrvDescriptorHeap,将贴图信息 mTextures 放进 mSrvDescriptorHeap
-	BuildShadersAndInputLayout(); // 读取 .hlsl 着色器存入 mShaders, 初始化 mInputLayout 对应 Vertex 结构体的 Pos, Normal, TexC
+	BuildDescriptorHeaps(); // 将贴图信息 mTextures["bricksTex","checkboardTex","iceTex","white1x1Tex"] 放进 mSrvDescriptorHeap
+	BuildShadersAndInputLayout(); // 读取 .hlsl 着色器存入 mShaders, 初始化 mInputLayout 对应 struct Vertex {Pos, Normal, TexC}
 	BuildRoomGeometry(); // 手写顶点数组和索引数组,存入 mGeometries["roomGeo"]->DrawArgs["floor","wall","mirror"]
 	BuildSkullGeometry(); // 读取骷髅顶点txt, 存入mGeometries["skullGeo"]->DrawArgs["skull"]
 	BuildMaterials(); // 手写各材质的属性(主要是漫反射和镜面反射),存入 mMaterials["bricks","checkertile","icemirror","skullMat","shadowMat"]
 	BuildRenderItems(); // 创建RenderItem,主要属性: World,TexTransform,Mat,Geo顶点 // 不同的渲染项目先加入不同的mRitemLayer[theIndex]中(mRitemLayer是二维数组),最后全部加入mAllRitems
 	BuildFrameResources(); // 初始化空的 mFrameResources
-	BuildPSOs(); // mPSOs["opaque","transparent","markStencilMirrors","drawStencilReflections","shadow"], 设置了混合,模板等,方法很大
+	BuildPSOs(); // mPSOs["opaque","transparent","markStencilMirrors","drawStencilReflections","shadow"], 设置了混合,模板等
 
 
 	ThrowIfFailed(mCommandList->Close());
@@ -229,15 +229,15 @@ void StencilApp::OnResize()
 
 void StencilApp::Update(const GameTimer& gt)
 {
-	OnKeyboardInput(gt);
-	UpdateCamera(gt);
+	OnKeyboardInput(gt); // WASD移动骷髅,更新 mSkullRitem, mReflectedSkullRitem, mShadowedSkullRitem 的 world, NumFramesDirty
+	UpdateCamera(gt); // 修改 mView
 
-	// Cycle through the circular frame resource array.
+
 	mCurrFrameResourceIndex = (mCurrFrameResourceIndex + 1) % gNumFrameResources;
 	mCurrFrameResource = mFrameResources[mCurrFrameResourceIndex].get();
 
-	// Has the GPU finished processing the commands of the current frame resource?
-	// If not, wait until the GPU has completed commands up to this fence point.
+
+
 	if (mCurrFrameResource->Fence != 0 && mFence->GetCompletedValue() < mCurrFrameResource->Fence)
 	{
 		HANDLE eventHandle = CreateEventEx(nullptr, false, false, EVENT_ALL_ACCESS);
@@ -246,11 +246,11 @@ void StencilApp::Update(const GameTimer& gt)
 		CloseHandle(eventHandle);
 	}
 
-	AnimateMaterials(gt);
-	UpdateObjectCBs(gt);
-	UpdateMaterialCBs(gt);
-	UpdateMainPassCB(gt);
-	UpdateReflectedPassCB(gt);
+	AnimateMaterials(gt); // empty func
+	UpdateObjectCBs(gt); // 修改了 mCurrFrameResource->ObjectCB
+	UpdateMaterialCBs(gt); // 修改了 mCurrFrameResource->MaterialCB
+	UpdateMainPassCB(gt); // 修改了 mCurrFrameResource->PassCB 索引值为0处, 存入 mMainPassCB
+	UpdateReflectedPassCB(gt); // 修改了 mCurrFrameResource->PassCB 索引值为1处,存入 mReflectedPassCB
 }
 
 void StencilApp::Draw(const GameTimer& gt)
@@ -385,9 +385,9 @@ void StencilApp::OnMouseMove(WPARAM btnState, int x, int y)
 
 void StencilApp::OnKeyboardInput(const GameTimer& gt)
 {
-	//
-	// Allow user to move skull.
-	//
+	// WASD移动骷髅
+
+
 
 	const float dt = gt.DeltaTime();
 
@@ -403,29 +403,29 @@ void StencilApp::OnKeyboardInput(const GameTimer& gt)
 	if (GetAsyncKeyState('S') & 0x8000)
 		mSkullTranslation.y -= 1.0f*dt;
 
-	// Don't let user move below ground plane.
+	// 禁止低于地面
 	mSkullTranslation.y = MathHelper::Max(mSkullTranslation.y, 0.0f);
 
-	// Update the new world matrix.
+	// update skull world matrix
 	XMMATRIX skullRotate = XMMatrixRotationY(0.5f*MathHelper::Pi);
 	XMMATRIX skullScale = XMMatrixScaling(0.45f, 0.45f, 0.45f);
 	XMMATRIX skullOffset = XMMatrixTranslation(mSkullTranslation.x, mSkullTranslation.y, mSkullTranslation.z);
-	XMMATRIX skullWorld = skullRotate * skullScale*skullOffset;
-	XMStoreFloat4x4(&mSkullRitem->World, skullWorld);
+	XMMATRIX skullworld = skullRotate * skullScale * skullOffset;
+	XMStoreFloat4x4(&mSkullRitem->World, skullworld);
 
-	// Update reflection world matrix.
+	// update reflection world matrix
 	XMVECTOR mirrorPlane = XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f); // xy plane
 	XMMATRIX R = XMMatrixReflect(mirrorPlane);
-	XMStoreFloat4x4(&mReflectedSkullRitem->World, skullWorld * R);
+	XMStoreFloat4x4(&mReflectedSkullRitem->World, skullworld * R); // 镜像*镜像矩阵即可
 
-	// Update shadow world matrix. 更新阴影世界矩阵
+	// update shadow world matrix
 	XMVECTOR shadowPlane = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f); // xz plane
 	XMVECTOR toMainLight = -XMLoadFloat3(&mMainPassCB.Lights[0].Direction);
 	XMMATRIX S = XMMatrixShadow(shadowPlane, toMainLight);
-	// 防止发生深度冲突,阴影略高于地面
+	// 防止深度冲突,阴影略高于地面
 	XMMATRIX shadowOffsetY = XMMatrixTranslation(0.0f, 0.001f, 0.0f);
-	XMStoreFloat4x4(&mShadowedSkullRitem->World, skullWorld * S * shadowOffsetY);
-
+	XMStoreFloat4x4(&mShadowedSkullRitem->World, skullworld * S * shadowOffsetY);
+	
 	mSkullRitem->NumFramesDirty = gNumFrameResources;
 	mReflectedSkullRitem->NumFramesDirty = gNumFrameResources;
 	mShadowedSkullRitem->NumFramesDirty = gNumFrameResources;
@@ -433,12 +433,12 @@ void StencilApp::OnKeyboardInput(const GameTimer& gt)
 
 void StencilApp::UpdateCamera(const GameTimer& gt)
 {
-	// Convert Spherical to Cartesian coordinates.
+
 	mEyePos.x = mRadius * sinf(mPhi)*cosf(mTheta);
 	mEyePos.z = mRadius * sinf(mPhi)*sinf(mTheta);
 	mEyePos.y = mRadius * cosf(mPhi);
 
-	// Build the view matrix.
+
 	XMVECTOR pos = XMVectorSet(mEyePos.x, mEyePos.y, mEyePos.z, 1.0f);
 	XMVECTOR target = XMVectorZero();
 	XMVECTOR up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
@@ -455,10 +455,10 @@ void StencilApp::AnimateMaterials(const GameTimer& gt)
 void StencilApp::UpdateObjectCBs(const GameTimer& gt)
 {
 	auto currObjectCB = mCurrFrameResource->ObjectCB.get();
-	for (auto& e : mAllRitems)
+	for (auto& e: mAllRitems)
 	{
-		// Only update the cbuffer data if the constants have changed.  
-		// This needs to be tracked per frame resource.
+
+
 		if (e->NumFramesDirty > 0)
 		{
 			XMMATRIX world = XMLoadFloat4x4(&e->World);
@@ -470,7 +470,7 @@ void StencilApp::UpdateObjectCBs(const GameTimer& gt)
 
 			currObjectCB->CopyData(e->ObjCBIndex, objConstants);
 
-			// Next FrameResource need to be updated too.
+
 			e->NumFramesDirty--;
 		}
 	}
@@ -481,8 +481,8 @@ void StencilApp::UpdateMaterialCBs(const GameTimer& gt)
 	auto currMaterialCB = mCurrFrameResource->MaterialCB.get();
 	for (auto& e : mMaterials)
 	{
-		// Only update the cbuffer data if the constants have changed.  If the cbuffer
-		// data changes, it needs to be updated for each FrameResource.
+
+
 		Material* mat = e.second.get();
 		if (mat->NumFramesDirty > 0)
 		{
@@ -496,7 +496,7 @@ void StencilApp::UpdateMaterialCBs(const GameTimer& gt)
 
 			currMaterialCB->CopyData(mat->MatCBIndex, matConstants);
 
-			// Next FrameResource need to be updated too.
+
 			mat->NumFramesDirty--;
 		}
 	}
@@ -533,7 +533,6 @@ void StencilApp::UpdateMainPassCB(const GameTimer& gt)
 	mMainPassCB.Lights[2].Direction = { 0.0f, -0.707f, -0.707f };
 	mMainPassCB.Lights[2].Strength = { 0.15f, 0.15f, 0.15f };
 
-	// Main pass stored in index 2
 	auto currPassCB = mCurrFrameResource->PassCB.get();
 	currPassCB->CopyData(0, mMainPassCB);
 }
@@ -545,15 +544,16 @@ void StencilApp::UpdateReflectedPassCB(const GameTimer& gt)
 	XMVECTOR mirrorPlane = XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f); // xy plane
 	XMMATRIX R = XMMatrixReflect(mirrorPlane);
 
-	// Reflect the lighting.
-	for (int i = 0; i < 3; ++i)
+
+	// reflect the lighting
+	for (int i=0; i<3; ++i)
 	{
 		XMVECTOR lightDir = XMLoadFloat3(&mMainPassCB.Lights[i].Direction);
 		XMVECTOR reflectedLightDir = XMVector3TransformNormal(lightDir, R);
 		XMStoreFloat3(&mReflectedPassCB.Lights[i].Direction, reflectedLightDir);
 	}
 
-	// Reflected pass stored in index 1 将光照镜像的渲染过程常量数据存于渲染过程常量缓冲区索引1的位置
+	// reflected pass stored in index 1
 	auto currPassCB = mCurrFrameResource->PassCB.get();
 	currPassCB->CopyData(1, mReflectedPassCB);
 }
@@ -649,7 +649,7 @@ void StencilApp::BuildDescriptorHeaps()
 
 	// Fill out the heap with actual descriptors
 	CD3DX12_CPU_DESCRIPTOR_HANDLE hDescriptor(mSrvDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
-
+	
 	auto bricksTex = mTextures["bricksTex"]->Resource;
 	auto checkboardTex = mTextures["checkboardTex"]->Resource;
 	auto iceTex = mTextures["iceTex"]->Resource;
