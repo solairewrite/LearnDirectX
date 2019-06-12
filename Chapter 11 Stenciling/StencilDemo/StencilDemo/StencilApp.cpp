@@ -1,154 +1,5 @@
 #include "StencilApp.h"
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
 	_In_ LPSTR lpCmdLine, _In_ int nShowCmd)
 {
@@ -189,10 +40,7 @@ bool StencilApp::Initialize()
 	if (!D3DApp::Initialize())
 		return false;
 
-
 	ThrowIfFailed(mCommandList->Reset(mDirectCmdListAlloc.Get(), nullptr));
-
-
 
 	mCbvSrvDescriptorSize = md3dDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
@@ -207,11 +55,9 @@ bool StencilApp::Initialize()
 	BuildFrameResources(); // 初始化空的 mFrameResources
 	BuildPSOs(); // mPSOs["opaque","transparent","markStencilMirrors","drawStencilReflections","shadow"], 设置了混合,模板等
 
-
 	ThrowIfFailed(mCommandList->Close());
 	ID3D12CommandList* cmdLists[] = { mCommandList.Get() };
 	mCommandQueue->ExecuteCommandLists(_countof(cmdLists), cmdLists);
-
 
 	FlushCommandQueue();
 
@@ -232,11 +78,8 @@ void StencilApp::Update(const GameTimer& gt)
 	OnKeyboardInput(gt); // WASD移动骷髅,更新 mSkullRitem, mReflectedSkullRitem, mShadowedSkullRitem 的 world, NumFramesDirty
 	UpdateCamera(gt); // 修改 mView
 
-
 	mCurrFrameResourceIndex = (mCurrFrameResourceIndex + 1) % gNumFrameResources;
 	mCurrFrameResource = mFrameResources[mCurrFrameResourceIndex].get();
-
-
 
 	if (mCurrFrameResource->Fence != 0 && mFence->GetCompletedValue() < mCurrFrameResource->Fence)
 	{
@@ -257,26 +100,19 @@ void StencilApp::Draw(const GameTimer& gt)
 {
 	auto cmdListAlloc = mCurrFrameResource->CmdListAlloc;
 
-	// Reuse the memory associated with command recording.
-	// We can only reset when the associated command lists have finished execution on the GPU.
 	ThrowIfFailed(cmdListAlloc->Reset());
 
-	// A command list can be reset after it has been added to the command queue via ExecuteCommandList.
-	// Reusing the command list reuses memory.
 	ThrowIfFailed(mCommandList->Reset(cmdListAlloc.Get(), mPSOs["opaque"].Get()));
 
 	mCommandList->RSSetViewports(1, &mScreenViewport);
 	mCommandList->RSSetScissorRects(1, &mScissorRect);
 
-	// Indicate a state transition on the resource usage.
 	mCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(CurrentBackBuffer(),
 		D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
 
-	// Clear the back buffer and depth buffer.
 	mCommandList->ClearRenderTargetView(CurrentBackBufferView(), (float*)&mMainPassCB.FogColor, 0, nullptr);
 	mCommandList->ClearDepthStencilView(DepthStencilView(), D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
 
-	// Specify the buffers we are going to render to.
 	mCommandList->OMSetRenderTargets(1, &CurrentBackBufferView(), true, &DepthStencilView());
 
 	ID3D12DescriptorHeap* descriptorHeaps[] = { mSrvDescriptorHeap.Get() };
@@ -286,55 +122,49 @@ void StencilApp::Draw(const GameTimer& gt)
 
 	UINT passCBByteSize = d3dUtil::CalcConstantBufferByteSize(sizeof(PassConstants));
 
-	// Draw opaque items--floors, walls, skull. 绘制不透明的物体:地板,墙壁,骷髅头
+	// draw opaque items: floor, wall, skull
 	auto passCB = mCurrFrameResource->PassCB->Resource();
-	mCommandList->SetGraphicsRootConstantBufferView(2, passCB->GetGPUVirtualAddress());
+	mCommandList->SetGraphicsRootConstantBufferView(2, passCB->GetGPUVirtualAddress()); // RootParameterIndex: 2
 	DrawRenderItems(mCommandList.Get(), mRitemLayer[(int)RenderLayer::Opaque]);
 
-	// Mark the visible mirror pixels in the stencil buffer with the value 1 将模板缓冲区中可见的镜面像素标记位1
-	mCommandList->OMSetStencilRef(1);
+	// mark(不是 draw) 将模板缓冲区中可见的镜面像素标记为1
+	mCommandList->OMSetStencilRef(1); // StencilRef: 模板测试的模板参考值
 	mCommandList->SetPipelineState(mPSOs["markStencilMirrors"].Get());
 	DrawRenderItems(mCommandList.Get(), mRitemLayer[(int)RenderLayer::Mirrors]);
 
-	// Draw the reflection into the mirror only (only for pixels where the stencil buffer is 1).
-	// Note that we must supply a different per-pass constant buffer--one with the lights reflected.
-	// 只绘制镜子范围内的镜像(即仅绘制模板缓冲区中标记为1的像素)
+	// draw 只绘制镜子范围内的镜像(即仅绘制模板缓冲区中标记为1的像素)
 	// 使用两个渲染过程常量缓冲区,一个储存物体镜像,另一个保存光照镜像
 	mCommandList->SetGraphicsRootConstantBufferView(2, passCB->GetGPUVirtualAddress() + 1 * passCBByteSize);
 	mCommandList->SetPipelineState(mPSOs["drawStencilReflections"].Get());
 	DrawRenderItems(mCommandList.Get(), mRitemLayer[(int)RenderLayer::Reflected]);
 
-	// Restore main pass constants and stencil ref. 恢复主渲染过程常量数据以及模板参考值
+	// restore main pass constants and stencil ref
 	mCommandList->SetGraphicsRootConstantBufferView(2, passCB->GetGPUVirtualAddress());
 	mCommandList->OMSetStencilRef(0);
 
-	// Draw mirror with transparency so reflection blends through. 绘制透明的镜面,使镜像可以与之混合
+	//  draw 绘制透明的镜面,使镜像可以与之混合
 	mCommandList->SetPipelineState(mPSOs["transparent"].Get());
 	DrawRenderItems(mCommandList.Get(), mRitemLayer[(int)RenderLayer::Transparent]);
 
-	// Draw shadows
+	// draw shadows
 	mCommandList->SetPipelineState(mPSOs["shadow"].Get());
 	DrawRenderItems(mCommandList.Get(), mRitemLayer[(int)RenderLayer::Shadow]);
 
-	// Indicate a state transition on the resource usage.
 	mCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(CurrentBackBuffer(),
 		D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
 
-	// Done recording commands.
 	ThrowIfFailed(mCommandList->Close());
 
-	// Add the command list to the queue for execution.
-	ID3D12CommandList* cmdsLists[] = { mCommandList.Get() };
-	mCommandQueue->ExecuteCommandLists(_countof(cmdsLists), cmdsLists);
+	ID3D12CommandList* cmdLists[] = { mCommandList.Get() };
+	mCommandQueue->ExecuteCommandLists(_countof(cmdLists), cmdLists);
 
-	// Swap the back and front buffers
 	ThrowIfFailed(mSwapChain->Present(0, 0));
 	mCurrBackBuffer = (mCurrBackBuffer + 1) % SwapChainBufferCount;
 
-	// Advance the fence value to mark commands up to this fence point.
+	// advance the fence value to mark commands up to this fence point
 	mCurrFrameResource->Fence = ++mCurrentFence;
 
-	// Notify the fence when the GPU completes commands up to this fence point.
+	// notify the fence when the GPU completes commands up to this fence point
 	mCommandQueue->Signal(mFence.Get(), mCurrentFence);
 }
 
@@ -387,8 +217,6 @@ void StencilApp::OnKeyboardInput(const GameTimer& gt)
 {
 	// WASD移动骷髅
 
-
-
 	const float dt = gt.DeltaTime();
 
 	if (GetAsyncKeyState('A') & 0x8000)
@@ -425,7 +253,7 @@ void StencilApp::OnKeyboardInput(const GameTimer& gt)
 	// 防止深度冲突,阴影略高于地面
 	XMMATRIX shadowOffsetY = XMMatrixTranslation(0.0f, 0.001f, 0.0f);
 	XMStoreFloat4x4(&mShadowedSkullRitem->World, skullworld * S * shadowOffsetY);
-	
+
 	mSkullRitem->NumFramesDirty = gNumFrameResources;
 	mReflectedSkullRitem->NumFramesDirty = gNumFrameResources;
 	mShadowedSkullRitem->NumFramesDirty = gNumFrameResources;
@@ -433,11 +261,9 @@ void StencilApp::OnKeyboardInput(const GameTimer& gt)
 
 void StencilApp::UpdateCamera(const GameTimer& gt)
 {
-
 	mEyePos.x = mRadius * sinf(mPhi)*cosf(mTheta);
 	mEyePos.z = mRadius * sinf(mPhi)*sinf(mTheta);
 	mEyePos.y = mRadius * cosf(mPhi);
-
 
 	XMVECTOR pos = XMVectorSet(mEyePos.x, mEyePos.y, mEyePos.z, 1.0f);
 	XMVECTOR target = XMVectorZero();
@@ -455,10 +281,8 @@ void StencilApp::AnimateMaterials(const GameTimer& gt)
 void StencilApp::UpdateObjectCBs(const GameTimer& gt)
 {
 	auto currObjectCB = mCurrFrameResource->ObjectCB.get();
-	for (auto& e: mAllRitems)
+	for (auto& e : mAllRitems)
 	{
-
-
 		if (e->NumFramesDirty > 0)
 		{
 			XMMATRIX world = XMLoadFloat4x4(&e->World);
@@ -470,7 +294,6 @@ void StencilApp::UpdateObjectCBs(const GameTimer& gt)
 
 			currObjectCB->CopyData(e->ObjCBIndex, objConstants);
 
-
 			e->NumFramesDirty--;
 		}
 	}
@@ -481,8 +304,6 @@ void StencilApp::UpdateMaterialCBs(const GameTimer& gt)
 	auto currMaterialCB = mCurrFrameResource->MaterialCB.get();
 	for (auto& e : mMaterials)
 	{
-
-
 		Material* mat = e.second.get();
 		if (mat->NumFramesDirty > 0)
 		{
@@ -495,7 +316,6 @@ void StencilApp::UpdateMaterialCBs(const GameTimer& gt)
 			XMStoreFloat4x4(&matConstants.MatTransform, XMMatrixTranspose(matTransform));
 
 			currMaterialCB->CopyData(mat->MatCBIndex, matConstants);
-
 
 			mat->NumFramesDirty--;
 		}
@@ -544,9 +364,8 @@ void StencilApp::UpdateReflectedPassCB(const GameTimer& gt)
 	XMVECTOR mirrorPlane = XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f); // xy plane
 	XMMATRIX R = XMMatrixReflect(mirrorPlane);
 
-
 	// reflect the lighting
-	for (int i=0; i<3; ++i)
+	for (int i = 0; i < 3; ++i)
 	{
 		XMVECTOR lightDir = XMLoadFloat3(&mMainPassCB.Lights[i].Direction);
 		XMVECTOR reflectedLightDir = XMVector3TransformNormal(lightDir, R);
@@ -599,9 +418,7 @@ void StencilApp::BuildRootSignature()
 	CD3DX12_DESCRIPTOR_RANGE texTable;
 	texTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0); // baseShaderRegister:0
 
-
 	CD3DX12_ROOT_PARAMETER slotRootParameter[4];
-
 
 	slotRootParameter[0].InitAsDescriptorTable(1, &texTable, D3D12_SHADER_VISIBILITY_PIXEL);
 	slotRootParameter[1].InitAsConstantBufferView(0); // shaderRegister:0
@@ -610,11 +427,9 @@ void StencilApp::BuildRootSignature()
 
 	auto staticSamplers = GetStaticSamplers();
 
-
 	CD3DX12_ROOT_SIGNATURE_DESC rootSigDesc(4, slotRootParameter,
 		(UINT)staticSamplers.size(), staticSamplers.data(),
 		D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
-
 
 	ComPtr<ID3DBlob> serializedRootSig = nullptr;
 	ComPtr<ID3DBlob> errorBlob = nullptr;
@@ -636,8 +451,6 @@ void StencilApp::BuildRootSignature()
 
 void StencilApp::BuildDescriptorHeaps()
 {
-
-
 	// Create the SRV heap
 	D3D12_DESCRIPTOR_HEAP_DESC srvHeapDesc = {};
 	srvHeapDesc.NumDescriptors = 4;
@@ -645,11 +458,9 @@ void StencilApp::BuildDescriptorHeaps()
 	srvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 	ThrowIfFailed(md3dDevice->CreateDescriptorHeap(&srvHeapDesc, IID_PPV_ARGS(&mSrvDescriptorHeap)));
 
-
-
 	// Fill out the heap with actual descriptors
 	CD3DX12_CPU_DESCRIPTOR_HANDLE hDescriptor(mSrvDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
-	
+
 	auto bricksTex = mTextures["bricksTex"]->Resource;
 	auto checkboardTex = mTextures["checkboardTex"]->Resource;
 	auto iceTex = mTextures["iceTex"]->Resource;
@@ -862,10 +673,6 @@ void StencilApp::BuildSkullGeometry()
 
 	fin.close();
 
-
-
-
-
 	const UINT vbByteSize = (UINT)vertices.size() * sizeof(Vertex);
 
 	const UINT ibByteSize = (UINT)indices.size() * sizeof(std::int32_t);
@@ -903,8 +710,6 @@ void StencilApp::BuildSkullGeometry()
 void StencilApp::BuildPSOs()
 {
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC opaquePsoDesc;
-
-
 
 	// PSO for opaque objects
 	ZeroMemory(&opaquePsoDesc, sizeof(D3D12_GRAPHICS_PIPELINE_STATE_DESC));
@@ -952,7 +757,6 @@ void StencilApp::BuildPSOs()
 
 	transparentPsoDesc.BlendState.RenderTarget[0] = transparencyBlendDesc; // RenderTarget有8个元素,默认都用[0]
 	ThrowIfFailed(md3dDevice->CreateGraphicsPipelineState(&transparentPsoDesc, IID_PPV_ARGS(&mPSOs["transparent"])));
-	
 
 	// 模板缓冲区中镜面部分的PSO
 
@@ -983,9 +787,6 @@ void StencilApp::BuildPSOs()
 	markMirrorsPsoDesc.BlendState = mirrorBlendState;
 	markMirrorsPsoDesc.DepthStencilState = mirrorDSS;
 	ThrowIfFailed(md3dDevice->CreateGraphicsPipelineState(&markMirrorsPsoDesc, IID_PPV_ARGS(&mPSOs["markStencilMirrors"])));
-	
-
-
 
 	// PSO for stencil reflections
 	D3D12_DEPTH_STENCIL_DESC reflectionsDSS;
@@ -1012,13 +813,10 @@ void StencilApp::BuildPSOs()
 	drawReflectionsPsoDesc.RasterizerState.CullMode = D3D12_CULL_MODE_BACK; // 不绘制背面
 	drawReflectionsPsoDesc.RasterizerState.FrontCounterClockwise = true; // 绕序
 	ThrowIfFailed(md3dDevice->CreateGraphicsPipelineState(&drawReflectionsPsoDesc, IID_PPV_ARGS(&mPSOs["drawStencilReflections"])));
-	
-	
-
 
 	// PSO for shadow objects
-	// 以下列深度/模板状态来防止双重混合的发生
 
+	// 以下列深度/模板状态来防止双重混合的发生
 	D3D12_DEPTH_STENCIL_DESC shadowDSS;
 	shadowDSS.DepthEnable = true;
 	shadowDSS.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
