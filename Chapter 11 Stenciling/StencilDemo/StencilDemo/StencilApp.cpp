@@ -201,11 +201,11 @@ bool StencilApp::Initialize()
 	BuildDescriptorHeaps(); // 创建 SRV heap 存入 mSrvDescriptorHeap,将贴图信息 mTextures 放进 mSrvDescriptorHeap
 	BuildShadersAndInputLayout(); // 读取 .hlsl 着色器存入 mShaders, 初始化 mInputLayout 对应 Vertex 结构体的 Pos, Normal, TexC
 	BuildRoomGeometry(); // 手写顶点数组和索引数组,存入 mGeometries["roomGeo"]->DrawArgs["floor","wall","mirror"]
-	BuildSkullGeometry(); // 读取骷髅顶点, 存入mGeometries["skullGeo"]->DrawArgs["skull"]
+	BuildSkullGeometry(); // 读取骷髅顶点txt, 存入mGeometries["skullGeo"]->DrawArgs["skull"]
 	BuildMaterials(); // 手写各材质的属性(主要是漫反射和镜面反射),存入 mMaterials["bricks","checkertile","icemirror","skullMat","shadowMat"]
 	BuildRenderItems(); // 创建RenderItem,主要属性: World,TexTransform,Mat,Geo顶点 // 不同的渲染项目先加入不同的mRitemLayer[theIndex]中(mRitemLayer是二维数组),最后全部加入mAllRitems
 	BuildFrameResources(); // 初始化空的 mFrameResources
-	BuildPSOs();
+	BuildPSOs(); // mPSOs["opaque","transparent","markStencilMirrors","drawStencilReflections","shadow"], 设置了混合,模板等,方法很大
 
 
 	ThrowIfFailed(mCommandList->Close());
@@ -932,48 +932,48 @@ void StencilApp::BuildPSOs()
 	opaquePsoDesc.DSVFormat = mDepthStencilFormat;
 	ThrowIfFailed(md3dDevice->CreateGraphicsPipelineState(&opaquePsoDesc, IID_PPV_ARGS(&mPSOs["opaque"])));
 
-	//
+	// 混合:将源像素(当前要光栅化的像素)与目标像素(已光栅化至后台缓冲区的像素)相融合.可用于渲染水,玻璃之类的半透明物体
+	// 混合方程: C = C(src) (*) F(src) 田 C(dst) (*) F(dst)
+	// C(src):源像素颜色, F(src):源混合因子, C(dst):目标像素颜色值, F(dst):目标混合因子. (*):分量式乘法, 田:二元运算符D3D12_BLEND_OP
 	// PSO for transparent objects
-	//
-
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC transparentPsoDesc = opaquePsoDesc;
 
 	D3D12_RENDER_TARGET_BLEND_DESC transparencyBlendDesc;
-	transparencyBlendDesc.BlendEnable = true;
-	transparencyBlendDesc.LogicOpEnable = false;
-	transparencyBlendDesc.SrcBlend = D3D12_BLEND_SRC_ALPHA;
-	transparencyBlendDesc.DestBlend = D3D12_BLEND_INV_SRC_ALPHA;
-	transparencyBlendDesc.BlendOp = D3D12_BLEND_OP_ADD;
-	transparencyBlendDesc.SrcBlendAlpha = D3D12_BLEND_ONE;
-	transparencyBlendDesc.DestBlendAlpha = D3D12_BLEND_ZERO;
+	transparencyBlendDesc.BlendEnable = true; // 启用常规混合功能,只能从常规混合和逻辑混合中选一种
+	transparencyBlendDesc.LogicOpEnable = false; // 启用逻辑混合运算(新特性)
+	transparencyBlendDesc.SrcBlend = D3D12_BLEND_SRC_ALPHA; // F(src),D3D12_BLEND, 这里采用源像素的alpha(a,a,a)
+	transparencyBlendDesc.DestBlend = D3D12_BLEND_INV_SRC_ALPHA; // (1-a,1-a,1-a)
+	transparencyBlendDesc.BlendOp = D3D12_BLEND_OP_ADD; // 二元运算符 田,这里是 +
+	transparencyBlendDesc.SrcBlendAlpha = D3D12_BLEND_ONE; // (1,1,1)
+	transparencyBlendDesc.DestBlendAlpha = D3D12_BLEND_ZERO; // (0,0,0)
 	transparencyBlendDesc.BlendOpAlpha = D3D12_BLEND_OP_ADD;
-	transparencyBlendDesc.LogicOp = D3D12_LOGIC_OP_NOOP;
-	transparencyBlendDesc.RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
+	transparencyBlendDesc.LogicOp = D3D12_LOGIC_OP_NOOP; // 逻辑运算符
+	transparencyBlendDesc.RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL; // 混合后的数据可被写入后台缓冲区的哪些颜色通道
 
-	transparentPsoDesc.BlendState.RenderTarget[0] = transparencyBlendDesc;
+	transparentPsoDesc.BlendState.RenderTarget[0] = transparencyBlendDesc; // RenderTarget有8个元素,默认都用[0]
 	ThrowIfFailed(md3dDevice->CreateGraphicsPipelineState(&transparentPsoDesc, IID_PPV_ARGS(&mPSOs["transparent"])));
+	
 
-	//
-	// PSO for marking stencil mirrors. 模板缓冲区中镜面部分的PSO
-	//
+	// 模板缓冲区中镜面部分的PSO
+
 	// 禁止对渲染目标的写操作
 	CD3DX12_BLEND_DESC mirrorBlendState(D3D12_DEFAULT);
 	mirrorBlendState.RenderTarget[0].RenderTargetWriteMask = 0; // 仅将镜面渲染到模板缓冲区中,禁止其他颜色数据写入到后台缓冲区
 
 	D3D12_DEPTH_STENCIL_DESC mirrorDSS;
-	mirrorDSS.DepthEnable = true;
-	mirrorDSS.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ZERO; // 禁止向深度缓冲区的写操作 
-	mirrorDSS.DepthFunc = D3D12_COMPARISON_FUNC_LESS;
-	mirrorDSS.StencilEnable = true;
-	mirrorDSS.StencilReadMask = 0xff; // 设置屏蔽的位
-	mirrorDSS.StencilWriteMask = 0xff; // 设置屏蔽写入的位. eg:0x0f-防止前4位数据被改写
+	mirrorDSS.DepthEnable = true; // 开启深度缓冲
+	mirrorDSS.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ZERO; // 禁止对深度缓冲区的写操作
+	mirrorDSS.DepthFunc = D3D12_COMPARISON_FUNC_LESS; // 深度测试比较函数 <
+	mirrorDSS.StencilEnable = true; // 开启模板测试
+	mirrorDSS.StencilReadMask = 0xff; // 设置模板测试屏蔽的位
+	mirrorDSS.StencilWriteMask = 0xff; // 设置屏蔽写入的位, eg:0x0f防止前4位数据被改写
 	// 镜面可见部分的对应像素为1,其他像素皆为0
-	mirrorDSS.FrontFace.StencilFailOp = D3D12_STENCIL_OP_KEEP;
-	mirrorDSS.FrontFace.StencilDepthFailOp = D3D12_STENCIL_OP_KEEP; // 貌似原来是0
-	mirrorDSS.FrontFace.StencilPassOp = D3D12_STENCIL_OP_REPLACE; // 将模板缓冲区中的元素替换为StencilRef(1)
-	mirrorDSS.FrontFace.StencilFunc = D3D12_COMPARISON_FUNC_ALWAYS;
+	mirrorDSS.FrontFace.StencilFailOp = D3D12_STENCIL_OP_KEEP; // 当模板测试失败时,不修改模板缓冲区,保持当前的数据
+	mirrorDSS.FrontFace.StencilDepthFailOp = D3D12_STENCIL_OP_KEEP; // 通过模板测试,深度测试失败, Keep 0
+	mirrorDSS.FrontFace.StencilPassOp = D3D12_STENCIL_OP_REPLACE; // 将模板缓冲区中的元素替换为模板参考值 StencilRef(1)
+	mirrorDSS.FrontFace.StencilFunc = D3D12_COMPARISON_FUNC_ALWAYS; // 模板测试比较函数,这里总是返回true
 
-	// We are not rendering backfacing polygons, so these settings do not matter. 不渲染背面,所以不关心这些参数
+	// 不渲染背面,所以不关心这些参数
 	mirrorDSS.BackFace.StencilFailOp = D3D12_STENCIL_OP_KEEP;
 	mirrorDSS.BackFace.StencilDepthFailOp = D3D12_STENCIL_OP_KEEP;
 	mirrorDSS.BackFace.StencilPassOp = D3D12_STENCIL_OP_REPLACE;
@@ -983,14 +983,14 @@ void StencilApp::BuildPSOs()
 	markMirrorsPsoDesc.BlendState = mirrorBlendState;
 	markMirrorsPsoDesc.DepthStencilState = mirrorDSS;
 	ThrowIfFailed(md3dDevice->CreateGraphicsPipelineState(&markMirrorsPsoDesc, IID_PPV_ARGS(&mPSOs["markStencilMirrors"])));
+	
 
-	//
-	// PSO for stencil reflections. 渲染模板缓冲区中反射镜像的PSO
-	//
 
+
+	// PSO for stencil reflections
 	D3D12_DEPTH_STENCIL_DESC reflectionsDSS;
 	reflectionsDSS.DepthEnable = true;
-	reflectionsDSS.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
+	reflectionsDSS.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL; // 通过深度测试与模板测试的深度数据将被写入深度缓冲区
 	reflectionsDSS.DepthFunc = D3D12_COMPARISON_FUNC_LESS;
 	reflectionsDSS.StencilEnable = true;
 	reflectionsDSS.StencilReadMask = 0xff;
@@ -1001,7 +1001,7 @@ void StencilApp::BuildPSOs()
 	reflectionsDSS.FrontFace.StencilPassOp = D3D12_STENCIL_OP_KEEP;
 	reflectionsDSS.FrontFace.StencilFunc = D3D12_COMPARISON_FUNC_EQUAL; // 仅当模板缓冲区中的值为1时,才能通过模板测试
 
-	// We are not rendering backfacing polygons, so these settings do not matter. 不渲染背面,所以不关心这些参数
+	// 不渲染背面,所以不关心这些参数
 	reflectionsDSS.BackFace.StencilFailOp = D3D12_STENCIL_OP_KEEP;
 	reflectionsDSS.BackFace.StencilDepthFailOp = D3D12_STENCIL_OP_KEEP;
 	reflectionsDSS.BackFace.StencilPassOp = D3D12_STENCIL_OP_KEEP;
@@ -1009,16 +1009,16 @@ void StencilApp::BuildPSOs()
 
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC drawReflectionsPsoDesc = opaquePsoDesc;
 	drawReflectionsPsoDesc.DepthStencilState = reflectionsDSS;
-	drawReflectionsPsoDesc.RasterizerState.CullMode = D3D12_CULL_MODE_BACK;
-	drawReflectionsPsoDesc.RasterizerState.FrontCounterClockwise = true;
+	drawReflectionsPsoDesc.RasterizerState.CullMode = D3D12_CULL_MODE_BACK; // 不绘制背面
+	drawReflectionsPsoDesc.RasterizerState.FrontCounterClockwise = true; // 绕序
 	ThrowIfFailed(md3dDevice->CreateGraphicsPipelineState(&drawReflectionsPsoDesc, IID_PPV_ARGS(&mPSOs["drawStencilReflections"])));
+	
+	
 
-	//
+
 	// PSO for shadow objects
-	//
-
-	// We are going to draw shadows with transparency, so base it off the transparency description. 
 	// 以下列深度/模板状态来防止双重混合的发生
+
 	D3D12_DEPTH_STENCIL_DESC shadowDSS;
 	shadowDSS.DepthEnable = true;
 	shadowDSS.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
@@ -1029,14 +1029,14 @@ void StencilApp::BuildPSOs()
 
 	shadowDSS.FrontFace.StencilFailOp = D3D12_STENCIL_OP_KEEP;
 	shadowDSS.FrontFace.StencilDepthFailOp = D3D12_STENCIL_OP_KEEP;
-	// 模板测试仅接受模板缓冲区中元素为0的像素.如果通过模板测试,则将相应模板缓冲区值增为1
-	// 第一次渲染阴影像素时,由于模板缓冲区元素为0,因而模板测试成功
+	// 模板测试仅接受模板缓冲区中元素为0的像素.如果通过模板测试,则将相应的模板缓冲区值增为1
+	// 第一次渲染阴影,由于模板缓冲区元素为0,因而模板测试成功
 	// 渲染该像素的同时,将对应的模板缓冲区元素增加为1
 	// 如果覆写已被渲染过的区域,模板测试失败
 	shadowDSS.FrontFace.StencilPassOp = D3D12_STENCIL_OP_INCR;
 	shadowDSS.FrontFace.StencilFunc = D3D12_COMPARISON_FUNC_EQUAL;
 
-	// We are not rendering backfacing polygons, so these settings do not matter. 不渲染背面,所以不关心这些参数
+	// 不渲染背面,所以不关心这些参数
 	shadowDSS.BackFace.StencilFailOp = D3D12_STENCIL_OP_KEEP;
 	shadowDSS.BackFace.StencilDepthFailOp = D3D12_STENCIL_OP_KEEP;
 	shadowDSS.BackFace.StencilPassOp = D3D12_STENCIL_OP_INCR;
