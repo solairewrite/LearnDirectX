@@ -4,19 +4,25 @@
 ### 4.1 预备知识
 #### 4.1.2 组件对象模型
 COM: Component Object Model 组件对象模型,是一种令DirectX不受编程语言束缚,并使之向后兼容的技术  
-为了管理COM对象的生命周期,Windows运行时库(WRL: Windows Runtime Library)提供了Microsoft::WRL::ComPtr类  
+为了管理COM对象的生命周期,Windows运行时库(WRL: Windows Runtime Library)提供了Microsoft\::WRL\::ComPtr类  
 COMPtr 3个方法 Get: 返回指向此底层COM接口的指针  
 GetAddressOf: 返回指向此底层COM接口指针的地址  
 Reset  
-#### 4.1.6 资源描述符(描述符即视图view)
+#### 4.1.6 资源描述符(descripor描述符即视图view)
 发出绘制命令之前,需要将与本次绘制调用相关的资源绑定到渲染流水线上  
 GPU资源并非直接与渲染流水线相绑定,而是要通过描述符对它间接引用  
-常用的描述符: CBV(constant buffer view), SRV(shader resource view), UAV(unordered access view)  
-RTV(render target view), DSV(depth/stencil view)  
-描述符堆(可以看做描述符数组)  
+描述符作用: 指定资源数据, 告知资源被绑定在流水线的哪个阶段上, 指定欲绑定资源中的局部数据, 指明类型  
+常用的描述符:  
+<font color="#FF8000">CBV(constant buffer view)</font>: 常量缓冲视图  
+<font color="#FF8000">SRV(shader resource view)</font>: 着色器资源视图  
+<font color="#FF8000">UAV(unordered access view)</font>: 无视访问视图  
+<font color="#FF8000">RTV(render target view)</font>: 渲染目标视图  
+<font color="#FF8000">DSV(depth/stencil view)</font>深度/模板视图  
+描述符堆descriptor heap(可以看做描述符数组),需要为每一种类型的描述符都创建出单独的描述符堆  
+也可为同一种描述符类型创建出多个描述符堆  
 #### 4.1.10 DirectX图形基础结构
 DXGI: DirectX Graphics Infrastructure DirectX图形基础结构: 提供通用API  
-显示适配器(显卡)IDXGI, 显示输出(显示器)IDXGIOutput
+显示适配器(显卡)IDXGIAdaptor, 显示输出(显示器)IDXGIOutput
 ### 4.2 CPU与GPU的交互
 #### 4.2.1 命令队列和命令列表
 GPU维护命令队列(command queue,本质上是环形缓冲区)**ID3D12CommandQueue**  

@@ -95,10 +95,21 @@ void InitDirect3DApp::Draw(const GameTimer& gt)
 	mCommandList->RSSetScissorRects(1, &mScissorRect);
 
 	// Clear the back buffer and depth buffer.
+	// 将指定的渲染目标清理为给定的颜色
+	// para3: 渲染目标要被清除的矩形区域数组数量
+	// para4: nullptr表示清除整个渲染目标
 	mCommandList->ClearRenderTargetView(CurrentBackBufferView(), Colors::LightSteelBlue, 0, nullptr);
+	// para3 Depth: 以此值来清除深度缓冲区
+	// para4 Stencil: 以此值来清除模板缓冲区
+	// para5 NumRects
+	// para6 D3D12_RECT[] pRects: nullptr表示清除整个渲染目标
 	mCommandList->ClearDepthStencilView(DepthStencilView(), D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
 
 	// Specify the buffers we are going to render to.
+	// para1: RTV数量
+	// para2: 希望绑定到渲染流水线上的渲染目标
+	// para3: RTV在描述符堆中是否连续存放
+	// para4: 希望绑定到渲染流水线上的深度/模板缓冲区
 	mCommandList->OMSetRenderTargets(1, &CurrentBackBufferView(), true, &DepthStencilView());
 
 	// Indicate a state transition on the resource usage.

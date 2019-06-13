@@ -27,6 +27,7 @@ D3DApp::D3DApp(HINSTANCE hInstance)
 
 D3DApp::~D3DApp()
 {
+	// 在销毁GPU引用的资源以前,必须等待GPU处理完队列中的所有命令.否则可能造成应用程序在退出时崩溃
 	if (md3dDevice != nullptr)
 		FlushCommandQueue();
 }
@@ -114,7 +115,7 @@ bool D3DApp::Initialize()
 
 void D3DApp::CreateRtvAndDsvDescriptorHeaps()
 {
-	// 创建RTV描述符堆
+	// 创建RTV描述符堆,SwapChainBufferCount个
 	D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc;
 	rtvHeapDesc.NumDescriptors = SwapChainBufferCount;
 	rtvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
@@ -123,7 +124,7 @@ void D3DApp::CreateRtvAndDsvDescriptorHeaps()
 	ThrowIfFailed(md3dDevice->CreateDescriptorHeap(
 		&rtvHeapDesc, IID_PPV_ARGS(mRtvHeap.GetAddressOf())));
 
-	// 创建DSV描述符堆
+	// 创建DSV描述符堆,1个
 	D3D12_DESCRIPTOR_HEAP_DESC dsvHeapDesc;
 	dsvHeapDesc.NumDescriptors = 1;
 	dsvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
@@ -158,42 +159,51 @@ void D3DApp::OnResize()
 
 	mCurrBackBuffer = 0;
 
+	// 资源不能与渲染流水线中的阶段直接绑定,所以必须先为资源创建视图(描述符)
 	// 描述符堆句柄
 	CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHeapHandle(mRtvHeap->GetCPUDescriptorHandleForHeapStart());
 	for (UINT i = 0; i < SwapChainBufferCount; i++)
 	{
-		// 获取交换链中的缓冲区资源
-		ThrowIfFailed(mSwapChain->GetBuffer(i, IID_PPV_ARGS(&mSwapChainBuffer[i])));
+		// 为了将后台缓冲区绑定到流水线的输出合并阶段
+		// 需要为后台缓冲区创建RTV
+		// 第一步就是:获取交换链中的缓冲区资源
+		ThrowIfFailed(mSwapChain->GetBuffer(i, IID_PPV_ARGS(&mSwapChainBuffer[i]))); // 后台缓冲区的索引:i
 		// 为获取的后台缓冲区创建渲染目标视图
+		// para2: D3D12_RENDER_TARGET_VIEW_DESC,描述了资源中元素的数据类型,如果该资源在创建时已指定了具体格式,就可以设为nullptr
 		md3dDevice->CreateRenderTargetView(mSwapChainBuffer[i].Get(), nullptr, rtvHeapHandle);
+		// 偏移到描述符堆中的下一个缓冲区
 		rtvHeapHandle.Offset(1, mRtvDescriptorSize);
 	}
 
 	// 深度/模板缓冲区描述结构体
 	D3D12_RESOURCE_DESC depthStencilDesc;
-	depthStencilDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+	depthStencilDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D; // 资源维度
 	depthStencilDesc.Alignment = 0;
-	depthStencilDesc.Width = mClientWidth;
-	depthStencilDesc.Height = mClientHeight;
-	depthStencilDesc.DepthOrArraySize = 1;
-	depthStencilDesc.MipLevels = 1;
-	depthStencilDesc.Format = mDepthStencilFormat;
+	depthStencilDesc.Width = mClientWidth; // 纹理宽度
+	depthStencilDesc.Height = mClientHeight; // 纹理高度
+	depthStencilDesc.DepthOrArraySize = 1; // 纹理深度(对于2D纹理,是纹理数组的大小)
+	depthStencilDesc.MipLevels = 1; // mipmap层级数量,对于深度/模板缓冲区,1
+	depthStencilDesc.Format = mDepthStencilFormat; // DXGI_FORMAT_D24_UNORM_S8_UINT. 24位深度,映射到[0,1], 8位模板,映射到[0,255]
 	depthStencilDesc.SampleDesc.Count = m4xMsaaState ? 4 : 1;
 	depthStencilDesc.SampleDesc.Quality = m4xMsaaState ? (m4xMsaaQuality - 1) : 0;
-	depthStencilDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
-	depthStencilDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
+	depthStencilDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN; // 指定纹理布局
+	depthStencilDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL; // 与资源有关的杂项标志
 
 	D3D12_CLEAR_VALUE optClear;
 	optClear.Format = mDepthStencilFormat;
 	optClear.DepthStencil.Depth = 1.0f;
 	optClear.DepthStencil.Stencil = 0;
+
+	// GPU资源都存于堆(heap)中,本质是具有特定属性的GPU显存快
+	// ID3D12Device::CreateCommittedResource方法,根据我们提供 的属性创建一个资源与一个堆,并把该资源提交到这个堆中
+
 	// 创建深度模板缓冲区
 	ThrowIfFailed(md3dDevice->CreateCommittedResource(
-		&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
-		D3D12_HEAP_FLAG_NONE,
-		&depthStencilDesc,
-		D3D12_RESOURCE_STATE_COMMON,
-		&optClear,
+		&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT), // (资源欲提交至的)堆所具有的的属性,深度模板缓冲区上传至默认堆.默认堆的资源只有GPU可以访问
+		D3D12_HEAP_FLAG_NONE, // 与堆有关的额外选项标志
+		&depthStencilDesc, 
+		D3D12_RESOURCE_STATE_COMMON, // 资源创建时的初始状态
+		&optClear, // 描述用于清除资源的优化值
 		IID_PPV_ARGS(mDepthStencilBuffer.GetAddressOf())));
 
 	// 创建DSV
@@ -206,7 +216,7 @@ void D3DApp::OnResize()
 	// 执行 resize 命令
 	ThrowIfFailed(mCommandList->Close());
 	ID3D12CommandList* cmdsLists[] = { mCommandList.Get() };
-	mCommandQueue->ExecuteCommandLists(_countof(cmdsLists), cmdsLists);
+	mCommandQueue->ExecuteCommandLists(_countof(cmdsLists), cmdsLists); // 将命令列表里的命令添加到命令队列中
 
 	// 等待 resize 完成
 	FlushCommandQueue();
@@ -402,12 +412,13 @@ bool D3DApp::InitDirect3D()
 	}
 #endif
 
-	ThrowIfFailed(CreateDXGIFactory1(IID_PPV_ARGS(&mdxgiFactory)));
+	// 为创建WARP适配器(也可用于创建交换链),需要先创建一个IDXGIFactory4对象
+	ThrowIfFailed(CreateDXGIFactory1(IID_PPV_ARGS(&mdxgiFactory))); 
 
 	// 1,尝试创建硬件设备
 	HRESULT hardwareResult = D3D12CreateDevice(
-		nullptr,	// 默认适配器
-		D3D_FEATURE_LEVEL_11_0,
+		nullptr,	// 指定创建设备时所用的显示适配器(显卡). nullptr:使用主显示适配器
+		D3D_FEATURE_LEVEL_11_0, // 应用程序需要硬件所支持的最低功能级别.如果适配器不支持此功能级别,则设备创建失败.这里是Direct3D11
 		IID_PPV_ARGS(&md3dDevice));
 
 	// 回滚到WARP设备
@@ -423,7 +434,7 @@ bool D3DApp::InitDirect3D()
 	}
 
 	// 2-1,创建围栏
-	ThrowIfFailed(md3dDevice->CreateFence(0, D3D12_FENCE_FLAG_NONE,
+	ThrowIfFailed(md3dDevice->CreateFence(0, D3D12_FENCE_FLAG_NONE, // 初始值:0
 		IID_PPV_ARGS(&mFence)));
 	// 2-2,获取描述符的大小
 	mRtvDescriptorSize = md3dDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
@@ -468,12 +479,12 @@ void D3DApp::CreateCommandObjects()
 
 	// 创建命令分配器
 	ThrowIfFailed(md3dDevice->CreateCommandAllocator(
-		D3D12_COMMAND_LIST_TYPE_DIRECT,
+		D3D12_COMMAND_LIST_TYPE_DIRECT, // 可供GPU直接执行的命令
 		IID_PPV_ARGS(mDirectCmdListAlloc.GetAddressOf())));
 
 	// 创建命令列表
 	ThrowIfFailed(md3dDevice->CreateCommandList(
-		0,
+		0, // node mask, 指定与所建命令列表相关联的物理GPU, 对于单GPU的系统,设置为0
 		D3D12_COMMAND_LIST_TYPE_DIRECT,
 		mDirectCmdListAlloc.Get(),	// 关联的command allocator
 		nullptr,					// 初始PipelineStateObject
@@ -490,21 +501,21 @@ void D3DApp::CreateSwapChain()
 
 	// 填写DXGI_SWAP_CHAIN_DESC结构体
 	DXGI_SWAP_CHAIN_DESC sd;
-	sd.BufferDesc.Width = mClientWidth;
-	sd.BufferDesc.Height = mClientHeight;
+	sd.BufferDesc.Width = mClientWidth; // 缓冲区分辨率的宽度
+	sd.BufferDesc.Height = mClientHeight; // 缓冲区分辨率的高度
 	sd.BufferDesc.RefreshRate.Numerator = 60;	// 分子
 	sd.BufferDesc.RefreshRate.Denominator = 1;	// 分母
-	sd.BufferDesc.Format = mBackBufferFormat;
-	sd.BufferDesc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
-	sd.BufferDesc.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;
-	sd.SampleDesc.Count = m4xMsaaState ? 4 : 1;
-	sd.SampleDesc.Quality = m4xMsaaState ? (m4xMsaaQuality - 1) : 0;
-	sd.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-	sd.BufferCount = SwapChainBufferCount;
-	sd.OutputWindow = mhMainWnd;
-	sd.Windowed = true;
+	sd.BufferDesc.Format = mBackBufferFormat; // 缓冲区的显示格式,这里是DXGI_FORMAT_R8G8B8A8_UNORM
+	sd.BufferDesc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED; // 逐行扫描 vs 隔行扫描
+	sd.BufferDesc.Scaling = DXGI_MODE_SCALING_UNSPECIFIED; // 图像如何相对于屏幕进行拉伸
+	sd.SampleDesc.Count = m4xMsaaState ? 4 : 1; // 多重采样每个像素的采样次数
+	sd.SampleDesc.Quality = m4xMsaaState ? (m4xMsaaQuality - 1) : 0; // 多重采样的质量级别
+	sd.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT; // 由于我们要将数据渲染至后台缓冲区(即用它作为渲染目标),因此这样指定
+	sd.BufferCount = SwapChainBufferCount; // 交换链中所用的缓冲区数量
+	sd.OutputWindow = mhMainWnd; // 渲染窗口的句柄
+	sd.Windowed = true; // 窗口模式 vs 全屏模式
 	sd.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
-	sd.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
+	sd.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH; // 切换全屏时,选择最适合于当前应用程序窗口尺寸的显示模式
 
 	// 创建交换链
 	ThrowIfFailed(mdxgiFactory->CreateSwapChain(
@@ -526,7 +537,7 @@ void D3DApp::FlushCommandQueue()
 	{
 		HANDLE eventHandle = CreateEventEx(nullptr, false, false, EVENT_ALL_ACCESS);
 
-		// 当GPU到达当前围栏值时,触发事件
+		// 当GPU到达当前围栏值时(执行到Signal()指令,修改了围栏值),触发预定事件
 		ThrowIfFailed(mFence->SetEventOnCompletion(mCurrentFence, eventHandle));
 
 		// 等待直到GPU到达当前围栏值,触发事件
@@ -542,14 +553,20 @@ ID3D12Resource* D3DApp::CurrentBackBuffer() const
 
 D3D12_CPU_DESCRIPTOR_HANDLE D3DApp::CurrentBackBufferView() const
 {
+	// 创建描述符堆后,访问其中所存的描述符
+	// 通过句柄引用描述符
+	// 创建了SwapChainBufferCount个RTV
+	// 用偏移量找到当前后台缓冲区的RTV描述符,必须知道RTV的大小
+	// 伪代码: 目标描述符句柄 = GetCPUDescriptorHandleForHeapStart() + mCurrBackBuffer * mRtvDescriptorSize
 	return CD3DX12_CPU_DESCRIPTOR_HANDLE(
-		mRtvHeap->GetCPUDescriptorHandleForHeapStart(),
-		mCurrBackBuffer,
-		mRtvDescriptorSize);
+		mRtvHeap->GetCPUDescriptorHandleForHeapStart(), // 获得描述符堆中第一个描述符的句柄
+		mCurrBackBuffer, // 偏移至后台缓冲区描述符句柄的索引
+		mRtvDescriptorSize); // 描述符所占字节的大小
 }
 
 D3D12_CPU_DESCRIPTOR_HANDLE D3DApp::DepthStencilView() const
 {
+	// 只创建了1个DSV
 	return mDsvHeap->GetCPUDescriptorHandleForHeapStart();
 }
 
