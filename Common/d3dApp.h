@@ -38,7 +38,7 @@ public:
 	// ***************************** 框架方法 ****************************************
 
 	virtual bool Initialize(); // 初始化,如分配资源,初始化对象,建立3D场景等
-	virtual LRESULT MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPARAM); // 应用程序主窗口的窗口过程函数 LRESULT:窗口程序或回调函数返回的32位值, WPARAM,LPARAM:消息响应机制
+	virtual LRESULT MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam); // 应用程序主窗口的窗口过程函数 LRESULT:窗口程序或回调函数返回的32位值, WPARAM,LPARAM:消息响应机制
 
 protected:
 	virtual void CreateRtvAndDsvDescriptorHeaps(); // 创建RTV和DSV描述符堆

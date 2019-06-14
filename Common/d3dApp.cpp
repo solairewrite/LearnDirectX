@@ -199,7 +199,7 @@ void D3DApp::OnResize()
 
 	// 创建深度模板缓冲区
 	ThrowIfFailed(md3dDevice->CreateCommittedResource(
-		&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT), // (资源欲提交至的)堆所具有的的属性,深度模板缓冲区上传至默认堆.默认堆的资源只有GPU可以访问
+		&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT), // (资源欲提交至的)堆所具有的属性,深度模板缓冲区上传至默认堆.默认堆的资源只有GPU可以访问
 		D3D12_HEAP_FLAG_NONE, // 与堆有关的额外选项标志
 		&depthStencilDesc, 
 		D3D12_RESOURCE_STATE_COMMON, // 资源创建时的初始状态
