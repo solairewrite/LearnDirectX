@@ -1,5 +1,5 @@
 #include "d3dApp.h"
-#include <windowsx.h> // GET_X_LPARAM
+#include <windowsx.h>
 
 using Microsoft::WRL::ComPtr;
 using namespace std;
@@ -20,14 +20,14 @@ D3DApp* D3DApp::GetApp()
 D3DApp::D3DApp(HINSTANCE hInstance)
 	:mhAppInst(hInstance)
 {
-	// 只有一个D3DApp可以被构造
+
 	assert(mApp == nullptr);
 	mApp = this;
 }
 
 D3DApp::~D3DApp()
 {
-	// 在销毁GPU引用的资源以前,必须等待GPU处理完队列中的所有命令.否则可能造成应用程序在退出时崩溃
+	// 在销毁GPU引用的资源以前,必须等待GPU处理完队列中的所有命令.否则可能造成应用在退出时崩溃
 	if (md3dDevice != nullptr)
 		FlushCommandQueue();
 }
@@ -44,7 +44,7 @@ HWND D3DApp::MainWnd() const
 
 float D3DApp::AspectRatio() const
 {
-	return static_cast<float>(mClientWidth) / mClientHeight;
+	return static_cast<float>(mClientWidth) / mClientHeight; // static_cast强迫隐式转换比如int->double
 }
 
 bool D3DApp::Get4xMsaaState() const
@@ -52,7 +52,7 @@ bool D3DApp::Get4xMsaaState() const
 	return m4xMsaaState;
 }
 
-void D3DApp::Set4xMsaaState(bool value)
+void  D3DApp::Set4xMsaaState(bool value)
 {
 	if (m4xMsaaState != value)
 	{
@@ -107,7 +107,7 @@ bool D3DApp::Initialize()
 	if (!InitDirect3D())
 		return false;
 
-	// 初始化resize
+	
 	OnResize();
 
 	return true;

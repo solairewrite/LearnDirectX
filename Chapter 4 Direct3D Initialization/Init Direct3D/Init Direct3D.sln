@@ -16,6 +16,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Notes", "Notes", "{8B2926E7
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "My Init Direct3D", "My Init Direct3D\My Init Direct3D.vcxproj", "{F30EF285-F144-4D9A-819C-CA4B6F4D103F}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "BasicWin32", "BasicWin32\BasicWin32.vcxproj", "{BD7D9ABD-1D92-4279-AD41-9DA5255B014D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -40,6 +42,14 @@ Global
 		{F30EF285-F144-4D9A-819C-CA4B6F4D103F}.Release|x64.Build.0 = Release|x64
 		{F30EF285-F144-4D9A-819C-CA4B6F4D103F}.Release|x86.ActiveCfg = Release|Win32
 		{F30EF285-F144-4D9A-819C-CA4B6F4D103F}.Release|x86.Build.0 = Release|Win32
+		{BD7D9ABD-1D92-4279-AD41-9DA5255B014D}.Debug|x64.ActiveCfg = Debug|x64
+		{BD7D9ABD-1D92-4279-AD41-9DA5255B014D}.Debug|x64.Build.0 = Debug|x64
+		{BD7D9ABD-1D92-4279-AD41-9DA5255B014D}.Debug|x86.ActiveCfg = Debug|Win32
+		{BD7D9ABD-1D92-4279-AD41-9DA5255B014D}.Debug|x86.Build.0 = Debug|Win32
+		{BD7D9ABD-1D92-4279-AD41-9DA5255B014D}.Release|x64.ActiveCfg = Release|x64
+		{BD7D9ABD-1D92-4279-AD41-9DA5255B014D}.Release|x64.Build.0 = Release|x64
+		{BD7D9ABD-1D92-4279-AD41-9DA5255B014D}.Release|x86.ActiveCfg = Release|Win32
+		{BD7D9ABD-1D92-4279-AD41-9DA5255B014D}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
