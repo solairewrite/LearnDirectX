@@ -20,7 +20,6 @@ D3DApp* D3DApp::GetApp()
 D3DApp::D3DApp(HINSTANCE hInstance)
 	:mhAppInst(hInstance)
 {
-
 	assert(mApp == nullptr);
 	mApp = this;
 }
@@ -107,7 +106,6 @@ bool D3DApp::Initialize()
 	if (!InitDirect3D())
 		return false;
 
-
 	OnResize();
 
 	return true;
@@ -169,7 +167,8 @@ void D3DApp::OnResize()
 		// 第一步就是:获取交换链中的缓冲区资源
 		ThrowIfFailed(mSwapChain->GetBuffer(i, IID_PPV_ARGS(&mSwapChainBuffer[i]))); // 后台缓冲区的索引:i
 		// 为获取的后台缓冲区创建渲染目标视图
-		// para2: D3D12_RENDER_TARGET_VIEW_DESC,描述了资源中元素的数据类型,如果该资源在创建时已指定了具体格式,就可以设为nullptr
+		// para2: D3D12_RENDER_TARGET_VIEW_DESC,描述了资源中元素的数据类型
+		// 如果该资源在创建时已指定了具体格式,就可以设为nullptr
 		md3dDevice->CreateRenderTargetView(mSwapChainBuffer[i].Get(), nullptr, rtvHeapHandle);
 		// 偏移到描述符堆中的下一个缓冲区
 		rtvHeapHandle.Offset(1, mRtvDescriptorSize);
@@ -386,9 +385,21 @@ bool D3DApp::InitMainWindow()
 	int width = R.right - R.left;
 	int height = R.bottom - R.top;
 
-	// 调用CreateWindow()创建窗口,返回创建窗口的句柄(HWND类型),创建失败返回0	// 窗口句柄是一种窗口的引用方式	// 采用前面注册的WNDCLASS实例	  // 窗口标题	// 窗口的样式标志	// x坐标	// y坐标	// 窗口宽度	// 窗口高度	// 父窗口句柄	// 菜单句柄 // 应用程序实例句柄 // 其他参数
-	mhMainWnd = CreateWindow(L"MainWnd", mMainWndCaption.c_str(),
-		WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, width, height, 0, 0, mhAppInst, 0);
+	// 调用CreateWindow()创建窗口,返回创建窗口的句柄(HWND类型),创建失败返回0
+	// 窗口句柄是一种窗口的引用方式
+	mhMainWnd = CreateWindow(
+		L"MainWnd", // 采用前面注册的WNDCLASS实例
+		mMainWndCaption.c_str(), // 窗口标题
+		WS_OVERLAPPEDWINDOW, // 窗口的样式标志
+		CW_USEDEFAULT, // x坐标
+		CW_USEDEFAULT, // y坐标
+		width, // 窗口宽度
+		height, // 窗口高度
+		0, // 父窗口句柄
+		0, // 菜单句柄
+		mhAppInst, // 应用程序实例句柄
+		0 // 其他参数
+	);
 	if (!mhMainWnd)
 	{
 		MessageBox(0, L"CreateWindow Failed", 0, 0);
@@ -463,8 +474,12 @@ bool D3DApp::InitDirect3D()
 	CreateCommandObjects();
 	// 5,描述并创建交换链
 	CreateSwapChain();
-	// 6,创建应用程序所需的描述符堆	// 7,调整后台缓冲区的大小,并为它创建渲染目标视图RTV // 8,创建深度/模板缓冲区及与之关联的深度/模板视图DSV // 9,设置视口(viewport)和裁剪矩形(scissor rectangle)
+	// 6,创建应用程序所需的描述符堆	
 	CreateRtvAndDsvDescriptorHeaps();
+
+	// 7,调整后台缓冲区的大小,并为它创建渲染目标视图RTV
+	// 8,创建深度/模板缓冲区及与之关联的深度/模板视图DSV
+	// 9,设置视口(viewport)和裁剪矩形(scissor rectangle)
 
 	return true;
 }
@@ -610,7 +625,7 @@ void D3DApp::LogAdapters()
 		DXGI_ADAPTER_DESC desc;
 		adapter->GetDesc(&desc);
 
-		std::wstring text = L"***Adapter: ";
+		std::wstring text = L"**Adapter: ";
 		text += desc.Description;
 		text += L"\n";
 
@@ -637,7 +652,7 @@ void D3DApp::LogAdapterOutputs(IDXGIAdapter* adapter)
 		DXGI_OUTPUT_DESC desc;
 		output->GetDesc(&desc);
 
-		std::wstring text = L"***Output: ";
+		std::wstring text = L"**Output: ";
 		text += desc.DeviceName;
 		text += L"\n";
 		OutputDebugString(text.c_str());
@@ -666,7 +681,7 @@ void D3DApp::LogOutputDisplayModes(IDXGIOutput* output, DXGI_FORMAT format)
 		UINT n = x.RefreshRate.Numerator;
 		UINT d = x.RefreshRate.Denominator;
 		std::wstring text =
-			L"Width = " + std::to_wstring(x.Width) + L" " +
+			L"**Width= " + std::to_wstring(x.Width) + L" " +
 			L"Height = " + std::to_wstring(x.Height) + L" " +
 			L"Refresh = " + std::to_wstring(n) + L"/" + std::to_wstring(d) +
 			L"\n";
