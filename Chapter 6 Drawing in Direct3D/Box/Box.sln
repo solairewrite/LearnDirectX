@@ -1,0 +1,40 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.28307.572
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Box", "Box\Box.vcxproj", "{F1A28D48-2CA7-49F7-B152-2B139B571E50}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Notes", "Notes", "{9DCC61F7-3DCA-43C7-96E0-3A21E598A41C}"
+	ProjectSection(SolutionItems) = preProject
+		..\..\Notes\第4章 Direct3D的初始化.md = ..\..\Notes\第4章 Direct3D的初始化.md
+		..\..\Notes\第5章 渲染流水线.md = ..\..\Notes\第5章 渲染流水线.md
+		..\..\Notes\第6章 利用Direct3D绘制几何体.md = ..\..\Notes\第6章 利用Direct3D绘制几何体.md
+		..\..\Notes\第7章 利用Direct3D绘制几何体(续)-LandAndWaves.md = ..\..\Notes\第7章 利用Direct3D绘制几何体(续)-LandAndWaves.md
+		..\..\Notes\第7章 利用Direct3D绘制几何体(续)-Shapes.md = ..\..\Notes\第7章 利用Direct3D绘制几何体(续)-Shapes.md
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Debug|x86 = Debug|x86
+		Release|x64 = Release|x64
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{F1A28D48-2CA7-49F7-B152-2B139B571E50}.Debug|x64.ActiveCfg = Debug|x64
+		{F1A28D48-2CA7-49F7-B152-2B139B571E50}.Debug|x64.Build.0 = Debug|x64
+		{F1A28D48-2CA7-49F7-B152-2B139B571E50}.Debug|x86.ActiveCfg = Debug|Win32
+		{F1A28D48-2CA7-49F7-B152-2B139B571E50}.Debug|x86.Build.0 = Debug|Win32
+		{F1A28D48-2CA7-49F7-B152-2B139B571E50}.Release|x64.ActiveCfg = Release|x64
+		{F1A28D48-2CA7-49F7-B152-2B139B571E50}.Release|x64.Build.0 = Release|x64
+		{F1A28D48-2CA7-49F7-B152-2B139B571E50}.Release|x86.ActiveCfg = Release|Win32
+		{F1A28D48-2CA7-49F7-B152-2B139B571E50}.Release|x86.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {6FFC791D-70D4-4FE8-9114-0937CABEBD58}
+	EndGlobalSection
+EndGlobal

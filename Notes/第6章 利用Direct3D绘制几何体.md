@@ -19,6 +19,7 @@
 这样一来,就能向流水线的输入装配阶段传递顶点数据了  
 **ID3D12GraphicsCommandList :: IASetVertexBuffers**  
 绘制顶点: **ID3D12GraphicsCommandList :: DrawInstanced**  
+在使用索引的时候,用 ID3D12GraphicsCommandList\::DrawIndexedInstanced 绘制  
 ### 6.3 索引和索引缓冲区
 为了使GPU可以访问索引数组,需要将它们放置于GPU的缓冲区资源(ID3D12Resource)内,称为索引缓冲区(index buffer)  
 为了使索引缓冲区与渲染流水线绑定,需要给索引缓冲区资源创建索引缓冲区视图(index buffer view,不需要描述符堆)  
