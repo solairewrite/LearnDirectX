@@ -45,7 +45,7 @@ Microsoft::WRL::ComPtr<ID3D12Resource> d3dUtil::CreateDefaultBuffer(
 {
 	ComPtr<ID3D12Resource> defaultBuffer;
 
-	// Create the actual default buffer resource. 创建实际的默认缓冲区资源
+	// 创建实际的默认缓冲区资源
 	ThrowIfFailed(device->CreateCommittedResource(
 		&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT), // 默认堆
 		D3D12_HEAP_FLAG_NONE,
@@ -54,8 +54,8 @@ Microsoft::WRL::ComPtr<ID3D12Resource> d3dUtil::CreateDefaultBuffer(
 		nullptr,
 		IID_PPV_ARGS(defaultBuffer.GetAddressOf())));
 
-	// In order to copy CPU memory data into our default buffer, we need to create
-	// an intermediate upload heap. 为了将CPU内存中的数据复制到默认缓冲区,还需要创建一个处于中介位置的上传堆
+
+	// 为了将CPU内存中的数据复制到默认缓冲区,还需要创建一个处于中介位置的上传堆
 	ThrowIfFailed(device->CreateCommittedResource(
 		&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD), // 上传堆
 		D3D12_HEAP_FLAG_NONE,
@@ -64,7 +64,7 @@ Microsoft::WRL::ComPtr<ID3D12Resource> d3dUtil::CreateDefaultBuffer(
 		nullptr,
 		IID_PPV_ARGS(uploadBuffer.GetAddressOf())));
 
-	// Describe the data we want to copy into the default buffer. 描述希望复制到默认缓冲区中的数据
+	// 描述希望复制到默认缓冲区中的数据
 	D3D12_SUBRESOURCE_DATA subResourceData = {};
 	subResourceData.pData = initData; // 指向某个系统内存块的指针,其中有初始化缓冲区所用的数据
 	subResourceData.RowPitch = byteSize; // 对于缓冲区而言,此参数为想要复制数据的字节数
@@ -93,20 +93,32 @@ ComPtr<ID3DBlob> d3dUtil::CompileShader(
 {
 	UINT compileFlags = 0; // 如果处于调试模式,则使用调试标志
 #if defined(DEBUG) || defined(_DEBUG)  
-	compileFlags = D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION; // 调试模式/跳过优化
+	compileFlags = D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION; //用调试模式来编译着色器,跳过优化阶段
 #endif
 
 	HRESULT hr = S_OK;
+
 	// ID3DBlob类型描述一段普通的内存块,两个方法
 	// GetBufferPointer(),返回数据void*类型的指针,使用前要转换类型.
 	// GetBufferSize(),返回数据大小
 	ComPtr<ID3DBlob> byteCode = nullptr; // 储存编译好的着色器对象字节码
 	ComPtr<ID3DBlob> errors; // 如果编译报错,储存报错的字符串
+
+	// para1: .hlsl源代码文件
+	// para2: 本书不使用,设置为nullptr
+	// para3: 本书不使用
+	// para4: 着色器的入口函数名
+	// para5: 指定所用着色器类型和版本的字符串
+	// para6: 指示对着色器代码应当如何编译的标志
+	// para7: 本书不使用
+	// para8: 返回一个指向 ID3DBlob 数据结构的指针,它储存着编译好的着色器对象字节码
+	// para8: 返回一个指向 ID3DBlob 数据结构的指针,如果编译出错,它便会储存报错的字符串
 	hr = D3DCompileFromFile(filename.c_str(), defines, D3D_COMPILE_STANDARD_FILE_INCLUDE,
 		entrypoint.c_str(), target.c_str(), compileFlags, 0, &byteCode, &errors);
+
 	// 将错误信息输出到调试窗口
 	if (errors != nullptr)
-		OutputDebugStringA((char*)errors->GetBufferPointer()); // GetBufferPointer:返回指向 ID3DBlob 对象数据的 void* 类型的指针
+		OutputDebugStringA((char*)errors->GetBufferPointer());
 
 	ThrowIfFailed(hr);
 

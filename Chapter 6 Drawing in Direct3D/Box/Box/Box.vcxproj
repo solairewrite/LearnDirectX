@@ -160,6 +160,7 @@
     <ClInclude Include="..\..\..\Common\GeometryGenerator.h" />
     <ClInclude Include="..\..\..\Common\MathHelper.h" />
     <ClInclude Include="..\..\..\Common\UploadBuffer.h" />
+    <ClInclude Include="BoxApp.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\color.hlsl">

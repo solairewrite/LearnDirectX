@@ -3,60 +3,62 @@
 #include "d3dUtil.h"
 
 template<typename T>
-class UploadBuffer // 上传缓冲区辅助函数
+class UploadBuffer
 {
 public:
-	UploadBuffer(ID3D12Device* device, UINT elementCount, bool isConstantBuffer) :
-		mIsConstantBuffer(isConstantBuffer)
+	UploadBuffer(ID3D12Device* device, UINT elementCount, bool isConstantBuffer)
+		:mIsConstantBuffer(isConstantBuffer)
 	{
 		mElementByteSize = sizeof(T);
 
-		// 常量缓冲区的大小为 256 bytes 的整数倍
-		// 因为硬盘只能按 m*256B的偏移量和n*256B的数据长度 查看常量数据 
+		// 常量缓冲区对硬件有特别的要求,大小必为硬件最小分配空间(256B)的整数倍
 		if (isConstantBuffer)
 			mElementByteSize = d3dUtil::CalcConstantBufferByteSize(sizeof(T));
 
-		// 根据构造器中的device,更新mUploadBuffer
 		ThrowIfFailed(device->CreateCommittedResource(
-			&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD), // 上传堆
+			&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD), // 常量缓冲区通常由CPU每帧更新一次,在上传堆
 			D3D12_HEAP_FLAG_NONE,
 			&CD3DX12_RESOURCE_DESC::Buffer(mElementByteSize*elementCount),
 			D3D12_RESOURCE_STATE_GENERIC_READ,
 			nullptr,
 			IID_PPV_ARGS(&mUploadBuffer)));
 
-		// 获取指向想要更新资源数据的指针,修改了mMappedData
+		// 获得指向欲更新资源数据的指针
+		// para1: 子资源的索引,指定了欲映射的子资源.对于缓冲区来说,它自身就是唯一的子资源,设为0
+		// para2: 内存的映射范围, nullptr对整个资源进行映射
+		// para3: 待映射资源数据的目标内存块
 		ThrowIfFailed(mUploadBuffer->Map(0, nullptr, reinterpret_cast<void**>(&mMappedData)));
-
-		// 只要还会修改当前的资源,就不取消映射
-		// 在资源被GPU使用期间,不能向资源进行写操作(使用同步技术)
 	}
 
 	UploadBuffer(const UploadBuffer& rhs) = delete;
 	UploadBuffer& operator=(const UploadBuffer& rhs) = delete;
 	~UploadBuffer()
 	{
+		// 当常量缓冲区更新完成后,应该在释放映射内存之前对其进行取消映射操作
+		// para1: 子资源索引,指定了将被取消映射的子资源,缓冲区设为0
+		// para2: 取消映射的内存范围, nullptr取消整个资源的映射
 		if (mUploadBuffer != nullptr)
-			mUploadBuffer->Unmap(0, nullptr); // 取消映射
+			mUploadBuffer->Unmap(0, nullptr);
 
 		mMappedData = nullptr;
 	}
 
-	ID3D12Resource* Resource()const
+	ID3D12Resource* Resource() const
 	{
 		return mUploadBuffer.Get();
 	}
 
-	// 将数据从系统内存复制到常量缓冲区
+	// 通过CPU修改上传缓冲区中数据(eg, 观察矩阵变化)
 	void CopyData(int elementIndex, const T& data)
 	{
+		// 将数据从系统内存复制到常量缓冲区
 		memcpy(&mMappedData[elementIndex*mElementByteSize], &data, sizeof(T));
 	}
 
 private:
-	Microsoft::WRL::ComPtr<ID3D12Resource> mUploadBuffer; // 上传缓冲区
-	BYTE* mMappedData = nullptr; // 想要更新资源数据的指针
+	Microsoft::WRL::ComPtr<ID3D12Resource> mUploadBuffer;
+	BYTE* mMappedData = nullptr;
 
 	UINT mElementByteSize = 0;
-	bool mIsConstantBuffer = false; // 是否是常量缓冲区
+	bool mIsConstantBuffer = false;
 };
