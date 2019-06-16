@@ -1,88 +1,9 @@
-//***************************************************************************************
-// BoxApp.cpp by Frank Luna (C) 2015 All Rights Reserved.
-//
-// Shows how to draw a box in Direct3D 12.
-//
-// Controls:
-//   Hold the left mouse button down and move the mouse to rotate.
-//   Hold the right mouse button down and move the mouse to zoom in and out.
-//***************************************************************************************
+// 按住左键拖动旋转,右键缩放
 
 // RTV,DSV				: 有描述符堆, 有描述符(视图)
 // 顶点缓冲区,索引缓冲区: 无描述符堆, 有描述符(视图), 默认堆, 通过输入布局描述指定着色器寄存器
 // 常量缓冲区			: 有描述符堆, 有描述符(视图), 上传堆, 通过根签名指定着色器寄存器, CPU每帧更新
 
-//#include "../../../Common/d3dApp.h"
-//#include "../../../Common/MathHelper.h"
-//#include "../../../Common/UploadBuffer.h"
-//
-//using Microsoft::WRL::ComPtr;
-//using namespace DirectX;
-//using namespace DirectX::PackedVector;
-//
-//struct Vertex
-//{
-//	XMFLOAT3 Pos;
-//	XMFLOAT4 Color;
-//};
-//
-//struct ObjectConstants
-//{
-//	XMFLOAT4X4 WorldViewProj = MathHelper::Identity4x4();
-//};
-//
-//class BoxApp : public D3DApp
-//{
-//public:
-//	BoxApp(HINSTANCE hInstance);
-//	BoxApp(const BoxApp& rhs) = delete;
-//	BoxApp& operator=(const BoxApp& rhs) = delete;
-//	~BoxApp();
-//
-//	virtual bool Initialize()override;
-//
-//private:
-//	virtual void OnResize()override;
-//	virtual void Update(const GameTimer& gt)override;
-//	virtual void Draw(const GameTimer& gt)override;
-//
-//	virtual void OnMouseDown(WPARAM btnState, int x, int y)override;
-//	virtual void OnMouseUp(WPARAM btnState, int x, int y)override;
-//	virtual void OnMouseMove(WPARAM btnState, int x, int y)override;
-//
-//	void BuildDescriptorHeaps();
-//	void BuildConstantBuffers();
-//	void BuildRootSignature();
-//	void BuildShadersAndInputLayout();
-//	void BuildBoxGeometry();
-//	void BuildPSO();
-//
-//private:
-//
-//	ComPtr<ID3D12RootSignature> mRootSignature = nullptr;
-//	ComPtr<ID3D12DescriptorHeap> mCbvHeap = nullptr;
-//
-//	std::unique_ptr<UploadBuffer<ObjectConstants>> mObjectCB = nullptr;
-//
-//	std::unique_ptr<MeshGeometry> mBoxGeo = nullptr;
-//
-//	ComPtr<ID3DBlob> mvsByteCode = nullptr;
-//	ComPtr<ID3DBlob> mpsByteCode = nullptr;
-//
-//	std::vector<D3D12_INPUT_ELEMENT_DESC> mInputLayout;
-//
-//	ComPtr<ID3D12PipelineState> mPSO = nullptr;
-//
-//	XMFLOAT4X4 mWorld = MathHelper::Identity4x4();
-//	XMFLOAT4X4 mView = MathHelper::Identity4x4();
-//	XMFLOAT4X4 mProj = MathHelper::Identity4x4();
-//
-//	float mTheta = 1.5f*XM_PI;
-//	float mPhi = XM_PIDIV4;
-//	float mRadius = 5.0f;
-//
-//	POINT mLastMousePos;
-//};
 #include "BoxApp.h"
 int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
 	_In_ LPSTR lpCmdLine, _In_ int nShowCmd)
@@ -110,10 +31,12 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
 BoxApp::BoxApp(HINSTANCE hInstance)
 	: D3DApp(hInstance)
 {
+
 }
 
 BoxApp::~BoxApp()
 {
+
 }
 
 bool BoxApp::Initialize()
@@ -167,8 +90,8 @@ void BoxApp::Update(const GameTimer& gt)
 	XMStoreFloat4x4(&mView, view);
 
 	XMMATRIX world = XMLoadFloat4x4(&mWorld);
-	XMMATRIX proj = XMLoadFloat4x4(&mProj);
-	XMMATRIX worldViewProj = world * view*proj;
+	XMMATRIX proj = XMLoadFloat4x4(&mProj); // 投影矩阵在 OnResize 中计算
+	XMMATRIX worldViewProj = world * view * proj;
 
 	// Update the constant buffer with the latest worldViewProj matrix.
 	// (CPU每帧)更新常量缓冲区
@@ -179,26 +102,19 @@ void BoxApp::Update(const GameTimer& gt)
 
 void BoxApp::Draw(const GameTimer& gt)
 {
-	// Reuse the memory associated with command recording.
-	// We can only reset when the associated command lists have finished execution on the GPU.
 	ThrowIfFailed(mDirectCmdListAlloc->Reset());
 
-	// A command list can be reset after it has been added to the command queue via ExecuteCommandList.
-	// Reusing the command list reuses memory.
 	ThrowIfFailed(mCommandList->Reset(mDirectCmdListAlloc.Get(), mPSO.Get()));
 
 	mCommandList->RSSetViewports(1, &mScreenViewport);
 	mCommandList->RSSetScissorRects(1, &mScissorRect);
 
-	// Indicate a state transition on the resource usage.
 	mCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(CurrentBackBuffer(),
 		D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
 
-	// Clear the back buffer and depth buffer.
 	mCommandList->ClearRenderTargetView(CurrentBackBufferView(), Colors::LightSteelBlue, 0, nullptr);
 	mCommandList->ClearDepthStencilView(DepthStencilView(), D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
 
-	// Specify the buffers we are going to render to.
 	mCommandList->OMSetRenderTargets(1, &CurrentBackBufferView(), true, &DepthStencilView());
 
 	ID3D12DescriptorHeap* descriptorHeaps[] = { mCbvHeap.Get() };
@@ -236,7 +152,6 @@ void BoxApp::Draw(const GameTimer& gt)
 		mBoxGeo->DrawArgs["box"].IndexCount,
 		1, 0, 0, 0);
 
-	// Indicate a state transition on the resource usage.
 	mCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(CurrentBackBuffer(),
 		D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
 
@@ -244,16 +159,12 @@ void BoxApp::Draw(const GameTimer& gt)
 	ThrowIfFailed(mCommandList->Close());
 
 	// Add the command list to the queue for execution.
-	ID3D12CommandList* cmdsLists[] = { mCommandList.Get() };
-	mCommandQueue->ExecuteCommandLists(_countof(cmdsLists), cmdsLists);
+	ID3D12CommandList* cmdLists[] = { mCommandList.Get() };
+	mCommandQueue->ExecuteCommandLists(_countof(cmdLists), cmdLists);
 
-	// swap the back and front buffers
 	ThrowIfFailed(mSwapChain->Present(0, 0));
 	mCurrBackBuffer = (mCurrBackBuffer + 1) % SwapChainBufferCount;
 
-	// Wait until frame commands are complete.  This waiting is inefficient and is
-	// done for simplicity.  Later we will show how to organize our rendering code
-	// so we do not have to wait per frame.
 	FlushCommandQueue();
 }
 
@@ -279,20 +190,20 @@ void BoxApp::OnMouseMove(WPARAM btnState, int x, int y)
 		float dy = XMConvertToRadians(0.25f*static_cast<float>(y - mLastMousePos.y));
 
 		// Update angles based on input to orbit camera around box.
-		mTheta += dx;
-		mPhi += dy;
+		mTheta += -dx; // 觉得原来的别扭,这里我换了方向
+		mPhi += -dy;
 
 		// Restrict the angle mPhi.
 		mPhi = MathHelper::Clamp(mPhi, 0.1f, MathHelper::Pi - 0.1f);
 	}
-	else if ((btnState & MK_RBUTTON) != 0)
+	if ((btnState & MK_RBUTTON) != 0) // 原来是 else if, 不顺畅
 	{
 		// Make each pixel correspond to 0.005 unit in the scene.
 		float dx = 0.005f*static_cast<float>(x - mLastMousePos.x);
 		float dy = 0.005f*static_cast<float>(y - mLastMousePos.y);
 
 		// Update the camera radius based on input.
-		mRadius += dx - dy;
+		mRadius += -(dx - dy); // 我换了方向
 
 		// Restrict the radius.
 		mRadius = MathHelper::Clamp(mRadius, 3.0f, 15.0f);
@@ -338,12 +249,6 @@ void BoxApp::BuildConstantBuffers()
 
 void BoxApp::BuildRootSignature()
 {
-
-
-
-
-
-
 	// 着色器程序一般需要以资源作为输入(eg,常量缓冲区,纹理,采样器等)
 	// 根签名定义了着色器程序所需的具体资源
 	// 如果把着色器程序看做一个函数,而将输入的资源看做向函数传递的参数数据
@@ -351,11 +256,9 @@ void BoxApp::BuildRootSignature()
 
 	// 根签名以一组描述绘制调用过程中,着色器所需资源的根参数定义而成 
 
-
 	// 根参数可以是根常量,根描述符,或根描述符表
 	// 描述符表指定的是描述符堆中存有描述符的一块连续区域
 	CD3DX12_ROOT_PARAMETER slotRootParameter[1];
-
 
 	CD3DX12_DESCRIPTOR_RANGE cbvTable;
 	// para1: 描述符表的类型
@@ -370,7 +273,6 @@ void BoxApp::BuildRootSignature()
 	// 根签名是根参数数组
 	CD3DX12_ROOT_SIGNATURE_DESC rootSigDesc(1, slotRootParameter, 0, nullptr,
 		D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
-
 
 	ComPtr<ID3DBlob> serializedRootSig = nullptr;
 	ComPtr<ID3DBlob> errorBlob = nullptr;
@@ -393,8 +295,6 @@ void BoxApp::BuildRootSignature()
 
 void BoxApp::BuildShadersAndInputLayout()
 {
-	//HRESULT hr = S_OK;
-
 	mvsByteCode = d3dUtil::CompileShader(L"Shaders\\color.hlsl", nullptr, "VS", "vs_5_0");
 	mpsByteCode = d3dUtil::CompileShader(L"Shaders\\color.hlsl", nullptr, "PS", "ps_5_0");
 
@@ -465,6 +365,24 @@ void BoxApp::BuildBoxGeometry()
 
 	ThrowIfFailed(D3DCreateBlob(ibByteSize, &mBoxGeo->IndexBufferCPU));
 	CopyMemory(mBoxGeo->IndexBufferCPU->GetBufferPointer(), indices.data(), ibByteSize);
+	// 将顶点数据和索引数据上传到GPU默认堆
+	mBoxGeo->VertexBufferGPU = d3dUtil::CreateDefaultBuffer(md3dDevice.Get(),
+		mCommandList.Get(), vertices.data(), vbByteSize, mBoxGeo->VertexBufferUploader);
+
+	mBoxGeo->IndexBufferGPU = d3dUtil::CreateDefaultBuffer(md3dDevice.Get(),
+		mCommandList.Get(), indices.data(), ibByteSize, mBoxGeo->IndexBufferUploader);
+
+	mBoxGeo->VertexByteStride = sizeof(Vertex);
+	mBoxGeo->VertexBufferByteSize = vbByteSize;
+	mBoxGeo->IndexFormat = DXGI_FORMAT_R16_UINT;
+	mBoxGeo->IndexBufferByteSize = ibByteSize;
+
+	SubmeshGeometry submesh;
+	submesh.IndexCount = (UINT)indices.size();
+	submesh.StartIndexLocation = 0;
+	submesh.BaseVertexLocation = 0;
+
+	mBoxGeo->DrawArgs["box"] = submesh;
 }
 
 void BoxApp::BuildPSO()
@@ -474,8 +392,8 @@ void BoxApp::BuildPSO()
 	// 输入布局描述 结构体 D3D12_INPUT_LAYOUT_DESC
 	// para1: D3D12_INPUT_ELEMENT_DESC *pInputElementDescs
 	// para2: UINT NumElements
-	psoDesc.InputLayout = { mInputLayout.data(), (UINT)mInputLayout.size() };
-	psoDesc.pRootSignature = mRootSignature.Get();
+	psoDesc.InputLayout = { mInputLayout.data(),(UINT)mInputLayout.size() }; // 输入布局描述,将顶点结构体映射到VS的输入参数中
+	psoDesc.pRootSignature = mRootSignature.Get(); // 根签名,指定了着色器程序所需的资源(CBV对应哪个着色器寄存器)
 	psoDesc.VS =
 	{
 		reinterpret_cast<BYTE*>(mvsByteCode->GetBufferPointer()),

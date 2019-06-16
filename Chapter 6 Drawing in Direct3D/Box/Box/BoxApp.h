@@ -40,15 +40,15 @@ private:
 	void BuildConstantBuffers(); // 为 mObjectCB 分配空间,描述符存在 mCbvHeap 中
 	void BuildRootSignature(); // 根签名指定了常量缓冲区绑定到哪个着色器寄存器
 	void BuildShadersAndInputLayout(); // 指定 VS, PS, mInputLayout(顶点结构体映射到VS的输入参数)
-	void BuildBoxGeometry();
-	void BuildPSO();
+	void BuildBoxGeometry(); // 将顶点/索引上传到默认堆, 存到 mBoxGeo 中
+	void BuildPSO(); // 为 mPSO 赋值
 
 private:
 
 	ComPtr<ID3D12RootSignature> mRootSignature = nullptr; // 根签名,指定了着色器程序所需的资源(CBV对应哪个着色器寄存器)
 	ComPtr<ID3D12DescriptorHeap> mCbvHeap = nullptr; // 常量缓冲区描述符
 
-	std::unique_ptr<UploadBuffer<ObjectConstants>> mObjectCB = nullptr; // 常量缓冲区
+	std::unique_ptr<UploadBuffer<ObjectConstants>> mObjectCB = nullptr; // 常量缓冲区, Update 中,每帧更新变换矩阵
 
 	std::unique_ptr<MeshGeometry> mBoxGeo = nullptr;
 
@@ -57,7 +57,7 @@ private:
 
 	std::vector<D3D12_INPUT_ELEMENT_DESC> mInputLayout; // 输入布局描述,将顶点结构体映射到VS的输入参数中
 
-	ComPtr<ID3D12PipelineState> mPSO = nullptr;
+	ComPtr<ID3D12PipelineState> mPSO = nullptr; // 流水线状态对象,整合了 mRootSignature, mInputLayout, mvsByteCode, mpsByteCode
 
 	XMFLOAT4X4 mWorld = MathHelper::Identity4x4();
 	XMFLOAT4X4 mView = MathHelper::Identity4x4();
