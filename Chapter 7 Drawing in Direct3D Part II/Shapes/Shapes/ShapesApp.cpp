@@ -3,128 +3,131 @@
 //
 // Hold down '1' key to view scene in wireframe mode.
 //***************************************************************************************
+#include "ShapesApp.h"
+//#include "../../../Common/d3dApp.h"
+//#include "../../../Common/MathHelper.h"
+//#include "../../../Common/UploadBuffer.h"
+//#include "../../../Common/GeometryGenerator.h"
+//#include "FrameResource.h"
+//
+//using Microsoft::WRL::ComPtr;
+//using namespace DirectX;
+//using namespace DirectX::PackedVector;
+//
+//const int gNumFrameResources = 3;
+//
+//// Lightweight structure stores parameters to draw a shape.  This will
+//// vary from app-to-app.
+//// 渲染项: 单次绘制调用过程中,需要向渲染流水线提交的数据集
+//struct RenderItem
+//{
+//	RenderItem() = default;
+//
+//	// World matrix of the shape that describes the object's local space
+//	// relative to the world space, which defines the position, orientation,
+//	// and scale of the object in the world.
+//	XMFLOAT4X4 World = MathHelper::Identity4x4();
+//
+//	// Dirty flag indicating the object data has changed and we need to update the constant buffer.
+//	// Because we have an object cbuffer for each FrameResource, we have to apply the
+//	// update to each FrameResource.  Thus, when we modify obect data we should set 
+//	// NumFramesDirty = gNumFrameResources so that each frame resource gets the update.
+//	int NumFramesDirty = gNumFrameResources;
+//
+//	// Index into GPU constant buffer corresponding to the ObjectCB for this render item.
+//	// 该索引指向的,GPU常量缓存区对应的,当前渲染项中的物体常量缓冲区
+//	UINT ObjCBIndex = -1;
+//
+//	// 此渲染项参与绘制的几何体,绘制一个几何体可能会用到多个渲染项
+//	MeshGeometry* Geo = nullptr;
+//
+//	// Primitive topology.
+//	D3D12_PRIMITIVE_TOPOLOGY PrimitiveType = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+//
+//	// DrawIndexedInstanced parameters.
+//	UINT IndexCount = 0;
+//	UINT StartIndexLocation = 0;
+//	int BaseVertexLocation = 0;
+//};
+//
+//class ShapesApp : public D3DApp
+//{
+//public:
+//	ShapesApp(HINSTANCE hInstance);
+//	ShapesApp(const ShapesApp& rhs) = delete;
+//	ShapesApp& operator=(const ShapesApp& rhs) = delete;
+//	~ShapesApp();
+//
+//	virtual bool Initialize()override;
+//
+//private:
+//	virtual void OnResize()override;
+//	virtual void Update(const GameTimer& gt)override;
+//	virtual void Draw(const GameTimer& gt)override;
+//
+//	virtual void OnMouseDown(WPARAM btnState, int x, int y)override;
+//	virtual void OnMouseUp(WPARAM btnState, int x, int y)override;
+//	virtual void OnMouseMove(WPARAM btnState, int x, int y)override;
+//
+//	void OnKeyboardInput(const GameTimer& gt);
+//	void UpdateCamera(const GameTimer& gt);
+//	void UpdateObjectCBs(const GameTimer& gt);
+//	void UpdateMainPassCB(const GameTimer& gt);
+//
+//	void BuildDescriptorHeaps();
+//	void BuildConstantBufferViews();
+//	void BuildRootSignature();
+//	void BuildShadersAndInputLayout();
+//	void BuildShapeGeometry();
+//	void BuildPSOs();
+//	void BuildFrameResources();
+//	void BuildRenderItems();
+//	void DrawRenderItems(ID3D12GraphicsCommandList* cmdList, const std::vector<RenderItem*>& ritems);
+//
+//private:
+//
+//	std::vector<std::unique_ptr<FrameResource>> mFrameResources;
+//	FrameResource* mCurrFrameResource = nullptr;
+//	int mCurrFrameResourceIndex = 0;
+//
+//	ComPtr<ID3D12RootSignature> mRootSignature = nullptr;
+//	ComPtr<ID3D12DescriptorHeap> mCbvHeap = nullptr;
+//
+//	ComPtr<ID3D12DescriptorHeap> mSrvDescriptorHeap = nullptr;
+//
+//	std::unordered_map<std::string, std::unique_ptr<MeshGeometry>> mGeometries;
+//	std::unordered_map<std::string, ComPtr<ID3DBlob>> mShaders;
+//	std::unordered_map<std::string, ComPtr<ID3D12PipelineState>> mPSOs;
+//
+//	std::vector<D3D12_INPUT_ELEMENT_DESC> mInputLayout;
+//
+//	// List of all the render items.
+//	std::vector<std::unique_ptr<RenderItem>> mAllRitems;
+//
+//	// Render items divided by PSO.
+//	std::vector<RenderItem*> mOpaqueRitems;
+//
+//	PassConstants mMainPassCB;
+//
+//	UINT mPassCbvOffset = 0; // 渲染过程CBV起始偏移量(最后3个),前面是3n个物体
+//
+//	bool mIsWireframe = false;
+//
+//	XMFLOAT3 mEyePos = { 0.0f, 0.0f, 0.0f };
+//	XMFLOAT4X4 mView = MathHelper::Identity4x4();
+//	XMFLOAT4X4 mProj = MathHelper::Identity4x4();
+//
+//	float mTheta = 1.5f*XM_PI;
+//	float mPhi = 0.2f*XM_PI;
+//	float mRadius = 15.0f;
+//
+//	POINT mLastMousePos;
+//};
 
-#include "../../../Common/d3dApp.h"
-#include "../../../Common/MathHelper.h"
-#include "../../../Common/UploadBuffer.h"
-#include "../../../Common/GeometryGenerator.h"
-#include "FrameResource.h"
-
-using Microsoft::WRL::ComPtr;
-using namespace DirectX;
-using namespace DirectX::PackedVector;
-
-const int gNumFrameResources = 3;
-
-// Lightweight structure stores parameters to draw a shape.  This will
-// vary from app-to-app.
-struct RenderItem
+int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
+	_In_ LPSTR lpCmdLine, _In_ int nShowCmd)
 {
-	RenderItem() = default;
 
-	// World matrix of the shape that describes the object's local space
-	// relative to the world space, which defines the position, orientation,
-	// and scale of the object in the world.
-	XMFLOAT4X4 World = MathHelper::Identity4x4();
-
-	// Dirty flag indicating the object data has changed and we need to update the constant buffer.
-	// Because we have an object cbuffer for each FrameResource, we have to apply the
-	// update to each FrameResource.  Thus, when we modify obect data we should set 
-	// NumFramesDirty = gNumFrameResources so that each frame resource gets the update.
-	int NumFramesDirty = gNumFrameResources;
-
-	// Index into GPU constant buffer corresponding to the ObjectCB for this render item.
-	UINT ObjCBIndex = -1;
-
-	MeshGeometry* Geo = nullptr;
-
-	// Primitive topology.
-	D3D12_PRIMITIVE_TOPOLOGY PrimitiveType = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
-
-	// DrawIndexedInstanced parameters.
-	UINT IndexCount = 0;
-	UINT StartIndexLocation = 0;
-	int BaseVertexLocation = 0;
-};
-
-class ShapesApp : public D3DApp
-{
-public:
-	ShapesApp(HINSTANCE hInstance);
-	ShapesApp(const ShapesApp& rhs) = delete;
-	ShapesApp& operator=(const ShapesApp& rhs) = delete;
-	~ShapesApp();
-
-	virtual bool Initialize()override;
-
-private:
-	virtual void OnResize()override;
-	virtual void Update(const GameTimer& gt)override;
-	virtual void Draw(const GameTimer& gt)override;
-
-	virtual void OnMouseDown(WPARAM btnState, int x, int y)override;
-	virtual void OnMouseUp(WPARAM btnState, int x, int y)override;
-	virtual void OnMouseMove(WPARAM btnState, int x, int y)override;
-
-	void OnKeyboardInput(const GameTimer& gt);
-	void UpdateCamera(const GameTimer& gt);
-	void UpdateObjectCBs(const GameTimer& gt);
-	void UpdateMainPassCB(const GameTimer& gt);
-
-	void BuildDescriptorHeaps();
-	void BuildConstantBufferViews();
-	void BuildRootSignature();
-	void BuildShadersAndInputLayout();
-	void BuildShapeGeometry();
-	void BuildPSOs();
-	void BuildFrameResources();
-	void BuildRenderItems();
-	void DrawRenderItems(ID3D12GraphicsCommandList* cmdList, const std::vector<RenderItem*>& ritems);
-
-private:
-
-	std::vector<std::unique_ptr<FrameResource>> mFrameResources;
-	FrameResource* mCurrFrameResource = nullptr;
-	int mCurrFrameResourceIndex = 0;
-
-	ComPtr<ID3D12RootSignature> mRootSignature = nullptr;
-	ComPtr<ID3D12DescriptorHeap> mCbvHeap = nullptr;
-
-	ComPtr<ID3D12DescriptorHeap> mSrvDescriptorHeap = nullptr;
-
-	std::unordered_map<std::string, std::unique_ptr<MeshGeometry>> mGeometries;
-	std::unordered_map<std::string, ComPtr<ID3DBlob>> mShaders;
-	std::unordered_map<std::string, ComPtr<ID3D12PipelineState>> mPSOs;
-
-	std::vector<D3D12_INPUT_ELEMENT_DESC> mInputLayout;
-
-	// List of all the render items.
-	std::vector<std::unique_ptr<RenderItem>> mAllRitems;
-
-	// Render items divided by PSO.
-	std::vector<RenderItem*> mOpaqueRitems;
-
-	PassConstants mMainPassCB;
-
-	UINT mPassCbvOffset = 0;
-
-	bool mIsWireframe = false;
-
-	XMFLOAT3 mEyePos = { 0.0f, 0.0f, 0.0f };
-	XMFLOAT4X4 mView = MathHelper::Identity4x4();
-	XMFLOAT4X4 mProj = MathHelper::Identity4x4();
-
-	float mTheta = 1.5f*XM_PI;
-	float mPhi = 0.2f*XM_PI;
-	float mRadius = 15.0f;
-
-	POINT mLastMousePos;
-};
-
-int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance,
-	PSTR cmdLine, int showCmd)
-{
-	// Enable run-time memory check for debug builds.
 #if defined(DEBUG) | defined(_DEBUG)
 	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
 #endif
@@ -163,10 +166,10 @@ bool ShapesApp::Initialize()
 	// Reset the command list to prep for initialization commands.
 	ThrowIfFailed(mCommandList->Reset(mDirectCmdListAlloc.Get(), nullptr));
 
-	BuildRootSignature();
-	BuildShadersAndInputLayout();
-	BuildShapeGeometry();
-	BuildRenderItems();
+	BuildRootSignature(); // 修改 mRootSignature, 包含两个cbvTable根参数,分别对应寄存器插槽 0,1. 着色器 cbuffer cbPerObject: register(b0), cbuffer cbPass: register(b1)
+	BuildShadersAndInputLayout(); // 修改了 mShaders, mInputLayout,顶点插槽是0
+	BuildShapeGeometry(); // 修改 mGeometries[geo->Name],将几个几何体的顶点和索引合并传到GPU,记录了几个图形的顶点/索引偏移, geo->VertexBufferUploader,在CPU也有内存副本 geo->VertexBufferCPU
+	BuildRenderItems(); // 将每一个物体都存到 mAllRitems, mOpaqueRitems 中,相同物体的顶点/索引偏移相同,但是它们的世界矩阵不同,ObjIndex++. 渲染对象中存储了 World, ObjCBIndex, Geo, PrimitiveType, IndexCount, StartIndexLocation, BaseVertexLocation
 	BuildFrameResources();
 	BuildDescriptorHeaps();
 	BuildConstantBufferViews();
@@ -203,6 +206,8 @@ void ShapesApp::Update(const GameTimer& gt)
 
 	// Has the GPU finished processing the commands of the current frame resource?
 	// If not, wait until the GPU has completed commands up to this fence point.
+	// 最开始,三个帧资源 Fence 都为 0,所致直接向队列中加入了3个帧资源的绘制命令
+	// 之后的循环,对于这个帧资源来说,判断之前传到GPU命令队列中的任务有没有完成,如果没完成,就让CPU等待
 	if (mCurrFrameResource->Fence != 0 && mFence->GetCompletedValue() < mCurrFrameResource->Fence)
 	{
 		HANDLE eventHandle = CreateEventEx(nullptr, false, false, EVENT_ALL_ACCESS);
@@ -256,7 +261,7 @@ void ShapesApp::Draw(const GameTimer& gt)
 	int passCbvIndex = mPassCbvOffset + mCurrFrameResourceIndex;
 	auto passCbvHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(mCbvHeap->GetGPUDescriptorHandleForHeapStart());
 	passCbvHandle.Offset(passCbvIndex, mCbvSrvUavDescriptorSize);
-	mCommandList->SetGraphicsRootDescriptorTable(1, passCbvHandle);
+	mCommandList->SetGraphicsRootDescriptorTable(1, passCbvHandle); // cbuffer cbPass : register(b1)
 
 	DrawRenderItems(mCommandList.Get(), mOpaqueRitems);
 
@@ -281,6 +286,8 @@ void ShapesApp::Draw(const GameTimer& gt)
 	// Add an instruction to the command queue to set a new fence point. 
 	// Because we are on the GPU timeline, the new fence point won't be 
 	// set until the GPU finishes processing all the commands prior to this Signal().
+	// mFence 配合 mCurrentFence 不停的将 ++ 命令加入GPU命令队列中
+	// 它并没有跳跃,而是 0->1->2->3... 一个一个的增加
 	mCommandQueue->Signal(mFence.Get(), mCurrentFence);
 }
 
@@ -409,6 +416,8 @@ void ShapesApp::BuildDescriptorHeaps()
 
 	// Need a CBV descriptor for each object for each frame resource,
 	// +1 for the perPass CBV for each frame resource.
+	// 为每个帧资源中的每一个物体都创建一个CBV描述符
+	// 为每个帧资源中的渲染过程CBV而+1
 	UINT numDescriptors = (objCount + 1) * gNumFrameResources;
 
 	// Save an offset to the start of the pass CBVs.  These are the last 3 descriptors.
@@ -423,6 +432,7 @@ void ShapesApp::BuildDescriptorHeaps()
 		IID_PPV_ARGS(&mCbvHeap)));
 }
 
+// 改的还是 cbvHeap,将物体的常量缓冲区地址和偏移后的句柄绑定
 void ShapesApp::BuildConstantBufferViews()
 {
 	UINT objCBByteSize = d3dUtil::CalcConstantBufferByteSize(sizeof(ObjectConstants));
@@ -430,6 +440,7 @@ void ShapesApp::BuildConstantBufferViews()
 	UINT objCount = (UINT)mOpaqueRitems.size();
 
 	// Need a CBV descriptor for each object for each frame resource.
+	// 每个帧资源中的每一个物体都需要一个对应的CBV描述符
 	for (int frameIndex = 0; frameIndex < gNumFrameResources; ++frameIndex)
 	{
 		auto objectCB = mFrameResources[frameIndex]->ObjectCB->Resource();
@@ -438,9 +449,11 @@ void ShapesApp::BuildConstantBufferViews()
 			D3D12_GPU_VIRTUAL_ADDRESS cbAddress = objectCB->GetGPUVirtualAddress();
 
 			// Offset to the ith object constant buffer in the buffer.
+			// 偏移到缓冲区中第i个物体的常量缓冲区
 			cbAddress += i * objCBByteSize;
 
 			// Offset to the object cbv in the descriptor heap.
+			// 偏移到该物体在描述符堆中的CBV
 			int heapIndex = frameIndex * objCount + i;
 			auto handle = CD3DX12_CPU_DESCRIPTOR_HANDLE(mCbvHeap->GetCPUDescriptorHandleForHeapStart());
 			handle.Offset(heapIndex, mCbvSrvUavDescriptorSize);
@@ -456,13 +469,15 @@ void ShapesApp::BuildConstantBufferViews()
 	UINT passCBByteSize = d3dUtil::CalcConstantBufferByteSize(sizeof(PassConstants));
 
 	// Last three descriptors are the pass CBVs for each frame resource.
+	// 最后3个描述符依次是每个帧资源的渲染过程CBV
 	for (int frameIndex = 0; frameIndex < gNumFrameResources; ++frameIndex)
 	{
 		auto passCB = mFrameResources[frameIndex]->PassCB->Resource();
 		D3D12_GPU_VIRTUAL_ADDRESS cbAddress = passCB->GetGPUVirtualAddress();
 
 		// Offset to the pass cbv in the descriptor heap.
-		int heapIndex = mPassCbvOffset + frameIndex;
+		// 偏移到描述符堆中对应的渲染过程CBV
+		int heapIndex = mPassCbvOffset + frameIndex; // mPassCbvOffset = objCount * gNumFrameResources
 		auto handle = CD3DX12_CPU_DESCRIPTOR_HANDLE(mCbvHeap->GetCPUDescriptorHandleForHeapStart());
 		handle.Offset(heapIndex, mCbvSrvUavDescriptorSize);
 
@@ -476,24 +491,28 @@ void ShapesApp::BuildConstantBufferViews()
 
 void ShapesApp::BuildRootSignature()
 {
+	// 两个描述符表,这两个CBV有着不同的更新频率
+	// 渲染过程CBV在每个渲染过程中设置一次
+	// 物体CBV针对每一个渲染项进行配置
+
 	CD3DX12_DESCRIPTOR_RANGE cbvTable0;
+	// para2: 描述符个数
+	// para3: 着色器寄存器
 	cbvTable0.Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 0);
 
 	CD3DX12_DESCRIPTOR_RANGE cbvTable1;
 	cbvTable1.Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 1);
 
-	// Root parameter can be a table, root descriptor or root constants.
 	CD3DX12_ROOT_PARAMETER slotRootParameter[2];
 
-	// Create root CBVs.
 	slotRootParameter[0].InitAsDescriptorTable(1, &cbvTable0);
 	slotRootParameter[1].InitAsDescriptorTable(1, &cbvTable1);
 
-	// A root signature is an array of root parameters.
+	
 	CD3DX12_ROOT_SIGNATURE_DESC rootSigDesc(2, slotRootParameter, 0, nullptr,
 		D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 
-	// create a root signature with a single slot which points to a descriptor range consisting of a single constant buffer
+
 	ComPtr<ID3DBlob> serializedRootSig = nullptr;
 	ComPtr<ID3DBlob> errorBlob = nullptr;
 	HRESULT hr = D3D12SerializeRootSignature(&rootSigDesc, D3D_ROOT_SIGNATURE_VERSION_1,
@@ -501,7 +520,7 @@ void ShapesApp::BuildRootSignature()
 
 	if (errorBlob != nullptr)
 	{
-		::OutputDebugStringA((char*)errorBlob->GetBufferPointer());
+		OutputDebugStringA((char*)errorBlob->GetBufferPointer());
 	}
 	ThrowIfFailed(hr);
 
@@ -516,8 +535,8 @@ void ShapesApp::BuildShadersAndInputLayout()
 {
 	mShaders["standardVS"] = d3dUtil::CompileShader(L"Shaders\\color.hlsl", nullptr, "VS", "vs_5_1");
 	mShaders["opaquePS"] = d3dUtil::CompileShader(L"Shaders\\color.hlsl", nullptr, "PS", "ps_5_1");
-
-	mInputLayout =
+	// LPCSTR SemanticName; UINT SemanticIndex; DXGI_FORMAT Format; UINT InputSlot; UINT AlignedByteOffset; D3D12_INPUT_CLASSIFICATION InputSlotClass; UINT InstanceDataStepRate; D3D12_INPUT_ELEMENT_DESC;
+	mInputLayout = // 顶点插槽是0
 	{
 		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 		{ "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
@@ -532,25 +551,29 @@ void ShapesApp::BuildShapeGeometry()
 	GeometryGenerator::MeshData sphere = geoGen.CreateSphere(0.5f, 20, 20);
 	GeometryGenerator::MeshData cylinder = geoGen.CreateCylinder(0.5f, 0.3f, 3.0f, 20, 20);
 
-	//
-	// We are concatenating all the geometry into one big vertex/index buffer.  So
-	// define the regions in the buffer each submesh covers.
-	//
 
-	// Cache the vertex offsets to each object in the concatenated vertex buffer.
+
+
+	// 将所有的几何体数据都合并到一对大的顶点/索引缓冲区中
+	// 以此来定义每个子网格数据在缓冲区中所占的范围
+
+
+	// 对合并顶点缓冲区中每个物体的顶点偏移量进行缓存
 	UINT boxVertexOffset = 0;
 	UINT gridVertexOffset = (UINT)box.Vertices.size();
 	UINT sphereVertexOffset = gridVertexOffset + (UINT)grid.Vertices.size();
 	UINT cylinderVertexOffset = sphereVertexOffset + (UINT)sphere.Vertices.size();
 
-	// Cache the starting index for each object in the concatenated index buffer.
+
+	// 对合并索引缓存区中每个物体的起始索引进行缓存
 	UINT boxIndexOffset = 0;
 	UINT gridIndexOffset = (UINT)box.Indices32.size();
 	UINT sphereIndexOffset = gridIndexOffset + (UINT)grid.Indices32.size();
 	UINT cylinderIndexOffset = sphereIndexOffset + (UINT)sphere.Indices32.size();
 
-	// Define the SubmeshGeometry that cover different 
-	// regions of the vertex/index buffers.
+
+
+	// 定义的多个SubmeshGeometry结构体包含了顶点/索引缓冲区内不同几何体的子网格数据
 
 	SubmeshGeometry boxSubmesh;
 	boxSubmesh.IndexCount = (UINT)box.Indices32.size();
@@ -572,10 +595,10 @@ void ShapesApp::BuildShapeGeometry()
 	cylinderSubmesh.StartIndexLocation = cylinderIndexOffset;
 	cylinderSubmesh.BaseVertexLocation = cylinderVertexOffset;
 
-	//
-	// Extract the vertex elements we are interested in and pack the
-	// vertices of all the meshes into one vertex buffer.
-	//
+
+
+
+	// 提取所有的顶点元素,再将所有网格的顶点装进一个顶点缓冲区
 
 	auto totalVertexCount =
 		box.Vertices.size() +
@@ -622,13 +645,13 @@ void ShapesApp::BuildShapeGeometry()
 	auto geo = std::make_unique<MeshGeometry>();
 	geo->Name = "shapeGeo";
 
-	ThrowIfFailed(D3DCreateBlob(vbByteSize, &geo->VertexBufferCPU));
-	CopyMemory(geo->VertexBufferCPU->GetBufferPointer(), vertices.data(), vbByteSize);
+	ThrowIfFailed(D3DCreateBlob(vbByteSize, &geo->VertexBufferCPU)); // 为顶点分配内存空间
+	CopyMemory(geo->VertexBufferCPU->GetBufferPointer(), vertices.data(), vbByteSize); // 顶点内存副本
 
 	ThrowIfFailed(D3DCreateBlob(ibByteSize, &geo->IndexBufferCPU));
 	CopyMemory(geo->IndexBufferCPU->GetBufferPointer(), indices.data(), ibByteSize);
 
-	geo->VertexBufferGPU = d3dUtil::CreateDefaultBuffer(md3dDevice.Get(),
+	geo->VertexBufferGPU = d3dUtil::CreateDefaultBuffer(md3dDevice.Get(), // 将顶点传到GPU默认堆
 		mCommandList.Get(), vertices.data(), vbByteSize, geo->VertexBufferUploader);
 
 	geo->IndexBufferGPU = d3dUtil::CreateDefaultBuffer(md3dDevice.Get(),
@@ -643,7 +666,7 @@ void ShapesApp::BuildShapeGeometry()
 	geo->DrawArgs["grid"] = gridSubmesh;
 	geo->DrawArgs["sphere"] = sphereSubmesh;
 	geo->DrawArgs["cylinder"] = cylinderSubmesh;
-
+	// 修改 mGeometries[geo->Name],将几个几何体的顶点和索引合并传到GPU, geo->VertexBufferUploader,在CPU也有内存副本 geo->VertexBufferCPU
 	mGeometries[geo->Name] = std::move(geo);
 }
 
@@ -699,8 +722,9 @@ void ShapesApp::BuildFrameResources()
 	}
 }
 
+// 渲染项: 向流水线提交的数据集
 void ShapesApp::BuildRenderItems()
-{
+{ // 将每一个物体都存到 mAllRitems, mOpaqueRitems 中,相同物体的顶点/索引偏移相同,但是它们的世界矩阵不同,ObjIndex++. 渲染对象中存储了 World, ObjCBIndex, Geo, PrimitiveType, IndexCount, StartIndexLocation, BaseVertexLocation
 	auto boxRitem = std::make_unique<RenderItem>();
 	XMStoreFloat4x4(&boxRitem->World, XMMatrixScaling(2.0f, 2.0f, 2.0f)*XMMatrixTranslation(0.0f, 0.5f, 0.0f));
 	boxRitem->ObjCBIndex = 0;
@@ -711,18 +735,18 @@ void ShapesApp::BuildRenderItems()
 	boxRitem->BaseVertexLocation = boxRitem->Geo->DrawArgs["box"].BaseVertexLocation;
 	mAllRitems.push_back(std::move(boxRitem));
 
-	auto gridRitem = std::make_unique<RenderItem>();
-	gridRitem->World = MathHelper::Identity4x4();
-	gridRitem->ObjCBIndex = 1;
-	gridRitem->Geo = mGeometries["shapeGeo"].get();
-	gridRitem->PrimitiveType = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
-	gridRitem->IndexCount = gridRitem->Geo->DrawArgs["grid"].IndexCount;
-	gridRitem->StartIndexLocation = gridRitem->Geo->DrawArgs["grid"].StartIndexLocation;
-	gridRitem->BaseVertexLocation = gridRitem->Geo->DrawArgs["grid"].BaseVertexLocation;
-	mAllRitems.push_back(std::move(gridRitem));
+	auto gridItem = std::make_unique<RenderItem>();
+	gridItem->World = MathHelper::Identity4x4();
+	gridItem->ObjCBIndex = 1;
+	gridItem->Geo = mGeometries["shapeGeo"].get();
+	gridItem->PrimitiveType = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+	gridItem->IndexCount = gridItem->Geo->DrawArgs["grid"].IndexCount;
+	gridItem->StartIndexLocation = gridItem->Geo->DrawArgs["grid"].StartIndexLocation;
+	gridItem->BaseVertexLocation = gridItem->Geo->DrawArgs["grid"].BaseVertexLocation;
+	mAllRitems.push_back(std::move(gridItem));
 
 	UINT objCBIndex = 2;
-	for (int i = 0; i < 5; ++i)
+	for (int i=0; i<5; ++i)
 	{
 		auto leftCylRitem = std::make_unique<RenderItem>();
 		auto rightCylRitem = std::make_unique<RenderItem>();
@@ -735,7 +759,7 @@ void ShapesApp::BuildRenderItems()
 		XMMATRIX leftSphereWorld = XMMatrixTranslation(-5.0f, 3.5f, -10.0f + i * 5.0f);
 		XMMATRIX rightSphereWorld = XMMatrixTranslation(+5.0f, 3.5f, -10.0f + i * 5.0f);
 
-		XMStoreFloat4x4(&leftCylRitem->World, rightCylWorld);
+		XMStoreFloat4x4(&leftCylRitem->World, leftCylWorld);
 		leftCylRitem->ObjCBIndex = objCBIndex++;
 		leftCylRitem->Geo = mGeometries["shapeGeo"].get();
 		leftCylRitem->PrimitiveType = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
@@ -743,7 +767,7 @@ void ShapesApp::BuildRenderItems()
 		leftCylRitem->StartIndexLocation = leftCylRitem->Geo->DrawArgs["cylinder"].StartIndexLocation;
 		leftCylRitem->BaseVertexLocation = leftCylRitem->Geo->DrawArgs["cylinder"].BaseVertexLocation;
 
-		XMStoreFloat4x4(&rightCylRitem->World, leftCylWorld);
+		XMStoreFloat4x4(&rightCylRitem->World, rightCylWorld);
 		rightCylRitem->ObjCBIndex = objCBIndex++;
 		rightCylRitem->Geo = mGeometries["shapeGeo"].get();
 		rightCylRitem->PrimitiveType = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
@@ -773,7 +797,7 @@ void ShapesApp::BuildRenderItems()
 		mAllRitems.push_back(std::move(rightSphereRitem));
 	}
 
-	// All the render items are opaque.
+
 	for (auto& e : mAllRitems)
 		mOpaqueRitems.push_back(e.get());
 }
@@ -794,11 +818,12 @@ void ShapesApp::DrawRenderItems(ID3D12GraphicsCommandList* cmdList, const std::v
 		cmdList->IASetPrimitiveTopology(ri->PrimitiveType);
 
 		// Offset to the CBV in the descriptor heap for this object and for this frame resource.
+		// 为了绘制当前的帧资源和当前物体,偏移到描述符堆中对应的CBV处
 		UINT cbvIndex = mCurrFrameResourceIndex * (UINT)mOpaqueRitems.size() + ri->ObjCBIndex;
 		auto cbvHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(mCbvHeap->GetGPUDescriptorHandleForHeapStart());
 		cbvHandle.Offset(cbvIndex, mCbvSrvUavDescriptorSize);
 
-		cmdList->SetGraphicsRootDescriptorTable(0, cbvHandle);
+		cmdList->SetGraphicsRootDescriptorTable(0, cbvHandle); // cbuffer cbPerObject : register(b0)
 
 		cmdList->DrawIndexedInstanced(ri->IndexCount, 1, ri->StartIndexLocation, ri->BaseVertexLocation, 0);
 	}
