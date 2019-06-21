@@ -183,10 +183,10 @@ bool LandAndWavesApp::Initialize()
 	BuildShadersAndInputLayout(); // 修改 mShaders, mInputLayout(对应顶点结构体)register0
 	BuildLandGeometry(); // 将顶点和索引数据存入 mGeometries["landGeo"]->DrawArgs["grid"]
 	BuildWavesGeometryBuffers(); // 将水面索引数据存入 mGeometries["waterGeo"]->DrawArgs["grid"],顶点数据需要动态设置
-	BuildRenderItems();
+	BuildRenderItems(); // 修改 mRitemLayer[], mAllRitems 存入 mGeometries[] 数据
 	//BuildRenderItems();
-	BuildFrameResources();
-	BuildPSOs();
+	BuildFrameResources(); // 修改 mFrameResources
+	BuildPSOs(); // 修改了 mPSOs
 
 	// Execute the initialization commands.
 	ThrowIfFailed(mCommandList->Close());
@@ -639,13 +639,13 @@ void LandAndWavesApp::BuildPSOs()
 {
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC opaquePsoDesc;
 
-	//
-	// PSO for opaque objects.
-	//
+
+
+	// PSO for opaque objects
 	ZeroMemory(&opaquePsoDesc, sizeof(D3D12_GRAPHICS_PIPELINE_STATE_DESC));
-	opaquePsoDesc.InputLayout = { mInputLayout.data(), (UINT)mInputLayout.size() };
+	opaquePsoDesc.InputLayout = { mInputLayout.data(),(UINT)mInputLayout.size() };
 	opaquePsoDesc.pRootSignature = mRootSignature.Get();
-	opaquePsoDesc.VS =
+	opaquePsoDesc.VS = 
 	{
 		reinterpret_cast<BYTE*>(mShaders["standardVS"]->GetBufferPointer()),
 		mShaders["standardVS"]->GetBufferSize()
@@ -667,9 +667,9 @@ void LandAndWavesApp::BuildPSOs()
 	opaquePsoDesc.DSVFormat = mDepthStencilFormat;
 	ThrowIfFailed(md3dDevice->CreateGraphicsPipelineState(&opaquePsoDesc, IID_PPV_ARGS(&mPSOs["opaque"])));
 
-	//
-	// PSO for opaque wireframe objects.
-	//
+
+	// PSO for opaque wireframe objects
+
 
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC opaqueWireframePsoDesc = opaquePsoDesc;
 	opaqueWireframePsoDesc.RasterizerState.FillMode = D3D12_FILL_MODE_WIREFRAME;
@@ -679,12 +679,12 @@ void LandAndWavesApp::BuildPSOs()
 void LandAndWavesApp::BuildFrameResources()
 {
 	for (int i = 0; i < gNumFrameResources; ++i)
-	{
+	{ // ID3D12Device* device, UINT passCount, UINT objectCount, UINT waveVertCount
 		mFrameResources.push_back(std::make_unique<FrameResource>(md3dDevice.Get(),
 			1, (UINT)mAllRitems.size(), mWaves->VertexCount()));
 	}
 }
-
+// 修改 mRitemLayer[], mAllRitems 存入 mGeometries[] 数据
 void LandAndWavesApp::BuildRenderItems()
 {
 	auto wavesRitem = std::make_unique<RenderItem>();
