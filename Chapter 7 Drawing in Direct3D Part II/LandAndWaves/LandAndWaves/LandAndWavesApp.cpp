@@ -3,137 +3,137 @@
 //
 // Hold down '1' key to view scene in wireframe mode.
 //***************************************************************************************
+#include "LandAndWavesApp.h";
 
-#include "../../../Common/d3dApp.h"
-#include "../../../Common/MathHelper.h"
-#include "../../../Common/UploadBuffer.h"
-#include "../../../Common/GeometryGenerator.h"
-#include "FrameResource.h"
-#include "Waves.h"
 
-using Microsoft::WRL::ComPtr;
-using namespace DirectX;
-using namespace DirectX::PackedVector;
 
-const int gNumFrameResources = 3;
 
-// Lightweight structure stores parameters to draw a shape.  This will
-// vary from app-to-app.
-struct RenderItem
-{
-	RenderItem() = default;
 
-	// World matrix of the shape that describes the object's local space
-	// relative to the world space, which defines the position, orientation,
-	// and scale of the object in the world.
-	XMFLOAT4X4 World = MathHelper::Identity4x4();
 
-	// Dirty flag indicating the object data has changed and we need to update the constant buffer.
-	// Because we have an object cbuffer for each FrameResource, we have to apply the
-	// update to each FrameResource.  Thus, when we modify obect data we should set 
-	// NumFramesDirty = gNumFrameResources so that each frame resource gets the update.
-	int NumFramesDirty = gNumFrameResources;
 
-	// Index into GPU constant buffer corresponding to the ObjectCB for this render item.
-	UINT ObjCBIndex = -1;
 
-	MeshGeometry* Geo = nullptr;
 
-	// Primitive topology.
-	D3D12_PRIMITIVE_TOPOLOGY PrimitiveType = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
 
-	// DrawIndexedInstanced parameters.
-	UINT IndexCount = 0;
-	UINT StartIndexLocation = 0;
-	int BaseVertexLocation = 0;
-};
 
-enum class RenderLayer : int
-{
-	Opaque = 0,
-	Count
-};
 
-class LandAndWavesApp : public D3DApp
-{
-public:
-	LandAndWavesApp(HINSTANCE hInstance);
-	LandAndWavesApp(const LandAndWavesApp& rhs) = delete;
-	LandAndWavesApp& operator=(const LandAndWavesApp& rhs) = delete;
-	~LandAndWavesApp();
 
-	virtual bool Initialize()override;
 
-private:
-	virtual void OnResize()override;
-	virtual void Update(const GameTimer& gt)override;
-	virtual void Draw(const GameTimer& gt)override;
 
-	virtual void OnMouseDown(WPARAM btnState, int x, int y)override;
-	virtual void OnMouseUp(WPARAM btnState, int x, int y)override;
-	virtual void OnMouseMove(WPARAM btnState, int x, int y)override;
 
-	void OnKeyboardInput(const GameTimer& gt);
-	void UpdateCamera(const GameTimer& gt);
-	void UpdateObjectCBs(const GameTimer& gt);
-	void UpdateMainPassCB(const GameTimer& gt);
-	void UpdateWaves(const GameTimer& gt);
 
-	void BuildRootSignature();
-	void BuildShadersAndInputLayout();
-	void BuildLandGeometry();
-	void BuildWavesGeometryBuffers();
-	void BuildPSOs();
-	void BuildFrameResources();
-	void BuildRenderItems();
-	void DrawRenderItems(ID3D12GraphicsCommandList* cmdList, const std::vector<RenderItem*>& ritems);
 
-	float GetHillsHeight(float x, float z)const;
-	XMFLOAT3 GetHillsNormal(float x, float z)const;
 
-private:
 
-	std::vector<std::unique_ptr<FrameResource>> mFrameResources;
-	FrameResource* mCurrFrameResource = nullptr;
-	int mCurrFrameResourceIndex = 0;
 
-	UINT mCbvSrvDescriptorSize = 0;
 
-	ComPtr<ID3D12RootSignature> mRootSignature = nullptr;
 
-	std::unordered_map<std::string, std::unique_ptr<MeshGeometry>> mGeometries;
-	std::unordered_map<std::string, ComPtr<ID3DBlob>> mShaders;
-	std::unordered_map<std::string, ComPtr<ID3D12PipelineState>> mPSOs;
 
-	std::vector<D3D12_INPUT_ELEMENT_DESC> mInputLayout;
 
-	RenderItem* mWavesRitem = nullptr;
 
-	// List of all the render items.
-	std::vector<std::unique_ptr<RenderItem>> mAllRitems;
 
-	// Render items divided by PSO.
-	std::vector<RenderItem*> mRitemLayer[(int)RenderLayer::Count];
 
-	std::unique_ptr<Waves> mWaves;
 
-	PassConstants mMainPassCB;
 
-	bool mIsWireframe = false;
 
-	XMFLOAT3 mEyePos = { 0.0f, 0.0f, 0.0f };
-	XMFLOAT4X4 mView = MathHelper::Identity4x4();
-	XMFLOAT4X4 mProj = MathHelper::Identity4x4();
 
-	float mTheta = 1.5f*XM_PI;
-	float mPhi = XM_PIDIV2 - 0.1f;
-	float mRadius = 50.0f;
 
-	float mSunTheta = 1.25f*XM_PI;
-	float mSunPhi = XM_PIDIV4;
 
-	POINT mLastMousePos;
-};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance,
 	PSTR cmdLine, int showCmd)
@@ -179,12 +179,12 @@ bool LandAndWavesApp::Initialize()
 
 	mWaves = std::make_unique<Waves>(128, 128, 1.0f, 0.03f, 4.0f, 0.2f);
 
-	BuildRootSignature();
-	BuildShadersAndInputLayout();
-	BuildLandGeometry();
-	BuildWavesGeometryBuffers();
+	BuildRootSignature(); // 将 register0,1 指定为 CBV
+	BuildShadersAndInputLayout(); // 修改 mShaders, mInputLayout(对应顶点结构体)register0
+	BuildLandGeometry(); // 将顶点和索引数据存入 mGeometries["landGeo"]->DrawArgs["grid"]
+	BuildWavesGeometryBuffers(); // 将水面索引数据存入 mGeometries["waterGeo"]->DrawArgs["grid"],顶点数据需要动态设置
 	BuildRenderItems();
-	BuildRenderItems();
+	//BuildRenderItems();
 	BuildFrameResources();
 	BuildPSOs();
 
@@ -454,25 +454,25 @@ void LandAndWavesApp::UpdateWaves(const GameTimer& gt)
 
 void LandAndWavesApp::BuildRootSignature()
 {
-	// Root parameter can be a table, root descriptor or root constants.
-	CD3DX12_ROOT_PARAMETER slotRootParameter[2];
 
-	// Create root CBV.
+	CD3DX12_ROOT_PARAMETER slotRootParameter[2];
+	// 使用根描述符,可以摆脱描述符堆直接绑定CBV
+	// para0: 着色器寄存器
 	slotRootParameter[0].InitAsConstantBufferView(0);
 	slotRootParameter[1].InitAsConstantBufferView(1);
 
-	// A root signature is an array of root parameters.
+
 	CD3DX12_ROOT_SIGNATURE_DESC rootSigDesc(2, slotRootParameter, 0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 
-	// create a root signature with a single slot which points to a descriptor range consisting of a single constant buffer
+
 	ComPtr<ID3DBlob> serializedRootSig = nullptr;
 	ComPtr<ID3DBlob> errorBlob = nullptr;
 	HRESULT hr = D3D12SerializeRootSignature(&rootSigDesc, D3D_ROOT_SIGNATURE_VERSION_1,
 		serializedRootSig.GetAddressOf(), errorBlob.GetAddressOf());
 
-	if (errorBlob != nullptr)
+	if (errorBlob!=nullptr)
 	{
-		::OutputDebugStringA((char*)errorBlob->GetBufferPointer());
+		OutputDebugStringA((char*)errorBlob->GetBufferPointer());
 	}
 	ThrowIfFailed(hr);
 
@@ -503,23 +503,23 @@ void LandAndWavesApp::BuildLandGeometry()
 	GeometryGenerator geoGen;
 	GeometryGenerator::MeshData grid = geoGen.CreateGrid(160.0f, 160.0f, 50, 50);
 
-	//
-	// Extract the vertex elements we are interested and apply the height function to
-	// each vertex.  In addition, color the vertices based on their height so we have
-	// sandy looking beaches, grassy low hills, and snow mountain peaks.
-	//
+
+
+
+
+
 
 	std::vector<Vertex> vertices(grid.Vertices.size());
-	for (size_t i = 0; i < grid.Vertices.size(); ++i)
+	for (size_t i=0; i<grid.Vertices.size(); ++i)
 	{
 		auto& p = grid.Vertices[i].Position;
 		vertices[i].Pos = p;
 		vertices[i].Pos.y = GetHillsHeight(p.x, p.z);
 
-		// Color the vertex based on its height.
+		// 根据高度设置颜色
 		if (vertices[i].Pos.y < -10.0f)
 		{
-			// Sandy beach color.
+
 			vertices[i].Color = XMFLOAT4(1.0f, 0.96f, 0.62f, 1.0f);
 		}
 		else if (vertices[i].Pos.y < 5.0f)
@@ -575,22 +575,22 @@ void LandAndWavesApp::BuildLandGeometry()
 	submesh.BaseVertexLocation = 0;
 
 	geo->DrawArgs["grid"] = submesh;
-
-	mGeometries["landGeo"] = std::move(geo);
+	
+	mGeometries["landGeo"]=std::move(geo);
 }
 
 void LandAndWavesApp::BuildWavesGeometryBuffers()
 {
-	std::vector<std::uint16_t> indices(3 * mWaves->TriangleCount()); // 3 indices per face
+	std::vector<std::uint16_t> indices(3 * mWaves->TriangleCount());
 	assert(mWaves->VertexCount() < 0x0000ffff);
 
-	// Iterate over each quad.
+
 	int m = mWaves->RowCount();
 	int n = mWaves->ColumnCount();
 	int k = 0;
-	for (int i = 0; i < m - 1; ++i)
+	for (int i=0; i<m-1; ++i)
 	{
-		for (int j = 0; j < n - 1; ++j)
+		for (int j=0; j<n-1; ++j)
 		{
 			indices[k] = i * n + j;
 			indices[k + 1] = i * n + j + 1;
@@ -600,17 +600,17 @@ void LandAndWavesApp::BuildWavesGeometryBuffers()
 			indices[k + 4] = i * n + j + 1;
 			indices[k + 5] = (i + 1)*n + j + 1;
 
-			k += 6; // next quad
+			k += 6;
 		}
 	}
 
-	UINT vbByteSize = mWaves->VertexCount() * sizeof(Vertex);
+	UINT bvByteSize = mWaves->VertexCount() * sizeof(Vertex);
 	UINT ibByteSize = (UINT)indices.size() * sizeof(std::uint16_t);
 
 	auto geo = std::make_unique<MeshGeometry>();
 	geo->Name = "waterGeo";
 
-	// Set dynamically.
+	// 动态设置
 	geo->VertexBufferCPU = nullptr;
 	geo->VertexBufferGPU = nullptr;
 
@@ -621,7 +621,7 @@ void LandAndWavesApp::BuildWavesGeometryBuffers()
 		mCommandList.Get(), indices.data(), ibByteSize, geo->IndexBufferUploader);
 
 	geo->VertexByteStride = sizeof(Vertex);
-	geo->VertexBufferByteSize = vbByteSize;
+	geo->VertexBufferByteSize = bvByteSize;
 	geo->IndexFormat = DXGI_FORMAT_R16_UINT;
 	geo->IndexBufferByteSize = ibByteSize;
 
@@ -631,7 +631,7 @@ void LandAndWavesApp::BuildWavesGeometryBuffers()
 	submesh.BaseVertexLocation = 0;
 
 	geo->DrawArgs["grid"] = submesh;
-
+	
 	mGeometries["waterGeo"] = std::move(geo);
 }
 
