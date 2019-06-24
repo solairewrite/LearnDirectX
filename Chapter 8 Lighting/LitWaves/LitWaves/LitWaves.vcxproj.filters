@@ -108,5 +108,8 @@
     <None Include="..\..\..\Notes\第7章 利用Direct3D绘制几何体(续)-Shapes.md">
       <Filter>Notes</Filter>
     </None>
+    <None Include="..\..\..\Notes\第8章 光照.md">
+      <Filter>Notes</Filter>
+    </None>
   </ItemGroup>
 </Project>
