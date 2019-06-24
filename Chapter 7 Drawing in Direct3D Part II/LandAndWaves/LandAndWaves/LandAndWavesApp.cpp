@@ -1,139 +1,6 @@
-//***************************************************************************************
-// LandAndWavesApp.cpp by Frank Luna (C) 2015 All Rights Reserved.
-//
-// Hold down '1' key to view scene in wireframe mode.
-//***************************************************************************************
+// 按下'1'以线框模式显示
+
 #include "LandAndWavesApp.h";
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance,
 	PSTR cmdLine, int showCmd)
@@ -161,6 +28,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance,
 LandAndWavesApp::LandAndWavesApp(HINSTANCE hInstance)
 	: D3DApp(hInstance)
 {
+
 }
 
 LandAndWavesApp::~LandAndWavesApp()
@@ -184,7 +52,7 @@ bool LandAndWavesApp::Initialize()
 	BuildLandGeometry(); // 将顶点和索引数据存入 mGeometries["landGeo"]->DrawArgs["grid"]
 	BuildWavesGeometryBuffers(); // 将水面索引数据存入 mGeometries["waterGeo"]->DrawArgs["grid"],顶点数据需要动态设置
 	BuildRenderItems(); // 修改 mRitemLayer[], mAllRitems 存入 mGeometries[] 数据
-	//BuildRenderItems();
+	
 	BuildFrameResources(); // 修改 mFrameResources
 	BuildPSOs(); // 修改了 mPSOs
 
@@ -213,12 +81,9 @@ void LandAndWavesApp::Update(const GameTimer& gt)
 	OnKeyboardInput(gt);
 	UpdateCamera(gt);
 
-	// Cycle through the circular frame resource array.
 	mCurrFrameResourceIndex = (mCurrFrameResourceIndex + 1) % gNumFrameResources;
 	mCurrFrameResource = mFrameResources[mCurrFrameResourceIndex].get();
 
-	// Has the GPU finished processing the commands of the current frame resource?
-	// If not, wait until the GPU has completed commands up to this fence point.
 	if (mCurrFrameResource->Fence != 0 && mFence->GetCompletedValue() < mCurrFrameResource->Fence)
 	{
 		HANDLE eventHandle = CreateEventEx(nullptr, false, false, EVENT_ALL_ACCESS);
@@ -227,21 +92,19 @@ void LandAndWavesApp::Update(const GameTimer& gt)
 		CloseHandle(eventHandle);
 	}
 
-	UpdateObjectCBs(gt);
-	UpdateMainPassCB(gt);
+	UpdateObjectCBs(gt); // 更新每个帧资源的每个物体的 World
+	UpdateMainPassCB(gt); // 修改每个帧资源的PassCB: mMainPassCB
+	// 更新mWaves,设置 mCurrFrameResource->WavesVB: mWaves
+	// 再设置 mWavesRitem->Geo->VertexBufferGPU: mCurrFrameResource->WavesVB
 	UpdateWaves(gt);
 }
-
+	
 void LandAndWavesApp::Draw(const GameTimer& gt)
 {
 	auto cmdListAlloc = mCurrFrameResource->CmdListAlloc;
 
-	// Reuse the memory associated with command recording.
-	// We can only reset when the associated command lists have finished execution on the GPU.
 	ThrowIfFailed(cmdListAlloc->Reset());
 
-	// A command list can be reset after it has been added to the command queue via ExecuteCommandList.
-	// Reusing the command list reuses memory.
 	if (mIsWireframe)
 	{
 		ThrowIfFailed(mCommandList->Reset(cmdListAlloc.Get(), mPSOs["opaque_wireframe"].Get()));
@@ -254,46 +117,36 @@ void LandAndWavesApp::Draw(const GameTimer& gt)
 	mCommandList->RSSetViewports(1, &mScreenViewport);
 	mCommandList->RSSetScissorRects(1, &mScissorRect);
 
-	// Indicate a state transition on the resource usage.
 	mCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(CurrentBackBuffer(),
 		D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
 
-	// Clear the back buffer and depth buffer.
 	mCommandList->ClearRenderTargetView(CurrentBackBufferView(), Colors::LightSteelBlue, 0, nullptr);
 	mCommandList->ClearDepthStencilView(DepthStencilView(), D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
 
-	// Specify the buffers we are going to render to.
 	mCommandList->OMSetRenderTargets(1, &CurrentBackBufferView(), true, &DepthStencilView());
 
 	mCommandList->SetGraphicsRootSignature(mRootSignature.Get());
 
 	// Bind per-pass constant buffer.  We only need to do this once per-pass.
 	auto passCB = mCurrFrameResource->PassCB->Resource();
-	mCommandList->SetGraphicsRootConstantBufferView(1, passCB->GetGPUVirtualAddress());
+	// 将过程常量绑定到着色器 cbuffer cbPass : register(b1)
+	mCommandList->SetGraphicsRootConstantBufferView(1, passCB->GetGPUVirtualAddress()); 
 
 	DrawRenderItems(mCommandList.Get(), mRitemLayer[(int)RenderLayer::Opaque]);
 
-	// Indicate a state transition on the resource usage.
 	mCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(CurrentBackBuffer(),
 		D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
 
-	// Done recording commands.
 	ThrowIfFailed(mCommandList->Close());
 
-	// Add the command list to the queue for execution.
 	ID3D12CommandList* cmdsLists[] = { mCommandList.Get() };
 	mCommandQueue->ExecuteCommandLists(_countof(cmdsLists), cmdsLists);
 
-	// Swap the back and front buffers
 	ThrowIfFailed(mSwapChain->Present(0, 0));
 	mCurrBackBuffer = (mCurrBackBuffer + 1) % SwapChainBufferCount;
 
-	// Advance the fence value to mark commands up to this fence point.
 	mCurrFrameResource->Fence = ++mCurrentFence;
 
-	// Add an instruction to the command queue to set a new fence point. 
-	// Because we are on the GPU timeline, the new fence point won't be 
-	// set until the GPU finishes processing all the commands prior to this Signal().
 	mCommandQueue->Signal(mFence.Get(), mCurrentFence);
 }
 
@@ -366,13 +219,12 @@ void LandAndWavesApp::UpdateCamera(const GameTimer& gt)
 	XMStoreFloat4x4(&mView, view);
 }
 
+// 更新每个帧资源的每个物体的 World
 void LandAndWavesApp::UpdateObjectCBs(const GameTimer& gt)
 {
 	auto currObjectCB = mCurrFrameResource->ObjectCB.get();
 	for (auto& e : mAllRitems)
 	{
-		// Only update the cbuffer data if the constants have changed.  
-		// This needs to be tracked per frame resource.
 		if (e->NumFramesDirty > 0)
 		{
 			XMMATRIX world = XMLoadFloat4x4(&e->World);
@@ -382,12 +234,12 @@ void LandAndWavesApp::UpdateObjectCBs(const GameTimer& gt)
 
 			currObjectCB->CopyData(e->ObjCBIndex, objConstants);
 
-			// Next FrameResource need to be updated too.
 			e->NumFramesDirty--;
 		}
 	}
 }
 
+// 修改每个帧资源的PassCB: mMainPassCB
 void LandAndWavesApp::UpdateMainPassCB(const GameTimer& gt)
 {
 	XMMATRIX view = XMLoadFloat4x4(&mView);
@@ -416,6 +268,8 @@ void LandAndWavesApp::UpdateMainPassCB(const GameTimer& gt)
 	currPassCB->CopyData(0, mMainPassCB);
 }
 
+// 更新mWaves,设置 mCurrFrameResource->WavesVB: mWaves
+// 再设置 mWavesRitem->Geo->VertexBufferGPU: mCurrFrameResource->WavesVB
 void LandAndWavesApp::UpdateWaves(const GameTimer& gt)
 {
 	// Every quarter second, generate a random wave.
@@ -447,23 +301,19 @@ void LandAndWavesApp::UpdateWaves(const GameTimer& gt)
 		currWavesVB->CopyData(i, v);
 	}
 
-	// Set the dynamic VB of the wave renderitem to the current frame VB.
 	// 将波浪渲染的动态顶点缓冲区设置到当前帧的顶点缓冲区
 	mWavesRitem->Geo->VertexBufferGPU = currWavesVB->Resource();
 }
 
 void LandAndWavesApp::BuildRootSignature()
 {
-
 	CD3DX12_ROOT_PARAMETER slotRootParameter[2];
 	// 使用根描述符,可以摆脱描述符堆直接绑定CBV
 	// para0: 着色器寄存器
 	slotRootParameter[0].InitAsConstantBufferView(0);
 	slotRootParameter[1].InitAsConstantBufferView(1);
 
-
 	CD3DX12_ROOT_SIGNATURE_DESC rootSigDesc(2, slotRootParameter, 0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
-
 
 	ComPtr<ID3DBlob> serializedRootSig = nullptr;
 	ComPtr<ID3DBlob> errorBlob = nullptr;
@@ -495,19 +345,10 @@ void LandAndWavesApp::BuildShadersAndInputLayout()
 	};
 }
 
-
-
-
 void LandAndWavesApp::BuildLandGeometry()
 {
 	GeometryGenerator geoGen;
 	GeometryGenerator::MeshData grid = geoGen.CreateGrid(160.0f, 160.0f, 50, 50);
-
-
-
-
-
-
 
 	std::vector<Vertex> vertices(grid.Vertices.size());
 	for (size_t i=0; i<grid.Vertices.size(); ++i)
@@ -519,7 +360,6 @@ void LandAndWavesApp::BuildLandGeometry()
 		// 根据高度设置颜色
 		if (vertices[i].Pos.y < -10.0f)
 		{
-
 			vertices[i].Color = XMFLOAT4(1.0f, 0.96f, 0.62f, 1.0f);
 		}
 		else if (vertices[i].Pos.y < 5.0f)
@@ -584,7 +424,6 @@ void LandAndWavesApp::BuildWavesGeometryBuffers()
 	std::vector<std::uint16_t> indices(3 * mWaves->TriangleCount());
 	assert(mWaves->VertexCount() < 0x0000ffff);
 
-
 	int m = mWaves->RowCount();
 	int n = mWaves->ColumnCount();
 	int k = 0;
@@ -639,8 +478,6 @@ void LandAndWavesApp::BuildPSOs()
 {
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC opaquePsoDesc;
 
-
-
 	// PSO for opaque objects
 	ZeroMemory(&opaquePsoDesc, sizeof(D3D12_GRAPHICS_PIPELINE_STATE_DESC));
 	opaquePsoDesc.InputLayout = { mInputLayout.data(),(UINT)mInputLayout.size() };
@@ -667,10 +504,7 @@ void LandAndWavesApp::BuildPSOs()
 	opaquePsoDesc.DSVFormat = mDepthStencilFormat;
 	ThrowIfFailed(md3dDevice->CreateGraphicsPipelineState(&opaquePsoDesc, IID_PPV_ARGS(&mPSOs["opaque"])));
 
-
 	// PSO for opaque wireframe objects
-
-
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC opaqueWireframePsoDesc = opaquePsoDesc;
 	opaqueWireframePsoDesc.RasterizerState.FillMode = D3D12_FILL_MODE_WIREFRAME;
 	ThrowIfFailed(md3dDevice->CreateGraphicsPipelineState(&opaqueWireframePsoDesc, IID_PPV_ARGS(&mPSOs["opaque_wireframe"])));
@@ -684,6 +518,7 @@ void LandAndWavesApp::BuildFrameResources()
 			1, (UINT)mAllRitems.size(), mWaves->VertexCount()));
 	}
 }
+
 // 修改 mRitemLayer[], mAllRitems 存入 mGeometries[] 数据
 void LandAndWavesApp::BuildRenderItems()
 {
@@ -715,25 +550,25 @@ void LandAndWavesApp::BuildRenderItems()
 	mAllRitems.push_back(std::move(gridRitem));
 }
 
-void LandAndWavesApp::DrawRenderItems(ID3D12GraphicsCommandList* cmdList, const std::vector<RenderItem*>& ritems)
+void LandAndWavesApp::DrawRenderItems(ID3D12GraphicsCommandList* cmdList, const std::vector<RenderItem *>& ritems) 
 {
 	UINT objCBByteSize = d3dUtil::CalcConstantBufferByteSize(sizeof(ObjectConstants));
 
 	auto objectCB = mCurrFrameResource->ObjectCB->Resource();
 
-	// For each render item...
-	for (size_t i = 0; i < ritems.size(); ++i)
+	for (size_t i=0; i<ritems.size(); ++i)
 	{
 		auto ri = ritems[i];
 
-		cmdList->IASetVertexBuffers(0, 1, &ri->Geo->VertexBufferView());
+		cmdList->IASetVertexBuffers(0, 1, &ri->Geo->VertexBufferView()); // 顶点register0
 		cmdList->IASetIndexBuffer(&ri->Geo->IndexBufferView());
 		cmdList->IASetPrimitiveTopology(ri->PrimitiveType);
 
 		D3D12_GPU_VIRTUAL_ADDRESS objCBAddress = objectCB->GetGPUVirtualAddress();
 		objCBAddress += ri->ObjCBIndex*objCBByteSize;
 
-		cmdList->SetGraphicsRootConstantBufferView(0, objCBAddress);
+		// 将物体常量绑定到着色器 cbuffer cbPerObject : register(b0)
+		cmdList->SetGraphicsRootConstantBufferView(0, objCBAddress); 
 
 		cmdList->DrawIndexedInstanced(ri->IndexCount, 1, ri->StartIndexLocation, ri->BaseVertexLocation, 0);
 	}
