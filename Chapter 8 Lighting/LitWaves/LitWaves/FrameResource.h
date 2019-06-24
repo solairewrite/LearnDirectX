@@ -34,6 +34,7 @@ struct PassConstants
 	Light Lights[MaxLights];
 };
 
+// ∂‘”¶ hlsl struct VertexIn
 struct Vertex
 {
 	DirectX::XMFLOAT3 Pos;
