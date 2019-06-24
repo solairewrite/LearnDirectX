@@ -211,6 +211,8 @@ struct MeshGeometry
 };
 
 // 描述光源,可表示方向光源,点光源,聚光灯
+// LightingUtil.hlsl定义了对应的 struct Light
+// 成员的排列顺序遵从HLSL的结构体封装规则: 以填充的方式,将结构体中的元素打包为4D向量
 struct Light
 {
 	DirectX::XMFLOAT3 Strength = { 0.5f, 0.5f, 0.5f };	// 光源颜色
@@ -225,9 +227,9 @@ struct Light
 
 struct MaterialConstants
 {
-	DirectX::XMFLOAT4 DiffuseAlbedo = { 1.0f, 1.0f, 1.0f, 1.0f }; // 漫反射系数
-	DirectX::XMFLOAT3 FresnelR0 = { 0.01f, 0.01f, 0.01f }; // 镜面反射系数
-	float Roughness = 0.25f; // 粗糙度
+	DirectX::XMFLOAT4 DiffuseAlbedo = { 1.0f, 1.0f, 1.0f, 1.0f }; // 漫反射反照率
+	DirectX::XMFLOAT3 FresnelR0 = { 0.01f, 0.01f, 0.01f }; // 材质属性RF(0°),影响镜面反射
+	float Roughness = 0.25f; // 粗糙度,0光滑,1最粗糙
 
 	// 纹理贴图中用到
 	DirectX::XMFLOAT4X4 MatTransform = MathHelper::Identity4x4();
@@ -254,8 +256,8 @@ struct Material
 
 	// 用于着色的材质常量缓冲区数据
 	DirectX::XMFLOAT4 DiffuseAlbedo = { 1.0f, 1.0f, 1.0f, 1.0f }; // 漫反射反照率
-	DirectX::XMFLOAT3 FresnelR0 = { 0.01f, 0.01f, 0.01f }; // 材质属性,影响镜面反射
-	float Roughness = .25f;
+	DirectX::XMFLOAT3 FresnelR0 = { 0.01f, 0.01f, 0.01f }; // 材质属性RF(0°),影响镜面反射
+	float Roughness = .25f; // 粗糙度,0光滑,1最粗糙
 	DirectX::XMFLOAT4X4 MatTransform = MathHelper::Identity4x4();
 };
 

@@ -1,3 +1,5 @@
+// 公式参考 Notes/第8章 光照.md
+
 #define MaxLights 16
 
 struct Light
@@ -24,31 +26,34 @@ float CalcAttenuation(float d, float falloffStart, float falloffEnd)
 	return saturate((falloffEnd - d) / (falloffEnd - falloffStart));
 }
 
-// 计算反射光,R0 = ((n-1)/(n+1))^2,n是折射率
+// 计算反射光,R0(介质的一种属性) = ((n-1)/(n+1))^2,n是折射率
 // 菲涅尔方程以数学方法描述了入射光线被反射的百分比
 // 采用石里克近似法代替菲涅尔方程
+// RF(θi)=RF(0°) + (1 - RF(0°))(1 - cosθ)^5
 float3 SchlickFresnel(float3 R0, float3 normal, float3 lightVec)
 {
 	float cosIncidentAngle = saturate(dot(normal, lightVec)); // 法向量与入射光的夹角
 
 	float f0 = 1.0f - cosIncidentAngle;
-	float reflectPercent = R0 + (1.0f - R0)*(R0*R0*R0*R0*R0);
+	float reflectPercent = R0 + (1.0f - R0)*(f0*f0*f0*f0*f0);
 
 	return reflectPercent;
 }
 
 // 漫反射+镜面反射
+// Cs=max(L·n,0)·BL (x) RF(αh) * (m+8)/8 * (n·h)^m
 float3 BlinnPhong(float3 lightStrength, float3 lightVec, float3 normal, float3 toEye, Material mat)
 {
+	// m由光泽度推导而来,光泽度根据粗糙度求得
 	const float m = mat.Shininess * 256.0f;
-	float3 halfVec = normalize(toEye + lightVec);
+	float3 halfVec = normalize(toEye + lightVec); // αh=<lightVec, halfVec>
 
 	float roughnessFactor = (m + 8.0f)*pow(max(dot(halfVec, normal), 0.0f), m) / 8.0f;
 	float3 fresnelFactor = SchlickFresnel(mat.FresnelR0, halfVec, lightVec);
 
 	float3 specAlbedo = fresnelFactor * roughnessFactor; // Albedo:反射率
 
-	// 我们采用LDR(low dynamic range),适当缩小
+	// 防止结果>1,适当缩小
 	specAlbedo = specAlbedo / (specAlbedo + 1.0f);
 
 	return (mat.DiffuseAlbedo.rgb + specAlbedo) * lightStrength;
@@ -80,14 +85,14 @@ float3 ComputePointLight(Light L, Material mat, float3 pos, float3 normal, float
 	if (d > L.FalloffEnd)
 		return 0.0f;
 
-	// Normalize the light vector. 规范化光向量
+	// 规范化光向量
 	lightVec /= d;
 
-	// Scale light down by Lambert's cosine law. 余弦定律
+	// 兰伯特余弦定律 max(L·n,0)
 	float ndotl = max(dot(lightVec, normal), 0.0f);
 	float3 lightStrength = L.Strength * ndotl;
 
-	// Attenuate light by distance. 根据距离计算衰减
+	// 根据距离计算衰减
 	float att = CalcAttenuation(d, L.FalloffStart, L.FalloffEnd);
 	lightStrength *= att;
 
@@ -118,6 +123,7 @@ float3 ComputeSpotLight(Light L, Material mat, float3 pos, float3 normal, float3
 	lightStrength *= att;
 
 	// Scale by spotlight
+	// max(cosφ,0)^s
 	float spotFactor = pow(max(dot(-lightVec, L.Direction), 0.0f), L.SpotPower);
 	lightStrength *= spotFactor;
 

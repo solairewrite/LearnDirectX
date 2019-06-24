@@ -25,8 +25,8 @@ cbuffer cbPerObject : register(b0)
 // 每种材质的不同常量数据
 cbuffer cbMaterial : register(b1)
 {
-	float4 gDiffuseAlbedo;
-	float3 gFresnelR0; // 数字0
+	float4 gDiffuseAlbedo; // 漫反射反照率
+	float3 gFresnelR0; // 材质属性RF(0°),影响镜面反射
 	float gRoughness;
 	float4x4 gMatTransform;
 };
@@ -48,7 +48,7 @@ cbuffer cbPass : register(b2)
 	float gFarZ;
 	float gTotalTime;
 	float gDeltaTime;
-	float4 gAmbientLight;
+	float4 gAmbientLight; // 环境光
 
 	// [0,NUM_DIR_LIGHTS]:方向光源
 	// [NUM_DIR_LIGHTS, NUM_DIR_LIGHTS+NUM_POINT_LIGHTS]:点光源 ...
@@ -68,6 +68,8 @@ struct VertexOut
 	float3 NormalW	: NORMAL;
 };
 
+// 将传入的顶点局部坐标系位置和法线转换为世界坐标系
+// 并将世界坐标位置转换为齐次裁剪空间
 VertexOut VS(VertexIn vin)
 {
 	VertexOut vout = (VertexOut)0.0f;
@@ -86,7 +88,6 @@ VertexOut VS(VertexIn vin)
 
 float4 PS(VertexOut pin) : SV_Target
 {
-
 	// 对法线进行差值可能导致其非规范化,因此需要再次对它进行规范化处理
 	pin.NormalW = normalize(pin.NormalW);
 
