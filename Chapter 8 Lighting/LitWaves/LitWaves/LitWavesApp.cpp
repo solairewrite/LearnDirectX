@@ -49,15 +49,15 @@ bool LitWavesApp::Initialize()
 	//  m,  n,  dx,  dt,  speed,  damping
 	mWaves = std::make_unique<Waves>(128, 128, 1.0f, 0.03f, 4.0f, 0.2f);
 
-	BuildRootSignature();
-	BuildShadersAndInputLayout();
-	BuildLandGeometry();
-	BuildWavesGeometryBuffers();
-	BuildMaterials();
-	BuildRenderItems();
+	BuildRootSignature(); // mRootSignature,绑定register0,1,2为CBV
+	BuildShadersAndInputLayout(); // mShaders,mInputLayout绑定顶点结构体
+	BuildLandGeometry(); // mGeometries["landGeo"]->DrawArgs["grid"]
+	BuildWavesGeometryBuffers(); // mGeometries["waterGeo"]->DrawArgs["grid"]
+	BuildMaterials(); // mMaterials["grass","water"]
+	BuildRenderItems(); // mWavesRitem,mRitemLayer,mAllRitems
 
-	BuildFrameResources();
-	BuildPSOs();
+	BuildFrameResources(); // mFrameResources
+	BuildPSOs(); // mPSOs["opaque"]
 
 	ThrowIfFailed(mCommandList->Close());
 	ID3D12CommandList* cmdLists[] = { mCommandList.Get() };
@@ -93,10 +93,10 @@ void LitWavesApp::Update(const GameTimer& gt)
 		CloseHandle(eventHandle);
 	}
 
-	UpdateObjectCBs(gt);
-	UpdateMaterialCBs(gt);
-	UpdateMainPassCB(gt);
-	UpdateWaves(gt);
+	UpdateObjectCBs(gt); // mCurrFrameResource->ObjectCB
+	UpdateMaterialCBs(gt); // mCurrFrameResource->MaterialCB
+	UpdateMainPassCB(gt); // mCurrFrameResource->PassCB,mMainPassCB
+	UpdateWaves(gt); // mWavesRitem->Geo->VertexBufferGPU -> mCurrFrameResource->WavesVB -> mWaves
 }
 
 void LitWavesApp::Draw(const GameTimer& gt)
@@ -121,6 +121,7 @@ void LitWavesApp::Draw(const GameTimer& gt)
 	mCommandList->SetGraphicsRootSignature(mRootSignature.Get());
 
 	auto passCB = mCurrFrameResource->PassCB->Resource();
+	// cbuffer cbPass : register(b2)
 	mCommandList->SetGraphicsRootConstantBufferView(2, passCB->GetGPUVirtualAddress());
 
 	DrawRenderItems(mCommandList.Get(), mRitemLayer[(int)RenderLayer::Opaque]);
@@ -216,6 +217,7 @@ void LitWavesApp::UpdateCamera(const GameTimer& gt)
 	XMStoreFloat4x4(&mView, view);
 }
 
+// mCurrFrameResource->ObjectCB
 void LitWavesApp::UpdateObjectCBs(const GameTimer& gt)
 {
 	auto currObjectCB = mCurrFrameResource->ObjectCB.get();
@@ -239,6 +241,7 @@ void LitWavesApp::UpdateObjectCBs(const GameTimer& gt)
 	}
 }
 
+// mCurrFrameResource->MaterialCB
 void LitWavesApp::UpdateMaterialCBs(const GameTimer& gt)
 {
 	auto currMaterialCB = mCurrFrameResource->MaterialCB.get();
@@ -261,6 +264,7 @@ void LitWavesApp::UpdateMaterialCBs(const GameTimer& gt)
 	}
 }
 
+// mCurrFrameResource->PassCB,mMainPassCB
 void LitWavesApp::UpdateMainPassCB(const GameTimer& gt)
 {
 	XMMATRIX view = XMLoadFloat4x4(&mView);
@@ -295,6 +299,7 @@ void LitWavesApp::UpdateMainPassCB(const GameTimer& gt)
 	currPassCB->CopyData(0, mMainPassCB);
 }
 
+// mWavesRitem->Geo->VertexBufferGPU -> mCurrFrameResource->WavesVB -> mWaves
 void LitWavesApp::UpdateWaves(const GameTimer& gt)
 {
 	// Every quarter second, generate a random wave.
@@ -327,18 +332,20 @@ void LitWavesApp::UpdateWaves(const GameTimer& gt)
 	}
 
 	// Set the dynamic VB of the wave renderitem to the current frame VB.
+	// mWavesRitem->Geo->VertexBufferGPU -> mCurrFrameResource->WavesVB -> mWaves
 	mWavesRitem->Geo->VertexBufferGPU = currWavesVB->Resource();
 }
 
+// 修改mRootSignature,绑定register0,1,2为CBV
 void LitWavesApp::BuildRootSignature()
 {
 	// Root parameter can be a table, root descriptor or root constants.
 	CD3DX12_ROOT_PARAMETER slotRootParameter[3];
 
 	// Create root CBV.
-	slotRootParameter[0].InitAsConstantBufferView(0);
-	slotRootParameter[1].InitAsConstantBufferView(1);
-	slotRootParameter[2].InitAsConstantBufferView(2);
+	slotRootParameter[0].InitAsConstantBufferView(0); // register0
+	slotRootParameter[1].InitAsConstantBufferView(1); // register1
+	slotRootParameter[2].InitAsConstantBufferView(2); // register2
 
 	// A root signature is an array of root parameters.
 	CD3DX12_ROOT_SIGNATURE_DESC rootSigDesc(3, slotRootParameter, 0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
@@ -362,6 +369,7 @@ void LitWavesApp::BuildRootSignature()
 		IID_PPV_ARGS(mRootSignature.GetAddressOf())));
 }
 
+// 修改mShaders,mInputLayout绑定顶点结构体
 void LitWavesApp::BuildShadersAndInputLayout()
 {
 	mShaders["standardVS"] = d3dUtil::CompileShader(L"Shaders\\Default.hlsl", nullptr, "VS", "vs_5_0");
@@ -374,14 +382,12 @@ void LitWavesApp::BuildShadersAndInputLayout()
 	};
 }
 
+// 将山丘顶点和索引存入mGeometries["landGeo"]->DrawArgs["grid"]
 void LitWavesApp::BuildLandGeometry()
 {
 	GeometryGenerator geoGen;
 	GeometryGenerator::MeshData grid = geoGen.CreateGrid(160.0f, 160.0f, 50, 50);
 
-	//
-	// Extract the vertex elements we are interested and apply the height function to
-	// each vertex.
 	std::vector<Vertex> vertices(grid.Vertices.size());
 	for (size_t i = 0; i < grid.Vertices.size(); ++i)
 	{
@@ -422,7 +428,7 @@ void LitWavesApp::BuildLandGeometry()
 	submesh.BaseVertexLocation = 0;
 
 	geo->DrawArgs["grid"] = submesh;
-
+	
 	mGeometries["landGeo"] = std::move(geo);
 }
 
@@ -522,6 +528,7 @@ void LitWavesApp::BuildFrameResources()
 	}
 }
 
+// mMaterials["grass","water"]
 void LitWavesApp::BuildMaterials()
 {
 	auto grass = std::make_unique<Material>();
@@ -544,6 +551,7 @@ void LitWavesApp::BuildMaterials()
 	mMaterials["water"] = std::move(water);
 }
 
+// mWavesRitem,mRitemLayer,mAllRitems
 void LitWavesApp::BuildRenderItems()
 {
 	auto wavesRitem = std::make_unique<RenderItem>();
@@ -596,8 +604,8 @@ void LitWavesApp::DrawRenderItems(ID3D12GraphicsCommandList* cmdList, const std:
 		D3D12_GPU_VIRTUAL_ADDRESS objCBAddress = objectCB->GetGPUVirtualAddress() + ri->ObjCBIndex*objCBByteSize;
 		D3D12_GPU_VIRTUAL_ADDRESS matCBAddress = matCB->GetGPUVirtualAddress() + ri->Mat->MatCBIndex*matCBByteSize;
 
-		cmdList->SetGraphicsRootConstantBufferView(0, objCBAddress);
-		cmdList->SetGraphicsRootConstantBufferView(1, matCBAddress);
+		cmdList->SetGraphicsRootConstantBufferView(0, objCBAddress); // cbuffer cbPerObject : register(b0)
+		cmdList->SetGraphicsRootConstantBufferView(1, matCBAddress); // cbuffer cbMaterial : register(b1)
 
 		cmdList->DrawIndexedInstanced(ri->IndexCount, 1, ri->StartIndexLocation, ri->BaseVertexLocation, 0);
 	}
