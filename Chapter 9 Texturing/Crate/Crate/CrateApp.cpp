@@ -356,11 +356,12 @@ void CrateApp::BuildDescriptorHeaps()
 	auto woodCrateTex = mTextures["woodCrateTex"]->Resource;
 
 	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
-	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+	// 提供方法,可以将采样时所返回的纹理向量中的分量进行重新排序
+	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING; 
 	srvDesc.Format = woodCrateTex->GetDesc().Format;
 	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
 	srvDesc.Texture2D.MostDetailedMip = 0; // 此视图中图像细节最详尽的mipmap层级的索引
-	srvDesc.Texture2D.MipLevels = woodCrateTex->GetDesc().MipLevels; // 此视图的mipmap层及数量,以MostDetailedMip为起始值
+	srvDesc.Texture2D.MipLevels = woodCrateTex->GetDesc().MipLevels; // 此视图的mipmap层级数量,以MostDetailedMip为起始值
 	srvDesc.Texture2D.ResourceMinLODClamp = 1.0f; // 可以访问的最小mipmap层级
 
 	md3dDevice->CreateShaderResourceView(woodCrateTex.Get(), &srvDesc, hDescriptor);

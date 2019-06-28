@@ -22,6 +22,9 @@
     <Filter Include="Shaders">
       <UniqueIdentifier>{9d08d7cb-458e-4673-9f31-0fb300f2b9d9}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Textures">
+      <UniqueIdentifier>{a9bff94f-2dee-4faa-953c-743c965da621}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\Common\d3dApp.cpp">
@@ -88,5 +91,10 @@
     <None Include="Shaders\Default.hlsl">
       <Filter>Shaders</Filter>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="..\..\..\Textures\WoodCrate01.dds">
+      <Filter>Textures</Filter>
+    </Image>
   </ItemGroup>
 </Project>

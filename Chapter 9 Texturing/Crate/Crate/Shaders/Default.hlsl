@@ -103,6 +103,8 @@ VertexOut VS(VertexIn vin)
 
 float4 PS(VertexOut pin) : SV_Target
 {
+	// 从纹理中提取此像素的漫反射反照率
+	// 将纹理样本与常量缓冲区中的反照率相乘
 	float4 diffuseAlbedo = gDiffuseMap.Sample(gsamLinear, pin.TexC) * gDiffuseAlbedo;
 
 	// Interpolating normal can unnormalize it, so renormalize it.
