@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
       <Configuration>Debug</Configuration>
@@ -19,10 +19,10 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <VCProjectVersion>15.0</VCProjectVersion>
-    <ProjectGuid>{37B1EA11-A25E-4AE1-8033-FFCC15367D9A}</ProjectGuid>
+    <VCProjectVersion>16.0</VCProjectVersion>
+    <ProjectGuid>{F52CBD3B-0CE7-48ED-A0FF-F62E33CD3D3D}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>LandAndWaves</RootNamespace>
+    <RootNamespace>CrateReview</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -70,10 +70,10 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -82,19 +82,6 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
   </PropertyGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <ClCompile>
-      <WarningLevel>Level3</WarningLevel>
-      <Optimization>Disabled</Optimization>
-      <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <ConformanceMode>true</ConformanceMode>
-    </ClCompile>
-    <Link>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
-      <SubSystem>Windows</SubSystem>
-    </Link>
-  </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
@@ -104,8 +91,21 @@
       <ConformanceMode>true</ConformanceMode>
     </ClCompile>
     <Link>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -119,10 +119,10 @@
       <ConformanceMode>true</ConformanceMode>
     </ClCompile>
     <Link>
+      <SubSystem>Windows</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <SubSystem>Windows</SubSystem>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -136,10 +136,10 @@
       <ConformanceMode>true</ConformanceMode>
     </ClCompile>
     <Link>
+      <SubSystem>Windows</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <SubSystem>Windows</SubSystem>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -149,9 +149,8 @@
     <ClCompile Include="..\..\..\Common\GameTimer.cpp" />
     <ClCompile Include="..\..\..\Common\GeometryGenerator.cpp" />
     <ClCompile Include="..\..\..\Common\MathHelper.cpp" />
+    <ClCompile Include="CrateApp.cpp" />
     <ClCompile Include="FrameResource.cpp" />
-    <ClCompile Include="LandAndWavesApp.cpp" />
-    <ClCompile Include="Waves.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\Common\d3dApp.h" />
@@ -162,12 +161,17 @@
     <ClInclude Include="..\..\..\Common\GeometryGenerator.h" />
     <ClInclude Include="..\..\..\Common\MathHelper.h" />
     <ClInclude Include="..\..\..\Common\UploadBuffer.h" />
+    <ClInclude Include="CrateApp.h" />
     <ClInclude Include="FrameResource.h" />
-    <ClInclude Include="LandAndWavesApp.h" />
-    <ClInclude Include="Waves.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Shaders\color.hlsl">
+    <Image Include="..\..\..\Textures\WoodCrate01.dds" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Shaders\Default.hlsl">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="Shaders\LightingUtil.hlsl">
       <FileType>Document</FileType>
     </None>
   </ItemGroup>
