@@ -5,14 +5,21 @@
 ## 参考
 [Github项目DXAppendixA: 为使用DX而创建Windows应用程序所需的最简代码](https://github.com/solairewrite/DXAppendixA)  
 ## Tips
-VS2017安装插件后,可以Alt+Space调出命令行  
-Ctrl+G: 跳转指定行  
-#include \"\"文件结构是以当前文件夹开始的,比如\"../Public/xxx.h\"  
-报错: unresolved external symbol _main referenced in function "int _cdecl invovke _main(void)"  
+>VS2017命令行: 安装插件 Alt+Space  
+
+>Ctrl+G: 跳转指定行  
+
+>#include \"\"文件结构是以当前文件夹开始的,比如\"../Public/xxx.h\"  
+
+>报错: unresolved external symbol _main referenced in function "int _cdecl invovke _main(void)"  
 可能是因为创建了控制台程序,DX要创建窗口程序  
 解决方法:配置项目属性  
 1,C/C++ -> Preprocessor -> Processor Definitions: 删除_CONSOLE, 添加_WINDOWS  
 2,Linker -> All Options -> Subsystem: Windows  
+
+>报错: The build tools for v142 (Platform Toolset = 'v142') cannot be found  
+解决方法: 配置项目属性  
+General -> Platform Toolset -> 选择合适的
 ## 激励
 学编程最重要的就是实践,就是写代码,看别人写的代码,再写代码.  
 你看再多的书,不写代码,你还是不会编程.  
