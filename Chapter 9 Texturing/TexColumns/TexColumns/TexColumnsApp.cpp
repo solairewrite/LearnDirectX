@@ -520,18 +520,18 @@ void TexColumnsApp::BuildRootSignature()
 
 void TexColumnsApp::BuildDescriptorHeaps()
 {
-	//
-	// Create the SRV heap.
-	//
+	// ´´½¨SRV¶Ñ,´¢´æÔÚmSrvDescriptorHeap,ÃèÊöÁË3ÕÅÌùÍ¼
+
+
 	D3D12_DESCRIPTOR_HEAP_DESC srvHeapDesc = {};
-	srvHeapDesc.NumDescriptors = 3;
+	srvHeapDesc.NumDescriptors = 3; // SRVÃèÊöÁË3ÕÅÌùÍ¼
 	srvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
 	srvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 	ThrowIfFailed(md3dDevice->CreateDescriptorHeap(&srvHeapDesc, IID_PPV_ARGS(&mSrvDescriptorHeap)));
 
-	//
-	// Fill out the heap with actual descriptors.
-	//
+	// ÓÃÊµ¼ÊµÄÃèÊö·ûÌî³äÃèÊö·û¶Ñ
+
+
 	CD3DX12_CPU_DESCRIPTOR_HANDLE hDescriptor(mSrvDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
 
 	auto bricksTex = mTextures["bricksTex"]->Resource;
@@ -547,14 +547,14 @@ void TexColumnsApp::BuildDescriptorHeaps()
 	srvDesc.Texture2D.ResourceMinLODClamp = 0.0f;
 	md3dDevice->CreateShaderResourceView(bricksTex.Get(), &srvDesc, hDescriptor);
 
-	// next descriptor
+
 	hDescriptor.Offset(1, mCbvSrvDescriptorSize);
 
 	srvDesc.Format = stoneTex->GetDesc().Format;
 	srvDesc.Texture2D.MipLevels = stoneTex->GetDesc().MipLevels;
 	md3dDevice->CreateShaderResourceView(stoneTex.Get(), &srvDesc, hDescriptor);
 
-	// next descriptor
+
 	hDescriptor.Offset(1, mCbvSrvDescriptorSize);
 
 	srvDesc.Format = tileTex->GetDesc().Format;
