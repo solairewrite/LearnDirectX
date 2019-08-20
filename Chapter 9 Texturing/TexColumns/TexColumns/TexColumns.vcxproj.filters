@@ -22,6 +22,9 @@
     <Filter Include="Shaders">
       <UniqueIdentifier>{38fadcd2-4324-4f55-86e8-8f929e8109a8}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Textures">
+      <UniqueIdentifier>{ff076ab7-6e4f-4f21-81d3-737f111b1e69}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\Common\d3dApp.cpp">
@@ -77,6 +80,9 @@
     <ClInclude Include="FrameResource.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="TexColumnsApp.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\Default.hlsl">
@@ -85,5 +91,16 @@
     <None Include="Shaders\LightingUtil.hlsl">
       <Filter>Shaders</Filter>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="..\..\..\Textures\bricks.dds">
+      <Filter>Textures</Filter>
+    </Image>
+    <Image Include="..\..\..\Textures\stone.dds">
+      <Filter>Textures</Filter>
+    </Image>
+    <Image Include="..\..\..\Textures\tile.dds">
+      <Filter>Textures</Filter>
+    </Image>
   </ItemGroup>
 </Project>

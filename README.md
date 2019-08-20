@@ -20,6 +20,9 @@
 >报错: The build tools for v142 (Platform Toolset = 'v142') cannot be found  
 解决方法: 配置项目属性  
 General -> Platform Toolset -> 选择合适的
+
+>VS C++ .自动变成->
+>选项Text Editor -> C/C++ -> Advanced -> IntelliSense -> Enable Member List Dot-To-Arrow : false  
 ## 激励
 学编程最重要的就是实践,就是写代码,看别人写的代码,再写代码.  
 你看再多的书,不写代码,你还是不会编程.  

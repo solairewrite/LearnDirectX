@@ -1,8 +1,4 @@
-//***************************************************************************************
-// LightingUtil.hlsl by Frank Luna (C) 2015 All Rights Reserved.
-//
-// Contains API for shader lighting.
-//***************************************************************************************
+// 公式参考 Notes/第8章 光照.md
 
 #define MaxLights 16
 
@@ -20,17 +16,20 @@ struct Material
 {
 	float4 DiffuseAlbedo;
 	float3 FresnelR0;
-	float Shininess;
+	float Shininess; // 光泽度 = 1 - 粗糙度
 };
 
+// 线性衰减因子
 float CalcAttenuation(float d, float falloffStart, float falloffEnd)
 {
-	// Linear falloff.
+	// saturate: 映射到[0,1]
 	return saturate((falloffEnd - d) / (falloffEnd - falloffStart));
 }
 
-// Schlick gives an approximation to Fresnel reflectance (see pg. 233 "Real-Time Rendering 3rd Ed.").
-// R0 = ( (n-1)/(n+1) )^2, where n is the index of refraction.
+// 计算反射光,R0(介质的一种属性) = ((n-1)/(n+1))^2,n是折射率
+// 菲涅尔方程以数学方法描述了入射光线被反射的百分比
+// 采用石里克近似法代替菲涅尔方程
+// RF(θi)=RF(0°) + (1 - RF(0°))(1 - cosθ)^5
 float3 SchlickFresnel(float3 R0, float3 normal, float3 lightVec)
 {
 	float cosIncidentAngle = saturate(dot(normal, lightVec));
@@ -41,41 +40,39 @@ float3 SchlickFresnel(float3 R0, float3 normal, float3 lightVec)
 	return reflectPercent;
 }
 
+// 漫反射+镜面反射(菲涅尔效应&粗糙度)
+// Cs=max(L·n,0)·BL (x) RF(αh) * (m+8)/8 * (n·h)^m
 float3 BlinnPhong(float3 lightStrength, float3 lightVec, float3 normal, float3 toEye, Material mat)
 {
+	// m由光泽度推导而来,光泽度根据粗糙度求得
 	const float m = mat.Shininess * 256.0f;
-	float3 halfVec = normalize(toEye + lightVec);
+    float3 halfVec = normalize(toEye + lightVec); // αh=<lightVec, halfVec>
 
 	float roughnessFactor = (m + 8.0f)*pow(max(dot(halfVec, normal), 0.0f), m) / 8.0f;
 	float3 fresnelFactor = SchlickFresnel(mat.FresnelR0, halfVec, lightVec);
 
 	float3 specAlbedo = fresnelFactor * roughnessFactor;
 
-	// Our spec formula goes outside [0,1] range, but we are 
-	// doing LDR rendering.  So scale it down a bit.
+	// 防止结果>1,适当缩小
 	specAlbedo = specAlbedo / (specAlbedo + 1.0f);
 
 	return (mat.DiffuseAlbedo.rgb + specAlbedo) * lightStrength;
 }
 
-//---------------------------------------------------------------------------------------
-// Evaluates the lighting equation for directional lights.
-//---------------------------------------------------------------------------------------
+// 方向光源
 float3 ComputeDirectionalLight(Light L, Material mat, float3 normal, float3 toEye)
 {
-	// The light vector aims opposite the direction the light rays travel.
+	// 光向量与光传播的方向相反
 	float3 lightVec = -L.Direction;
 
-	// Scale light down by Lambert's cosine law.
+	// 朗伯余弦定律
 	float ndotl = max(dot(lightVec, normal), 0.0f);
 	float3 lightStrength = L.Strength * ndotl;
 
 	return BlinnPhong(lightStrength, lightVec, normal, toEye, mat);
 }
 
-//---------------------------------------------------------------------------------------
-// Evaluates the lighting equation for point lights.
-//---------------------------------------------------------------------------------------
+// 点光源
 float3 ComputePointLight(Light L, Material mat, float3 pos, float3 normal, float3 toEye)
 {
 	// The vector from the surface to the light.
@@ -102,9 +99,7 @@ float3 ComputePointLight(Light L, Material mat, float3 pos, float3 normal, float
 	return BlinnPhong(lightStrength, lightVec, normal, toEye, mat);
 }
 
-//---------------------------------------------------------------------------------------
-// Evaluates the lighting equation for spot lights.
-//---------------------------------------------------------------------------------------
+// 聚光灯
 float3 ComputeSpotLight(Light L, Material mat, float3 pos, float3 normal, float3 toEye)
 {
 	// The vector from the surface to the light.
@@ -125,6 +120,7 @@ float3 ComputeSpotLight(Light L, Material mat, float3 pos, float3 normal, float3
 	float3 lightStrength = L.Strength * ndotl;
 
 	// Attenuate light by distance.
+	// max(cosφ,0)^s
 	float att = CalcAttenuation(d, L.FalloffStart, L.FalloffEnd);
 	lightStrength *= att;
 
@@ -135,6 +131,7 @@ float3 ComputeSpotLight(Light L, Material mat, float3 pos, float3 normal, float3
 	return BlinnPhong(lightStrength, lightVec, normal, toEye, mat);
 }
 
+// 多种光照叠加
 float4 ComputeLighting(Light gLights[MaxLights], Material mat,
 	float3 pos, float3 normal, float3 toEye,
 	float3 shadowFactor)
@@ -166,5 +163,3 @@ float4 ComputeLighting(Light gLights[MaxLights], Material mat,
 
 	return float4(result, 0.0f);
 }
-
-

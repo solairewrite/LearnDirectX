@@ -1,8 +1,4 @@
-//***************************************************************************************
-// Default.hlsl by Frank Luna (C) 2015 All Rights Reserved.
-//***************************************************************************************
-
-// Defaults for number of lights.
+// 光源数量的默认值
 #ifndef NUM_DIR_LIGHTS
 #define NUM_DIR_LIGHTS 3
 #endif
@@ -15,11 +11,10 @@
 #define NUM_SPOT_LIGHTS 0
 #endif
 
-// Include structures and functions for lighting.
+// 包含了光照所用的结构体与函数
 #include "LightingUtil.hlsl"
 
 Texture2D    gDiffuseMap : register(t0);
-
 
 SamplerState gsamPointWrap        : register(s0);
 SamplerState gsamPointClamp       : register(s1);
@@ -28,14 +23,13 @@ SamplerState gsamLinearClamp      : register(s3);
 SamplerState gsamAnisotropicWrap  : register(s4);
 SamplerState gsamAnisotropicClamp : register(s5);
 
-// Constant data that varies per frame.
+// 每帧都变化的常量数据
 cbuffer cbPerObject : register(b0)
 {
 	float4x4 gWorld;
 	float4x4 gTexTransform;
 };
 
-// Constant data that varies per material.
 cbuffer cbPass : register(b1)
 {
 	float4x4 gView;
@@ -54,10 +48,7 @@ cbuffer cbPass : register(b1)
 	float gDeltaTime;
 	float4 gAmbientLight;
 
-	// Indices [0, NUM_DIR_LIGHTS) are directional lights;
-	// indices [NUM_DIR_LIGHTS, NUM_DIR_LIGHTS+NUM_POINT_LIGHTS) are point lights;
-	// indices [NUM_DIR_LIGHTS+NUM_POINT_LIGHTS, NUM_DIR_LIGHTS+NUM_POINT_LIGHT+NUM_SPOT_LIGHTS)
-	// are spot lights for a maximum of MaxLights per object.
+	// 每种光照有自己的索引区间
 	Light gLights[MaxLights];
 };
 
@@ -78,12 +69,13 @@ struct VertexIn
 
 struct VertexOut
 {
-	float4 PosH    : SV_POSITION;
-	float3 PosW    : POSITION;
+	float4 PosH    : SV_POSITION; // 齐次裁剪空间
+	float3 PosW    : POSITION; // world space
 	float3 NormalW : NORMAL;
 	float2 TexC    : TEXCOORD;
 };
 
+// 顶点函数将顶点转为齐次空间
 VertexOut VS(VertexIn vin)
 {
 	VertexOut vout = (VertexOut)0.0f;
@@ -105,8 +97,10 @@ VertexOut VS(VertexIn vin)
 	return vout;
 }
 
+// 片元函数返回颜色
 float4 PS(VertexOut pin) : SV_Target
 {
+	// 采样器对Texture进行采样,作为漫反射反照率因子
 	float4 diffuseAlbedo = gDiffuseMap.Sample(gsamAnisotropicWrap, pin.TexC) * gDiffuseAlbedo;
 
 	// Interpolating normal can unnormalize it, so renormalize it.
@@ -126,10 +120,8 @@ float4 PS(VertexOut pin) : SV_Target
 
 	float4 litColor = ambient + directLight;
 
-	// Common convention to take alpha from diffuse albedo.
+	// 从漫反射材质中获取alpha的常见手段
 	litColor.a = diffuseAlbedo.a;
 
 	return litColor;
 }
-
-

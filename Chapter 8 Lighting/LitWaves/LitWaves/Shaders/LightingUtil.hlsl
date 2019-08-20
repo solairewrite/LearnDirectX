@@ -40,7 +40,7 @@ float3 SchlickFresnel(float3 R0, float3 normal, float3 lightVec)
 	return reflectPercent;
 }
 
-// 漫反射+镜面反射
+// 漫反射+镜面反射(菲涅尔效应&粗糙度)
 // Cs=max(L·n,0)·BL (x) RF(αh) * (m+8)/8 * (n·h)^m
 float3 BlinnPhong(float3 lightStrength, float3 lightVec, float3 normal, float3 toEye, Material mat)
 {
