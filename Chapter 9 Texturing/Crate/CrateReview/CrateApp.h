@@ -6,37 +6,37 @@ using Microsoft::WRL::ComPtr;
 using namespace DirectX;
 using namespace DirectX::PackedVector;
 
-//#pragma comment(lib,"d3dcompiler.lib")
-//#pragma comment(lib,"D3D12.lib")
+
+
 
 const int gNumFrameResources = 3;
 
-// 存储绘制图形所需参数的轻量级结构,所应用不而不同
+
 struct RenderItem
 {
 	RenderItem() = default;
 
-	// 世界矩阵,描述物体的位置,旋转,缩放
+
 	XMFLOAT4X4 World = MathHelper::Identity4x4();
 
 	XMFLOAT4X4 TexTransform = MathHelper::Identity4x4();
 
-	// 脏标志,表明物体状态改变,需要更新常量缓存
-	// 因为每个帧资源都有常量缓存,需要对每个帧资源进行更新
+
+
 	int NumFramesDirty = gNumFrameResources;
 
-	// 这个渲染项的GPU常量缓存索引
-	UINT ObjCBIndex = -1;
+
+	UINT ObjCBIndex = -1; // 这个渲染项的GPU常量缓存索引(它是第几个渲染项)
 
 	Material* Mat = nullptr;
 	MeshGeometry* Geo = nullptr;
 
 	D3D12_PRIMITIVE_TOPOLOGY PrimitiveType = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
 
-	// 绘制函数的参数
+
 	UINT IndexCount = 0;
 	UINT StartIndexLocation = 0;
-	int BaseVertexLocation = 0;
+	UINT BaseVertexLocation = 0;
 };
 
 class CrateApp :public D3DApp
@@ -99,15 +99,15 @@ private:
 
 	ComPtr<ID3D12PipelineState> mOpaquePSO = nullptr;
 
-	// 所有渲染项
+
 	std::vector<std::unique_ptr<RenderItem>> mAllRitems;
 
-	// PSO divided 的渲染项
+
 	std::vector<RenderItem*> mOpaqueRitems;
 
 	PassConstants mMainPassCB;
 
-	XMFLOAT3 mEyePos = { 0.0f,0.0f,0.0f };
+	XMFLOAT3 mEyePos = { 0.0f, 0.0f, 0.0f };
 	XMFLOAT4X4 mView = MathHelper::Identity4x4();
 	XMFLOAT4X4 mProj = MathHelper::Identity4x4();
 
