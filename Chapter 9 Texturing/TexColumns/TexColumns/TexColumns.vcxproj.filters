@@ -14,16 +14,16 @@
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
     <Filter Include="Header Files\Framework">
-      <UniqueIdentifier>{78490baa-b5fc-4cad-924e-7cb9e8093d95}</UniqueIdentifier>
+      <UniqueIdentifier>{b226aa7a-26fc-4d32-b2d5-aef9a7ecbf0b}</UniqueIdentifier>
     </Filter>
     <Filter Include="Source Files\Framework">
-      <UniqueIdentifier>{d2c56d9d-2baa-45ba-8501-67c64c03be12}</UniqueIdentifier>
+      <UniqueIdentifier>{d23c7c09-93e9-4243-86e2-447a0a175ac0}</UniqueIdentifier>
     </Filter>
     <Filter Include="Shaders">
-      <UniqueIdentifier>{dca53e3a-39f5-4336-94e1-eeb1b3fac4f0}</UniqueIdentifier>
+      <UniqueIdentifier>{38fadcd2-4324-4f55-86e8-8f929e8109a8}</UniqueIdentifier>
     </Filter>
     <Filter Include="Textures">
-      <UniqueIdentifier>{bbca32e0-b73c-4ac2-be1b-4b57ff4ae61b}</UniqueIdentifier>
+      <UniqueIdentifier>{ff076ab7-6e4f-4f21-81d3-737f111b1e69}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -31,6 +31,9 @@
       <Filter>Source Files\Framework</Filter>
     </ClCompile>
     <ClCompile Include="..\..\..\Common\d3dUtil.cpp">
+      <Filter>Source Files\Framework</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\Common\DDSTextureLoader.cpp">
       <Filter>Source Files\Framework</Filter>
     </ClCompile>
     <ClCompile Include="..\..\..\Common\GameTimer.cpp">
@@ -42,13 +45,10 @@
     <ClCompile Include="..\..\..\Common\MathHelper.cpp">
       <Filter>Source Files\Framework</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\Common\DDSTextureLoader.cpp">
-      <Filter>Source Files\Framework</Filter>
-    </ClCompile>
     <ClCompile Include="FrameResource.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="CrateApp.cpp">
+    <ClCompile Include="TexColumnsApp.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -77,20 +77,30 @@
     <ClInclude Include="..\..\..\Common\UploadBuffer.h">
       <Filter>Header Files\Framework</Filter>
     </ClInclude>
-    <ClInclude Include="CrateApp.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="FrameResource.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="TexColumnsApp.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <Image Include="..\..\..\Textures\WoodCrate01.dds">
+    <None Include="Shaders\Default.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="Shaders\LightingUtil.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="..\..\..\Textures\bricks.dds">
       <Filter>Textures</Filter>
     </Image>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Shaders\Default.hlsl" />
-    <None Include="Shaders\LightingUtil.hlsl" />
+    <Image Include="..\..\..\Textures\stone.dds">
+      <Filter>Textures</Filter>
+    </Image>
+    <Image Include="..\..\..\Textures\tile.dds">
+      <Filter>Textures</Filter>
+    </Image>
   </ItemGroup>
 </Project>

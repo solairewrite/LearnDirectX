@@ -1,4 +1,8 @@
+#pragma once
+
 #include "../../../Common/d3dApp.h"
+#include "../../../Common/MathHelper.h"
+#include "../../../Common/UploadBuffer.h"
 #include "../../../Common/GeometryGenerator.h"
 #include "FrameResource.h"
 
@@ -6,26 +10,23 @@ using Microsoft::WRL::ComPtr;
 using namespace DirectX;
 using namespace DirectX::PackedVector;
 
-#pragma comment(lib,"d3dcompiler.lib")
-#pragma comment(lib,"D3D12.lib")
+#pragma comment(lib, "d3dcompiler.lib")
+#pragma comment(lib, "D3D12.lib")
 
 const int gNumFrameResources = 3;
 
-// 存储绘制图形所需参数的轻量级结构,所应用不而不同
-struct RenderItem
+struct RenderItem 
 {
 	RenderItem() = default;
+	RenderItem(const RenderItem& rhs) = delete;
 
-	// 世界矩阵,描述物体的位置,旋转,缩放
 	XMFLOAT4X4 World = MathHelper::Identity4x4();
-
+	
 	XMFLOAT4X4 TexTransform = MathHelper::Identity4x4();
 
-	// 脏标志,表明物体状态改变,需要更新常量缓存
-	// 因为每个帧资源都有常量缓存,需要对每个帧资源进行更新
 	int NumFramesDirty = gNumFrameResources;
 
-	// 这个渲染项的GPU常量缓存索引
+	// GPU常量缓存区索引
 	UINT ObjCBIndex = -1;
 
 	Material* Mat = nullptr;
@@ -33,19 +34,19 @@ struct RenderItem
 
 	D3D12_PRIMITIVE_TOPOLOGY PrimitiveType = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
 
-	// 绘制函数的参数
+	// DrawIndexedInstanced参数
 	UINT IndexCount = 0;
 	UINT StartIndexLocation = 0;
 	int BaseVertexLocation = 0;
 };
 
-class CrateApp :public D3DApp
+class TexColumnsApp :public D3DApp
 {
 public:
-	CrateApp(HINSTANCE hInstance);
-	CrateApp(const CrateApp& rhs) = delete;
-	CrateApp& operator=(const CrateApp& rhs) = delete;
-	~CrateApp();
+	TexColumnsApp(HINSTANCE hInstance);
+	TexColumnsApp(const TexColumnsApp& rhs) = delete;
+	TexColumnsApp& operator=(const TexColumnsApp& rhs) = delete;
+	~TexColumnsApp();
 
 	virtual bool Initialize() override;
 
@@ -85,24 +86,23 @@ private:
 	int mCurrFrameResourceIndex = 0;
 
 	UINT mCbvSrvDescriptorSize = 0;
-
+	
 	ComPtr<ID3D12RootSignature> mRootSignature = nullptr;
-
+	
 	ComPtr<ID3D12DescriptorHeap> mSrvDescriptorHeap = nullptr;
 
 	std::unordered_map<std::string, std::unique_ptr<MeshGeometry>> mGeometries;
 	std::unordered_map<std::string, std::unique_ptr<Material>> mMaterials;
 	std::unordered_map<std::string, std::unique_ptr<Texture>> mTextures;
 	std::unordered_map<std::string, ComPtr<ID3DBlob>> mShaders;
+	std::unordered_map<std::string, ComPtr<ID3D12PipelineState>> mPSOs;
 
 	std::vector<D3D12_INPUT_ELEMENT_DESC> mInputLayout;
-
-	ComPtr<ID3D12PipelineState> mOpaquePSO = nullptr;
 
 	// 所有渲染项
 	std::vector<std::unique_ptr<RenderItem>> mAllRitems;
 
-	// PSO divided 的渲染项
+	// 根据PSO区分的渲染项
 	std::vector<RenderItem*> mOpaqueRitems;
 
 	PassConstants mMainPassCB;
@@ -111,9 +111,9 @@ private:
 	XMFLOAT4X4 mView = MathHelper::Identity4x4();
 	XMFLOAT4X4 mProj = MathHelper::Identity4x4();
 
-	float mTheta = 1.3f*XM_PI;
-	float mPhi = 0.4f*XM_PI;
-	float mRadius = 2.5f;
+	float mTheta = 1.5f * XM_PI;
+	float mPhi = 0.2f * XM_PI;
+	float mRadius = 15.0f;
 
 	POINT mLastMousePos;
 };

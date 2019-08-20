@@ -7,14 +7,9 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Crate", "Crate\Crate.vcxpro
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CrateReview", "CrateReview\CrateReview.vcxproj", "{F52CBD3B-0CE7-48ED-A0FF-F62E33CD3D3D}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Notes", "Notes", "{D8705590-BAC0-4D63-94DC-A7DAF7B376D9}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{0A19CFD5-FD45-421B-9F65-3BCC4CEC5F31}"
 	ProjectSection(SolutionItems) = preProject
-		..\..\Notes\第4章 Direct3D的初始化.md = ..\..\Notes\第4章 Direct3D的初始化.md
-		..\..\Notes\第5章 渲染流水线.md = ..\..\Notes\第5章 渲染流水线.md
-		..\..\Notes\第6章 利用Direct3D绘制几何体.md = ..\..\Notes\第6章 利用Direct3D绘制几何体.md
-		..\..\Notes\第7章 利用Direct3D绘制几何体(续)-LandAndWaves.md = ..\..\Notes\第7章 利用Direct3D绘制几何体(续)-LandAndWaves.md
-		..\..\Notes\第7章 利用Direct3D绘制几何体(续)-Shapes.md = ..\..\Notes\第7章 利用Direct3D绘制几何体(续)-Shapes.md
-		..\..\Notes\第8章 光照.md = ..\..\Notes\第8章 光照.md
+		..\..\README.md = ..\..\README.md
 	EndProjectSection
 EndProject
 Global

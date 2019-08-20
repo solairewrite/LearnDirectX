@@ -20,9 +20,9 @@
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
-    <ProjectGuid>{29FE2C4D-FEBD-4B00-9670-56D47A988C2B}</ProjectGuid>
+    <ProjectGuid>{F0AC4B98-81D9-4C92-A073-A6166F3E938F}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>TexWaves</RootNamespace>
+    <RootNamespace>TexColumns</RootNamespace>
     <WindowsTargetPlatformVersion>10.0.17763.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -115,14 +115,14 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <SubSystem>Console</SubSystem>
+      <SubSystem>Windows</SubSystem>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -132,14 +132,14 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <SubSystem>Console</SubSystem>
+      <SubSystem>Windows</SubSystem>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -150,8 +150,7 @@
     <ClCompile Include="..\..\..\Common\GeometryGenerator.cpp" />
     <ClCompile Include="..\..\..\Common\MathHelper.cpp" />
     <ClCompile Include="FrameResource.cpp" />
-    <ClCompile Include="TexWavesApp.cpp" />
-    <ClCompile Include="Waves.cpp" />
+    <ClCompile Include="TexColumnsApp.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\Common\d3dApp.h" />
@@ -163,8 +162,7 @@
     <ClInclude Include="..\..\..\Common\MathHelper.h" />
     <ClInclude Include="..\..\..\Common\UploadBuffer.h" />
     <ClInclude Include="FrameResource.h" />
-    <ClInclude Include="TexWavesApp.h" />
-    <ClInclude Include="Waves.h" />
+    <ClInclude Include="TexColumnsApp.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\Default.hlsl">
@@ -175,10 +173,9 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <Image Include="..\..\..\Textures\grass.dds" />
-    <Image Include="..\..\..\Textures\water1.dds" />
-    <Image Include="..\..\..\Textures\WoodCrate01.dds" />
-    <Image Include="..\..\..\Textures\WoodCrate02.dds" />
+    <Image Include="..\..\..\Textures\bricks.dds" />
+    <Image Include="..\..\..\Textures\stone.dds" />
+    <Image Include="..\..\..\Textures\tile.dds" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
