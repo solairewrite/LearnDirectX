@@ -169,24 +169,25 @@ bool TexColumnsApp::Initialize()
 	if (!D3DApp::Initialize())
 		return false;
 
-
 	ThrowIfFailed(mCommandList->Reset(mDirectCmdListAlloc.Get(), nullptr));
-
-
 
 	mCbvSrvDescriptorSize = md3dDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
-
 	LoadTextures(); // 载入贴图,存入mTextures
 	BuildRootSignature(); // mRootSignature,指定了register: t0(SRV,tex), b0,b1,b2(CB)
+	// 创建SRV堆,储存在mSrvDescriptorHeap,描述了3张贴图["bricksTex","stoneTex","tileTex"],用句柄偏移区分
+	// md3dDevice->CreateShaderResourceView(),依次传入mTextures中的资源,视图和句柄
 	BuildDescriptorHeaps();
+	// 载入Shader,函数名"VS"绑定mShaders["standardVS"],函数名"PS"绑定mShaders["opaquePS"]
+	// mInputLayout通过字符串和Shader中的struct VertexIn绑定,通过顺序和C++中的struct Vertex绑定
 	BuildShadersAndInputLayout();
+	// 将所有几何体放入一个大的顶点.索引缓存,定义每个子几何体的区间,存入mGeometries
+	// 将顶点数据放入内存,再通过上传堆传到默认堆
 	BuildShapeGeometry();
 	BuildMaterials();
 	BuildRenderItems();
 	BuildFrameResources();
 	BuildPSOs();
-
 
 	ThrowIfFailed(mCommandList->Close());
 	ID3D12CommandList* cmdLists[] = { mCommandList.Get() };
@@ -197,7 +198,6 @@ bool TexColumnsApp::Initialize()
 
 	return true;
 }
-
 void TexColumnsApp::OnResize()
 {
 	D3DApp::OnResize();
@@ -520,8 +520,8 @@ void TexColumnsApp::BuildRootSignature()
 
 void TexColumnsApp::BuildDescriptorHeaps()
 {
-	// 创建SRV堆,储存在mSrvDescriptorHeap,描述了3张贴图
-
+	// 创建SRV堆,储存在mSrvDescriptorHeap,描述了3张贴图["bricksTex","stoneTex","tileTex"],用句柄偏移区分
+	// md3dDevice->CreateShaderResourceView(),依次传入mTextures中的资源,视图和句柄
 
 	D3D12_DESCRIPTOR_HEAP_DESC srvHeapDesc = {};
 	srvHeapDesc.NumDescriptors = 3; // SRV描述了3张贴图
@@ -569,15 +569,15 @@ void TexColumnsApp::BuildShadersAndInputLayout()
 		"ALPHA_TEST", "1",
 		NULL, NULL
 	};
-
+	// 载入Shader,函数名"VS"绑定mShaders["standardVS"],函数名"PS"绑定mShaders["opaquePS"]
 	mShaders["standardVS"] = d3dUtil::CompileShader(L"Shaders\\Default.hlsl", nullptr, "VS", "vs_5_0");
 	mShaders["opaquePS"] = d3dUtil::CompileShader(L"Shaders\\Default.hlsl", nullptr, "PS", "ps_5_0");
-
+	// mInputLayout通过字符串和Shader中的struct VertexIn绑定,通过顺序和C++中的struct Vertex绑定
 	mInputLayout =
 	{
-		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 24, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		{"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
+		{"NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
+		{"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 24, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
 	};
 }
 
@@ -589,18 +589,18 @@ void TexColumnsApp::BuildShapeGeometry()
 	GeometryGenerator::MeshData sphere = geoGen.CreateSphere(0.5f, 20, 20);
 	GeometryGenerator::MeshData cylinder = geoGen.CreateCylinder(0.5f, 0.3f, 3.0f, 20, 20);
 
-	//
-	// We are concatenating all the geometry into one big vertex/index buffer.  So
-	// define the regions in the buffer each submesh covers.
-	//
+	// 将所有几何体放入一个大的顶点.索引缓存,定义每个子几何体的区间,存入mGeometries
+	// 将顶点数据放入内存,再通过上传堆传到默认堆
 
-	// Cache the vertex offsets to each object in the concatenated vertex buffer.
+
+
+
 	UINT boxVertexOffset = 0;
 	UINT gridVertexOffset = (UINT)box.Vertices.size();
 	UINT sphereVertexOffset = gridVertexOffset + (UINT)grid.Vertices.size();
 	UINT cylinderVertexOffset = sphereVertexOffset + (UINT)sphere.Vertices.size();
 
-	// Cache the starting index for each object in the concatenated index buffer.
+
 	UINT boxIndexOffset = 0;
 	UINT gridIndexOffset = (UINT)box.Indices32.size();
 	UINT sphereIndexOffset = gridIndexOffset + (UINT)grid.Indices32.size();
@@ -626,10 +626,10 @@ void TexColumnsApp::BuildShapeGeometry()
 	cylinderSubmesh.StartIndexLocation = cylinderIndexOffset;
 	cylinderSubmesh.BaseVertexLocation = cylinderVertexOffset;
 
-	//
-	// Extract the vertex elements we are interested in and pack the
-	// vertices of all the meshes into one vertex buffer.
-	//
+	// 将所有顶点放入一个顶点缓存
+
+
+
 
 	auto totalVertexCount =
 		box.Vertices.size() +
@@ -639,7 +639,7 @@ void TexColumnsApp::BuildShapeGeometry()
 
 	std::vector<Vertex> vertices(totalVertexCount);
 
-	UINT k = 0;
+	UINT k = 0; // 用于整体循环所有几何体
 	for (size_t i = 0; i < box.Vertices.size(); ++i, ++k)
 	{
 		vertices[k].Pos = box.Vertices[i].Position;
@@ -679,13 +679,13 @@ void TexColumnsApp::BuildShapeGeometry()
 
 	auto geo = std::make_unique<MeshGeometry>();
 	geo->Name = "shapeGeo";
-
+	// 将顶点数据放入内存
 	ThrowIfFailed(D3DCreateBlob(vbByteSize, &geo->VertexBufferCPU));
 	CopyMemory(geo->VertexBufferCPU->GetBufferPointer(), vertices.data(), vbByteSize);
 
 	ThrowIfFailed(D3DCreateBlob(ibByteSize, &geo->IndexBufferCPU));
 	CopyMemory(geo->IndexBufferCPU->GetBufferPointer(), indices.data(), ibByteSize);
-
+	// 将顶点数据通过上传堆传到默认堆
 	geo->VertexBufferGPU = d3dUtil::CreateDefaultBuffer(md3dDevice.Get(),
 		mCommandList.Get(), vertices.data(), vbByteSize, geo->VertexBufferUploader);
 
