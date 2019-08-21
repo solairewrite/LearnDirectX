@@ -128,8 +128,6 @@
 
 
 
-
-
 int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
 	_In_ LPSTR lpCmdLine, _In_ int nShowCmd)
 {
@@ -144,7 +142,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
 		if (!theApp.Initialize())
 			return 0;
 
-		return theApp.Run();
+		return theApp.Run(); // Update() -> Draw()
 	}
 	catch (DxException& e)
 	{
@@ -176,7 +174,7 @@ bool TexColumnsApp::Initialize()
 	LoadTextures(); // 载入贴图,存入mTextures
 	BuildRootSignature(); // mRootSignature,指定了register: t0(SRV,tex), b0,b1,b2(CB)
 	// 创建SRV堆,储存在mSrvDescriptorHeap,描述了3张贴图["bricksTex","stoneTex","tileTex"],用句柄偏移区分
-	// md3dDevice->CreateShaderResourceView(),依次传入mTextures中的资源,视图和句柄
+	// md3dDevice->CreateShaderResourceView(),依次传入mTextures中的资源,视图(描述符)和句柄
 	BuildDescriptorHeaps();
 	// 载入Shader,函数名"VS"绑定mShaders["standardVS"],函数名"PS"绑定mShaders["opaquePS"]
 	// mInputLayout通过字符串和Shader中的struct VertexIn绑定,通过顺序和C++中的struct Vertex绑定
@@ -184,10 +182,12 @@ bool TexColumnsApp::Initialize()
 	// 将所有几何体放入一个大的顶点.索引缓存,定义每个子几何体的区间,存入mGeometries
 	// 将顶点数据放入内存,再通过上传堆传到默认堆
 	BuildShapeGeometry();
-	BuildMaterials();
-	BuildRenderItems();
+	BuildMaterials(); // 将材质存入mMaterials[],设置MatCBIndex
+	BuildRenderItems(); // 渲染项存入mAllRitems和mOpaqueRitems,设置Translation,ObjCBIndex,mat,顶点/索引
+	// 创建帧资源储存在mFrameResources[],指明passCount,objectCount,materialCount 
+	// 帧资源的构造函数将这些常量储存在UploadBuffer<>中
 	BuildFrameResources();
-	BuildPSOs();
+	BuildPSOs(); // 创建PSO,存入mPSOs["opaque"]
 
 	ThrowIfFailed(mCommandList->Close());
 	ID3D12CommandList* cmdLists[] = { mCommandList.Get() };
@@ -202,22 +202,22 @@ void TexColumnsApp::OnResize()
 {
 	D3DApp::OnResize();
 
-	// The window resized, so update the aspect ratio and recompute the projection matrix.
-	XMMATRIX P = XMMatrixPerspectiveFovLH(0.25f*MathHelper::Pi, AspectRatio(), 1.0f, 1000.0f);
+	// 更新投影矩阵
+	XMMATRIX P = XMMatrixPerspectiveFovLH(0.25*MathHelper::Pi, AspectRatio(), 1.0f, 1000.0f);
 	XMStoreFloat4x4(&mProj, P);
 }
 
 void TexColumnsApp::Update(const GameTimer& gt)
 {
 	OnKeyboardInput(gt);
-	UpdateCamera(gt);
+	UpdateCamera(gt); // 更新mView
 
-	// Cycle through the circular frame resource array.
+	// 循环帧资源数组
 	mCurrFrameResourceIndex = (mCurrFrameResourceIndex + 1) % gNumFrameResources;
 	mCurrFrameResource = mFrameResources[mCurrFrameResourceIndex].get();
 
-	// Has the GPU finished processing the commands of the current frame resource?
-	// If not, wait until the GPU has completed commands up to this fence point.
+	// 如果GPU没有完成当前帧资源的处理
+	// 等待GPU处理完命令,到达这个围栏点 假设CPU比GPU快,CPU在第一个帧资源,mCurrFrameResource->Fence = 4,那么mFence可能是3
 	if (mCurrFrameResource->Fence != 0 && mFence->GetCompletedValue() < mCurrFrameResource->Fence)
 	{
 		HANDLE eventHandle = CreateEventEx(nullptr, false, false, EVENT_ALL_ACCESS);
@@ -288,7 +288,7 @@ void TexColumnsApp::Draw(const GameTimer& gt)
 
 	// Add an instruction to the command queue to set a new fence point. 
 	// Because we are on the GPU timeline, the new fence point won't be 
-	// set until the GPU finishes processing all the commands prior to this Signal().
+	// set until the GPU finishes processing all the commands prior to this Signal(). // mCurrentFence每帧++,1,2,3,4... 其中1,4,7...属于第一个帧资源,CPU给GPU设置了围栏点(mCurrentFence)1,2,3,4...GPU一直在计算,(mFence)依次到达这些围栏点1,2,3,4...
 	mCommandQueue->Signal(mFence.Get(), mCurrentFence);
 }
 
@@ -340,15 +340,15 @@ void TexColumnsApp::OnMouseMove(WPARAM btnState, int x, int y)
 void TexColumnsApp::OnKeyboardInput(const GameTimer& gt)
 {
 }
-
+// 更新mView
 void TexColumnsApp::UpdateCamera(const GameTimer& gt)
 {
-	// Convert Spherical to Cartesian coordinates.
+
 	mEyePos.x = mRadius * sinf(mPhi)*cosf(mTheta);
 	mEyePos.z = mRadius * sinf(mPhi)*sinf(mTheta);
 	mEyePos.y = mRadius * cosf(mPhi);
 
-	// Build the view matrix.
+
 	XMVECTOR pos = XMVectorSet(mEyePos.x, mEyePos.y, mEyePos.z, 1.0f);
 	XMVECTOR target = XMVectorZero();
 	XMVECTOR up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
@@ -361,38 +361,38 @@ void TexColumnsApp::AnimateMaterials(const GameTimer& gt)
 {
 
 }
-
+// 更新每个帧资源的每个ObjectConstant
 void TexColumnsApp::UpdateObjectCBs(const GameTimer& gt)
 {
-	auto currObjectCB = mCurrFrameResource->ObjectCB.get();
-	for (auto& e : mAllRitems)
+	auto currObjectCB = mCurrFrameResource->ObjectCB.get(); // BuildFrameResources()中实例化帧资源,帧资源的构造函数创建了空的ObjectCB数组
+	for (auto& e : mAllRitems) // BuildRenderItems()中实例化RenderItem,默认 NumFramesDirty = gNumFrameResources
 	{
-		// Only update the cbuffer data if the constants have changed.  
-		// This needs to be tracked per frame resource.
+		// 只修改有改动的cb,每个帧资源都要修改
+
 		if (e->NumFramesDirty > 0)
 		{
 			XMMATRIX world = XMLoadFloat4x4(&e->World);
 			XMMATRIX texTransform = XMLoadFloat4x4(&e->TexTransform);
 
 			ObjectConstants objConstants;
-			XMStoreFloat4x4(&objConstants.World, XMMatrixTranspose(world));
+			XMStoreFloat4x4(&objConstants.World, XMMatrixTranspose(world)); // XMMatrixTranspose()转置矩阵 // XMFLOAT4X4 is a row-major matrix form. To write out column-major data requires the XMMATRIX be transposed via XMMatrixTranpose before calling the store function.
 			XMStoreFloat4x4(&objConstants.TexTransform, XMMatrixTranspose(texTransform));
 
 			currObjectCB->CopyData(e->ObjCBIndex, objConstants);
 
-			// Next FrameResource need to be updated too.
+
 			e->NumFramesDirty--;
 		}
 	}
 }
-
+// 更新每个帧资源的每个材质
 void TexColumnsApp::UpdateMaterialCBs(const GameTimer& gt)
 {
 	auto currMaterialCB = mCurrFrameResource->MaterialCB.get();
 	for (auto& e : mMaterials)
 	{
-		// Only update the cbuffer data if the constants have changed.  If the cbuffer
-		// data changes, it needs to be updated for each FrameResource.
+
+
 		Material* mat = e.second.get();
 		if (mat->NumFramesDirty > 0)
 		{
@@ -406,7 +406,7 @@ void TexColumnsApp::UpdateMaterialCBs(const GameTimer& gt)
 
 			currMaterialCB->CopyData(mat->MatCBIndex, matConstants);
 
-			// Next FrameResource need to be updated too.
+
 			mat->NumFramesDirty--;
 		}
 	}
@@ -414,10 +414,10 @@ void TexColumnsApp::UpdateMaterialCBs(const GameTimer& gt)
 
 void TexColumnsApp::UpdateMainPassCB(const GameTimer& gt)
 {
-	XMMATRIX view = XMLoadFloat4x4(&mView);
-	XMMATRIX proj = XMLoadFloat4x4(&mProj);
-
+	XMMATRIX view = XMLoadFloat4x4(&mView); // UpdateCamera()
+	XMMATRIX proj = XMLoadFloat4x4(&mProj); // OnResize()
 	XMMATRIX viewProj = XMMatrixMultiply(view, proj);
+	
 	XMMATRIX invView = XMMatrixInverse(&XMMatrixDeterminant(view), view);
 	XMMATRIX invProj = XMMatrixInverse(&XMMatrixDeterminant(proj), proj);
 	XMMATRIX invViewProj = XMMatrixInverse(&XMMatrixDeterminant(viewProj), viewProj);
@@ -428,7 +428,7 @@ void TexColumnsApp::UpdateMainPassCB(const GameTimer& gt)
 	XMStoreFloat4x4(&mMainPassCB.InvProj, XMMatrixTranspose(invProj));
 	XMStoreFloat4x4(&mMainPassCB.ViewProj, XMMatrixTranspose(viewProj));
 	XMStoreFloat4x4(&mMainPassCB.InvViewProj, XMMatrixTranspose(invViewProj));
-	mMainPassCB.EyePosW = mEyePos;
+	mMainPassCB.EyePosW = mEyePos; // UpdateCamera()
 	mMainPassCB.RenderTargetSize = XMFLOAT2((float)mClientWidth, (float)mClientHeight);
 	mMainPassCB.InvRenderTargetSize = XMFLOAT2(1.0f / mClientWidth, 1.0f / mClientHeight);
 	mMainPassCB.NearZ = 1.0f;
@@ -482,7 +482,7 @@ void TexColumnsApp::BuildRootSignature()
 		D3D12_DESCRIPTOR_RANGE_TYPE_SRV,
 		1, // 描述符数量
 		0); // register t0
-	
+
 	// 根参数可以是描述符表,根描述符,或根常量
 	CD3DX12_ROOT_PARAMETER slotRootParameter[4];
 
@@ -704,16 +704,16 @@ void TexColumnsApp::BuildShapeGeometry()
 
 	mGeometries[geo->Name] = std::move(geo);
 }
-
+// 创建PSO,存入mPSOs["opaque"]
 void TexColumnsApp::BuildPSOs()
 {
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC opaquePsoDesc;
 
-	//
-	// PSO for opaque objects.
-	//
+	// PSO for opaque objects
+
+
 	ZeroMemory(&opaquePsoDesc, sizeof(D3D12_GRAPHICS_PIPELINE_STATE_DESC));
-	opaquePsoDesc.InputLayout = { mInputLayout.data(), (UINT)mInputLayout.size() };
+	opaquePsoDesc.InputLayout = { mInputLayout.data(),(UINT)mInputLayout.size() };
 	opaquePsoDesc.pRootSignature = mRootSignature.Get();
 	opaquePsoDesc.VS =
 	{
@@ -737,7 +737,7 @@ void TexColumnsApp::BuildPSOs()
 	opaquePsoDesc.DSVFormat = mDepthStencilFormat;
 	ThrowIfFailed(md3dDevice->CreateGraphicsPipelineState(&opaquePsoDesc, IID_PPV_ARGS(&mPSOs["opaque"])));
 }
-
+// 创建帧资源储存在mFrameResources[],指明passCount,objectCount,materialCount // 帧资源的构造函数将这些常量储存在UploadBuffer<>中
 void TexColumnsApp::BuildFrameResources()
 {
 	for (int i = 0; i < gNumFrameResources; ++i)
@@ -746,7 +746,7 @@ void TexColumnsApp::BuildFrameResources()
 			1, (UINT)mAllRitems.size(), (UINT)mMaterials.size()));
 	}
 }
-
+// 将材质存入mMaterials[],设置MatCBIndex
 void TexColumnsApp::BuildMaterials()
 {
 	auto bricks0 = std::make_unique<Material>();
@@ -777,7 +777,7 @@ void TexColumnsApp::BuildMaterials()
 	mMaterials["stone0"] = std::move(stone0);
 	mMaterials["tile0"] = std::move(tile0);
 }
-
+// 渲染项存入mAllRitems和mOpaqueRitems,设置Translation,ObjCBIndex,mat,顶点/索引
 void TexColumnsApp::BuildRenderItems()
 {
 	auto boxRitem = std::make_unique<RenderItem>();
@@ -792,17 +792,17 @@ void TexColumnsApp::BuildRenderItems()
 	boxRitem->BaseVertexLocation = boxRitem->Geo->DrawArgs["box"].BaseVertexLocation;
 	mAllRitems.push_back(std::move(boxRitem));
 
-	auto gridRitem = std::make_unique<RenderItem>();
-	gridRitem->World = MathHelper::Identity4x4();
-	XMStoreFloat4x4(&gridRitem->TexTransform, XMMatrixScaling(8.0f, 8.0f, 1.0f));
-	gridRitem->ObjCBIndex = 1;
-	gridRitem->Mat = mMaterials["tile0"].get();
-	gridRitem->Geo = mGeometries["shapeGeo"].get();
-	gridRitem->PrimitiveType = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
-	gridRitem->IndexCount = gridRitem->Geo->DrawArgs["grid"].IndexCount;
-	gridRitem->StartIndexLocation = gridRitem->Geo->DrawArgs["grid"].StartIndexLocation;
-	gridRitem->BaseVertexLocation = gridRitem->Geo->DrawArgs["grid"].BaseVertexLocation;
-	mAllRitems.push_back(std::move(gridRitem));
+	auto gridItem = std::make_unique<RenderItem>();
+	gridItem->World = MathHelper::Identity4x4();
+	XMStoreFloat4x4(&gridItem->TexTransform, XMMatrixScaling(8.0f, 8.0f, 1.0f));
+	gridItem->ObjCBIndex = 1;
+	gridItem->Mat = mMaterials["tile0"].get();
+	gridItem->Geo = mGeometries["shapeGeo"].get();
+	gridItem->PrimitiveType = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+	gridItem->IndexCount = gridItem->Geo->DrawArgs["grid"].IndexCount;
+	gridItem->StartIndexLocation = gridItem->Geo->DrawArgs["grid"].StartIndexLocation;
+	gridItem->BaseVertexLocation = gridItem->Geo->DrawArgs["grid"].BaseVertexLocation;
+	mAllRitems.push_back(std::move(gridItem));
 
 	XMMATRIX brickTexTransform = XMMatrixScaling(1.0f, 1.0f, 1.0f);
 	UINT objCBIndex = 2;
@@ -819,7 +819,7 @@ void TexColumnsApp::BuildRenderItems()
 		XMMATRIX leftSphereWorld = XMMatrixTranslation(-5.0f, 3.5f, -10.0f + i * 5.0f);
 		XMMATRIX rightSphereWorld = XMMatrixTranslation(+5.0f, 3.5f, -10.0f + i * 5.0f);
 
-		XMStoreFloat4x4(&leftCylRitem->World, rightCylWorld);
+		XMStoreFloat4x4(&leftCylRitem->World, leftCylWorld);
 		XMStoreFloat4x4(&leftCylRitem->TexTransform, brickTexTransform);
 		leftCylRitem->ObjCBIndex = objCBIndex++;
 		leftCylRitem->Mat = mMaterials["bricks0"].get();
@@ -829,7 +829,7 @@ void TexColumnsApp::BuildRenderItems()
 		leftCylRitem->StartIndexLocation = leftCylRitem->Geo->DrawArgs["cylinder"].StartIndexLocation;
 		leftCylRitem->BaseVertexLocation = leftCylRitem->Geo->DrawArgs["cylinder"].BaseVertexLocation;
 
-		XMStoreFloat4x4(&rightCylRitem->World, leftCylWorld);
+		XMStoreFloat4x4(&rightCylRitem->World, rightCylWorld);
 		XMStoreFloat4x4(&rightCylRitem->TexTransform, brickTexTransform);
 		rightCylRitem->ObjCBIndex = objCBIndex++;
 		rightCylRitem->Mat = mMaterials["bricks0"].get();
@@ -865,7 +865,7 @@ void TexColumnsApp::BuildRenderItems()
 		mAllRitems.push_back(std::move(rightSphereRitem));
 	}
 
-	// All the render items are opaque.
+	// 所有渲染项都不透明
 	for (auto& e : mAllRitems)
 		mOpaqueRitems.push_back(e.get());
 }
