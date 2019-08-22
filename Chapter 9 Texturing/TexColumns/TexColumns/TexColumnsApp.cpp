@@ -1,133 +1,5 @@
 #include "TexColumnsApp.h"
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
 	_In_ LPSTR lpCmdLine, _In_ int nShowCmd)
 {
@@ -171,23 +43,37 @@ bool TexColumnsApp::Initialize()
 
 	mCbvSrvDescriptorSize = md3dDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
-	LoadTextures(); // 载入贴图,存入mTextures
-	BuildRootSignature(); // mRootSignature,指定了register: t0(SRV,tex), b0,b1,b2(CB)
-	// 创建SRV堆,储存在mSrvDescriptorHeap,描述了3张贴图["bricksTex","stoneTex","tileTex"],用句柄偏移区分
+	// 载入贴图,存入mTextures
+	LoadTextures();
+
+	// mRootSignature,指定了register: t0(SRV,tex), b0,b1,b2(CB)
+	// 根签名(根参数数组)指定了寄存器插槽,constant buffer 通过指明根签名中的根参数索引对应register
+	BuildRootSignature(); 
+
+	// 创建SRV堆,储存在mSrvDescriptorHeap,描述了3张贴图,用句柄偏移区分
 	// md3dDevice->CreateShaderResourceView(),依次传入mTextures中的资源,视图(描述符)和句柄
 	BuildDescriptorHeaps();
+
 	// 载入Shader,函数名"VS"绑定mShaders["standardVS"],函数名"PS"绑定mShaders["opaquePS"]
 	// mInputLayout通过字符串和Shader中的struct VertexIn绑定,通过顺序和C++中的struct Vertex绑定
 	BuildShadersAndInputLayout();
+
 	// 将所有几何体放入一个大的顶点.索引缓存,定义每个子几何体的区间,存入mGeometries
 	// 将顶点数据放入内存,再通过上传堆传到默认堆
 	BuildShapeGeometry();
-	BuildMaterials(); // 将材质存入mMaterials[],设置MatCBIndex
-	BuildRenderItems(); // 渲染项存入mAllRitems和mOpaqueRitems,设置Translation,ObjCBIndex,mat,顶点/索引
+
+	// 将材质存入mMaterials[],设置MatCBIndex
+	BuildMaterials();
+
+	// 渲染项存入mAllRitems和mOpaqueRitems,设置Translation,ObjCBIndex,mat,顶点/索引
+	BuildRenderItems();
+
 	// 创建帧资源储存在mFrameResources[],指明passCount,objectCount,materialCount 
 	// 帧资源的构造函数将这些常量储存在UploadBuffer<>中
 	BuildFrameResources();
-	BuildPSOs(); // 创建PSO,存入mPSOs["opaque"]
+
+	// 创建PSO,存入mPSOs["opaque"],设置了 InputLayout, pRootSignature, Shader
+	BuildPSOs(); 
 
 	ThrowIfFailed(mCommandList->Close());
 	ID3D12CommandList* cmdLists[] = { mCommandList.Get() };
@@ -198,26 +84,26 @@ bool TexColumnsApp::Initialize()
 
 	return true;
 }
+
+// 更新投影矩阵 mProj
 void TexColumnsApp::OnResize()
 {
 	D3DApp::OnResize();
 
-	// 更新投影矩阵
 	XMMATRIX P = XMMatrixPerspectiveFovLH(0.25*MathHelper::Pi, AspectRatio(), 1.0f, 1000.0f);
 	XMStoreFloat4x4(&mProj, P);
 }
 
 void TexColumnsApp::Update(const GameTimer& gt)
 {
-	OnKeyboardInput(gt);
+	OnKeyboardInput(gt); // do nothing
 	UpdateCamera(gt); // 更新mView
 
 	// 循环帧资源数组
 	mCurrFrameResourceIndex = (mCurrFrameResourceIndex + 1) % gNumFrameResources;
 	mCurrFrameResource = mFrameResources[mCurrFrameResourceIndex].get();
 
-	// 如果GPU没有完成当前帧资源的处理
-	// 等待GPU处理完命令,到达这个围栏点 假设CPU比GPU快,CPU在第一个帧资源,mCurrFrameResource->Fence = 4,那么mFence可能是3
+	// 如果GPU没有完成当前帧资源的处理,CPU等待GPU处理完命令,到达这个围栏点
 	if (mCurrFrameResource->Fence != 0 && mFence->GetCompletedValue() < mCurrFrameResource->Fence)
 	{
 		HANDLE eventHandle = CreateEventEx(nullptr, false, false, EVENT_ALL_ACCESS);
@@ -226,69 +112,66 @@ void TexColumnsApp::Update(const GameTimer& gt)
 		CloseHandle(eventHandle);
 	}
 
-	AnimateMaterials(gt);
-	UpdateObjectCBs(gt);
-	UpdateMaterialCBs(gt);
-	UpdateMainPassCB(gt);
+	AnimateMaterials(gt); // do nothing
+	UpdateObjectCBs(gt); // 更新每个帧资源的每个ObjectConstant
+	UpdateMaterialCBs(gt); // 更新每个帧资源的每个材质MaterialConstants
+	UpdateMainPassCB(gt); // 修改了mCurrFrameResource->PassCB, struct PassConstants
 }
 
 void TexColumnsApp::Draw(const GameTimer& gt)
 {
 	auto cmdListAlloc = mCurrFrameResource->CmdListAlloc;
-
-	// Reuse the memory associated with command recording.
-	// We can only reset when the associated command lists have finished execution on the GPU.
 	ThrowIfFailed(cmdListAlloc->Reset());
 
-	// A command list can be reset after it has been added to the command queue via ExecuteCommandList.
-	// Reusing the command list reuses memory.
+	// mPSOs["opaque"],设置了 InputLayout, pRootSignature, Shader
+	// mInputLayout通过字符串和Shader中的struct VertexIn绑定,通过顺序和C++中的struct Vertex绑定
+	// mRootSignature,指定了register: t0(SRV,tex), b0,b1,b2(CB)
 	ThrowIfFailed(mCommandList->Reset(cmdListAlloc.Get(), mPSOs["opaque"].Get()));
 
 	mCommandList->RSSetViewports(1, &mScreenViewport);
 	mCommandList->RSSetScissorRects(1, &mScissorRect);
 
-	// Indicate a state transition on the resource usage.
 	mCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(CurrentBackBuffer(),
 		D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
 
-	// Clear the back buffer and depth buffer.
+	// 清空后台缓冲区和深度缓冲区
 	mCommandList->ClearRenderTargetView(CurrentBackBufferView(), Colors::LightSteelBlue, 0, nullptr);
 	mCommandList->ClearDepthStencilView(DepthStencilView(), D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
 
-	// Specify the buffers we are going to render to.
+	// 指明要渲染的缓冲区
 	mCommandList->OMSetRenderTargets(1, &CurrentBackBufferView(), true, &DepthStencilView());
 
+	// mSrvDescriptorHeap,描述了3张贴图,用句柄偏移区分
 	ID3D12DescriptorHeap* descriptorHeaps[] = { mSrvDescriptorHeap.Get() };
 	mCommandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
 
+	// mPSOs["opaque"],设置了 pRootSignature, mRootSignature,指定了register: t0(SRV,tex), b0,b1,b2(CB)
 	mCommandList->SetGraphicsRootSignature(mRootSignature.Get());
 
+	// 根签名(根参数数组)指定了寄存器插槽,constant buffer 通过指明根签名中的根参数索引对应register
+	// RootParameterIndex:2, cbuffer cbPass : register(b1)
 	auto passCB = mCurrFrameResource->PassCB->Resource();
 	mCommandList->SetGraphicsRootConstantBufferView(2, passCB->GetGPUVirtualAddress());
 
 	DrawRenderItems(mCommandList.Get(), mOpaqueRitems);
 
-	// Indicate a state transition on the resource usage.
 	mCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(CurrentBackBuffer(),
 		D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
 
-	// Done recording commands.
 	ThrowIfFailed(mCommandList->Close());
 
-	// Add the command list to the queue for execution.
 	ID3D12CommandList* cmdsLists[] = { mCommandList.Get() };
 	mCommandQueue->ExecuteCommandLists(_countof(cmdsLists), cmdsLists);
 
-	// Swap the back and front buffers
 	ThrowIfFailed(mSwapChain->Present(0, 0));
 	mCurrBackBuffer = (mCurrBackBuffer + 1) % SwapChainBufferCount;
 
-	// Advance the fence value to mark commands up to this fence point.
+	// mCurrFrameResource->Fence只属于当前帧资源,每次+=3, mCurrentFence作用于所有帧资源,每次++
 	mCurrFrameResource->Fence = ++mCurrentFence;
 
-	// Add an instruction to the command queue to set a new fence point. 
-	// Because we are on the GPU timeline, the new fence point won't be 
-	// set until the GPU finishes processing all the commands prior to this Signal(). // mCurrentFence每帧++,1,2,3,4... 其中1,4,7...属于第一个帧资源,CPU给GPU设置了围栏点(mCurrentFence)1,2,3,4...GPU一直在计算,(mFence)依次到达这些围栏点1,2,3,4...
+	// CPU为GPU设置围栏命令: 1,2,3,4... GPU依次达到1,2,3,4...
+	// 如果CPU再一次处理第一个帧资源,eg(mCurrFrameResource->Fence=4)
+	// CPU就会等待GPU(mFence->GetCompletedValue())增长:1->2->3->4
 	mCommandQueue->Signal(mFence.Get(), mCurrentFence);
 }
 
@@ -340,14 +223,13 @@ void TexColumnsApp::OnMouseMove(WPARAM btnState, int x, int y)
 void TexColumnsApp::OnKeyboardInput(const GameTimer& gt)
 {
 }
+
 // 更新mView
 void TexColumnsApp::UpdateCamera(const GameTimer& gt)
 {
-
 	mEyePos.x = mRadius * sinf(mPhi)*cosf(mTheta);
 	mEyePos.z = mRadius * sinf(mPhi)*sinf(mTheta);
 	mEyePos.y = mRadius * cosf(mPhi);
-
 
 	XMVECTOR pos = XMVectorSet(mEyePos.x, mEyePos.y, mEyePos.z, 1.0f);
 	XMVECTOR target = XMVectorZero();
@@ -361,38 +243,42 @@ void TexColumnsApp::AnimateMaterials(const GameTimer& gt)
 {
 
 }
+
 // 更新每个帧资源的每个ObjectConstant
 void TexColumnsApp::UpdateObjectCBs(const GameTimer& gt)
 {
-	auto currObjectCB = mCurrFrameResource->ObjectCB.get(); // BuildFrameResources()中实例化帧资源,帧资源的构造函数创建了空的ObjectCB数组
-	for (auto& e : mAllRitems) // BuildRenderItems()中实例化RenderItem,默认 NumFramesDirty = gNumFrameResources
+	// BuildFrameResources()中实例化帧资源,帧资源的构造函数创建了空的ObjectCB数组
+	auto currObjectCB = mCurrFrameResource->ObjectCB.get();
+	// BuildRenderItems()中实例化RenderItem,默认 NumFramesDirty = gNumFrameResources
+	for (auto& e : mAllRitems)
 	{
 		// 只修改有改动的cb,每个帧资源都要修改
-
 		if (e->NumFramesDirty > 0)
 		{
 			XMMATRIX world = XMLoadFloat4x4(&e->World);
 			XMMATRIX texTransform = XMLoadFloat4x4(&e->TexTransform);
 
 			ObjectConstants objConstants;
-			XMStoreFloat4x4(&objConstants.World, XMMatrixTranspose(world)); // XMMatrixTranspose()转置矩阵 // XMFLOAT4X4 is a row-major matrix form. To write out column-major data requires the XMMATRIX be transposed via XMMatrixTranpose before calling the store function.
+			// XMFLOAT4X4 is a row-major matrix form
+			// To write out column-major data requires the XMMATRIX be transposed via XMMatrixTranpose
+			// before calling the store function.
+			// XMMatrixTranspose()转置矩阵
+			XMStoreFloat4x4(&objConstants.World, XMMatrixTranspose(world));  
 			XMStoreFloat4x4(&objConstants.TexTransform, XMMatrixTranspose(texTransform));
 
 			currObjectCB->CopyData(e->ObjCBIndex, objConstants);
-
 
 			e->NumFramesDirty--;
 		}
 	}
 }
-// 更新每个帧资源的每个材质
+
+// 更新每个帧资源的每个材质MaterialConstants
 void TexColumnsApp::UpdateMaterialCBs(const GameTimer& gt)
 {
 	auto currMaterialCB = mCurrFrameResource->MaterialCB.get();
 	for (auto& e : mMaterials)
 	{
-
-
 		Material* mat = e.second.get();
 		if (mat->NumFramesDirty > 0)
 		{
@@ -406,18 +292,18 @@ void TexColumnsApp::UpdateMaterialCBs(const GameTimer& gt)
 
 			currMaterialCB->CopyData(mat->MatCBIndex, matConstants);
 
-
 			mat->NumFramesDirty--;
 		}
 	}
 }
 
+// 修改了mCurrFrameResource->PassCB, struct PassConstants
 void TexColumnsApp::UpdateMainPassCB(const GameTimer& gt)
 {
 	XMMATRIX view = XMLoadFloat4x4(&mView); // UpdateCamera()
 	XMMATRIX proj = XMLoadFloat4x4(&mProj); // OnResize()
 	XMMATRIX viewProj = XMMatrixMultiply(view, proj);
-	
+
 	XMMATRIX invView = XMMatrixInverse(&XMMatrixDeterminant(view), view);
 	XMMATRIX invProj = XMMatrixInverse(&XMMatrixDeterminant(proj), proj);
 	XMMATRIX invViewProj = XMMatrixInverse(&XMMatrixDeterminant(viewProj), viewProj);
@@ -447,6 +333,7 @@ void TexColumnsApp::UpdateMainPassCB(const GameTimer& gt)
 	currPassCB->CopyData(0, mMainPassCB);
 }
 
+// 载入贴图,存入mTextures
 void TexColumnsApp::LoadTextures()
 {
 	auto bricksTex = std::make_unique<Texture>();
@@ -475,6 +362,8 @@ void TexColumnsApp::LoadTextures()
 	mTextures[tileTex->Name] = std::move(tileTex);
 }
 
+// mRootSignature,指定了register: t0(SRV,tex), b0,b1,b2(CB)
+// 根签名(根参数数组)指定了寄存器插槽,constant buffer 通过指明根签名中的根参数索引对应register
 void TexColumnsApp::BuildRootSignature()
 {
 	CD3DX12_DESCRIPTOR_RANGE texTable;
@@ -485,7 +374,6 @@ void TexColumnsApp::BuildRootSignature()
 
 	// 根参数可以是描述符表,根描述符,或根常量
 	CD3DX12_ROOT_PARAMETER slotRootParameter[4];
-
 
 	slotRootParameter[0].InitAsDescriptorTable(1, &texTable, D3D12_SHADER_VISIBILITY_PIXEL);
 	slotRootParameter[1].InitAsConstantBufferView(0); // register b0
@@ -518,11 +406,10 @@ void TexColumnsApp::BuildRootSignature()
 		IID_PPV_ARGS(mRootSignature.GetAddressOf())));
 }
 
+// 创建SRV堆,储存在mSrvDescriptorHeap,描述了3张贴图,用句柄偏移区分
+// md3dDevice->CreateShaderResourceView(),依次传入mTextures中的资源,视图(描述符)和句柄
 void TexColumnsApp::BuildDescriptorHeaps()
 {
-	// 创建SRV堆,储存在mSrvDescriptorHeap,描述了3张贴图["bricksTex","stoneTex","tileTex"],用句柄偏移区分
-	// md3dDevice->CreateShaderResourceView(),依次传入mTextures中的资源,视图和句柄
-
 	D3D12_DESCRIPTOR_HEAP_DESC srvHeapDesc = {};
 	srvHeapDesc.NumDescriptors = 3; // SRV描述了3张贴图
 	srvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
@@ -530,8 +417,6 @@ void TexColumnsApp::BuildDescriptorHeaps()
 	ThrowIfFailed(md3dDevice->CreateDescriptorHeap(&srvHeapDesc, IID_PPV_ARGS(&mSrvDescriptorHeap)));
 
 	// 用实际的描述符填充描述符堆
-
-
 	CD3DX12_CPU_DESCRIPTOR_HANDLE hDescriptor(mSrvDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
 
 	auto bricksTex = mTextures["bricksTex"]->Resource;
@@ -547,13 +432,11 @@ void TexColumnsApp::BuildDescriptorHeaps()
 	srvDesc.Texture2D.ResourceMinLODClamp = 0.0f;
 	md3dDevice->CreateShaderResourceView(bricksTex.Get(), &srvDesc, hDescriptor);
 
-
 	hDescriptor.Offset(1, mCbvSrvDescriptorSize);
 
 	srvDesc.Format = stoneTex->GetDesc().Format;
 	srvDesc.Texture2D.MipLevels = stoneTex->GetDesc().MipLevels;
 	md3dDevice->CreateShaderResourceView(stoneTex.Get(), &srvDesc, hDescriptor);
-
 
 	hDescriptor.Offset(1, mCbvSrvDescriptorSize);
 
@@ -562,6 +445,8 @@ void TexColumnsApp::BuildDescriptorHeaps()
 	md3dDevice->CreateShaderResourceView(tileTex.Get(), &srvDesc, hDescriptor);
 }
 
+// 载入Shader,函数名"VS"绑定mShaders["standardVS"],函数名"PS"绑定mShaders["opaquePS"]
+// mInputLayout通过字符串和Shader中的struct VertexIn绑定,通过顺序和C++中的struct Vertex绑定
 void TexColumnsApp::BuildShadersAndInputLayout()
 {
 	const D3D_SHADER_MACRO alphaTestDefines[] =
@@ -569,10 +454,10 @@ void TexColumnsApp::BuildShadersAndInputLayout()
 		"ALPHA_TEST", "1",
 		NULL, NULL
 	};
-	// 载入Shader,函数名"VS"绑定mShaders["standardVS"],函数名"PS"绑定mShaders["opaquePS"]
+	
 	mShaders["standardVS"] = d3dUtil::CompileShader(L"Shaders\\Default.hlsl", nullptr, "VS", "vs_5_0");
 	mShaders["opaquePS"] = d3dUtil::CompileShader(L"Shaders\\Default.hlsl", nullptr, "PS", "ps_5_0");
-	// mInputLayout通过字符串和Shader中的struct VertexIn绑定,通过顺序和C++中的struct Vertex绑定
+	
 	mInputLayout =
 	{
 		{"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
@@ -581,6 +466,8 @@ void TexColumnsApp::BuildShadersAndInputLayout()
 	};
 }
 
+// 将所有几何体放入一个大的顶点.索引缓存,定义每个子几何体的区间,存入mGeometries
+// 将顶点数据放入内存,再通过上传堆传到默认堆
 void TexColumnsApp::BuildShapeGeometry()
 {
 	GeometryGenerator geoGen;
@@ -589,17 +476,10 @@ void TexColumnsApp::BuildShapeGeometry()
 	GeometryGenerator::MeshData sphere = geoGen.CreateSphere(0.5f, 20, 20);
 	GeometryGenerator::MeshData cylinder = geoGen.CreateCylinder(0.5f, 0.3f, 3.0f, 20, 20);
 
-	// 将所有几何体放入一个大的顶点.索引缓存,定义每个子几何体的区间,存入mGeometries
-	// 将顶点数据放入内存,再通过上传堆传到默认堆
-
-
-
-
 	UINT boxVertexOffset = 0;
 	UINT gridVertexOffset = (UINT)box.Vertices.size();
 	UINT sphereVertexOffset = gridVertexOffset + (UINT)grid.Vertices.size();
 	UINT cylinderVertexOffset = sphereVertexOffset + (UINT)sphere.Vertices.size();
-
 
 	UINT boxIndexOffset = 0;
 	UINT gridIndexOffset = (UINT)box.Indices32.size();
@@ -627,10 +507,6 @@ void TexColumnsApp::BuildShapeGeometry()
 	cylinderSubmesh.BaseVertexLocation = cylinderVertexOffset;
 
 	// 将所有顶点放入一个顶点缓存
-
-
-
-
 	auto totalVertexCount =
 		box.Vertices.size() +
 		grid.Vertices.size() +
@@ -704,14 +580,13 @@ void TexColumnsApp::BuildShapeGeometry()
 
 	mGeometries[geo->Name] = std::move(geo);
 }
-// 创建PSO,存入mPSOs["opaque"]
+
+// 创建PSO,存入mPSOs["opaque"],设置了 InputLayout, pRootSignature, Shader
 void TexColumnsApp::BuildPSOs()
 {
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC opaquePsoDesc;
 
 	// PSO for opaque objects
-
-
 	ZeroMemory(&opaquePsoDesc, sizeof(D3D12_GRAPHICS_PIPELINE_STATE_DESC));
 	opaquePsoDesc.InputLayout = { mInputLayout.data(),(UINT)mInputLayout.size() };
 	opaquePsoDesc.pRootSignature = mRootSignature.Get();
@@ -737,7 +612,9 @@ void TexColumnsApp::BuildPSOs()
 	opaquePsoDesc.DSVFormat = mDepthStencilFormat;
 	ThrowIfFailed(md3dDevice->CreateGraphicsPipelineState(&opaquePsoDesc, IID_PPV_ARGS(&mPSOs["opaque"])));
 }
-// 创建帧资源储存在mFrameResources[],指明passCount,objectCount,materialCount // 帧资源的构造函数将这些常量储存在UploadBuffer<>中
+
+// 创建帧资源储存在mFrameResources[],指明passCount,objectCount,materialCount 
+// 帧资源的构造函数将这些常量储存在UploadBuffer<>中
 void TexColumnsApp::BuildFrameResources()
 {
 	for (int i = 0; i < gNumFrameResources; ++i)
@@ -746,6 +623,7 @@ void TexColumnsApp::BuildFrameResources()
 			1, (UINT)mAllRitems.size(), (UINT)mMaterials.size()));
 	}
 }
+
 // 将材质存入mMaterials[],设置MatCBIndex
 void TexColumnsApp::BuildMaterials()
 {
@@ -777,6 +655,7 @@ void TexColumnsApp::BuildMaterials()
 	mMaterials["stone0"] = std::move(stone0);
 	mMaterials["tile0"] = std::move(tile0);
 }
+
 // 渲染项存入mAllRitems和mOpaqueRitems,设置Translation,ObjCBIndex,mat,顶点/索引
 void TexColumnsApp::BuildRenderItems()
 {
@@ -870,7 +749,7 @@ void TexColumnsApp::BuildRenderItems()
 		mOpaqueRitems.push_back(e.get());
 }
 
-void TexColumnsApp::DrawRenderItems(ID3D12GraphicsCommandList* cmdList, const std::vector<RenderItem*>& ritems)
+void TexColumnsApp::DrawRenderItems(ID3D12GraphicsCommandList* cmdList, const std::vector<RenderItem *>& ritems)
 {
 	UINT objCBByteSize = d3dUtil::CalcConstantBufferByteSize(sizeof(ObjectConstants));
 	UINT matCBByteSize = d3dUtil::CalcConstantBufferByteSize(sizeof(MaterialConstants));
@@ -878,29 +757,39 @@ void TexColumnsApp::DrawRenderItems(ID3D12GraphicsCommandList* cmdList, const st
 	auto objectCB = mCurrFrameResource->ObjectCB->Resource();
 	auto matCB = mCurrFrameResource->MaterialCB->Resource();
 
-	// For each render item...
+	// 对于每个渲染项
 	for (size_t i = 0; i < ritems.size(); ++i)
 	{
 		auto ri = ritems[i];
 
+		// BuildShapeGeometry()中,d3dUtil::CreateDefaultBuffer()将所有顶点传到GPU默认堆
 		cmdList->IASetVertexBuffers(0, 1, &ri->Geo->VertexBufferView());
 		cmdList->IASetIndexBuffer(&ri->Geo->IndexBufferView());
 		cmdList->IASetPrimitiveTopology(ri->PrimitiveType);
 
 		CD3DX12_GPU_DESCRIPTOR_HANDLE tex(mSrvDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
+		// BuildRenderItems()中设置了Mat,struct Material内含有DiffuseSrvHeapIndex
 		tex.Offset(ri->Mat->DiffuseSrvHeapIndex, mCbvSrvDescriptorSize);
 
+		// BuildRenderItems()中,为每个几何体设置ObjCBIndex,ObjectConstants
+		// UpdateObjectCBs()中,读取每个mAllRenderItems,赋值给mCurrFrameResource->ObjectCB
 		D3D12_GPU_VIRTUAL_ADDRESS objCBAddress = objectCB->GetGPUVirtualAddress() + ri->ObjCBIndex*objCBByteSize;
+		// BuildMaterials()中设置了MatCBIndex
 		D3D12_GPU_VIRTUAL_ADDRESS matCBAddress = matCB->GetGPUVirtualAddress() + ri->Mat->MatCBIndex*matCBByteSize;
 
+		// 根签名(根参数数组)指定了寄存器插槽,constant buffer 通过指明根签名中的根参数索引对应register
+		// RootParameterIndex:0, Texture2D gDiffuseMap : register(t0)
 		cmdList->SetGraphicsRootDescriptorTable(0, tex);
+		// RootParameterIndex:1, cbuffer cbPerObject : register(b0)
 		cmdList->SetGraphicsRootConstantBufferView(1, objCBAddress);
+		// RootParameterIndex:3, cbuffer cbMaterial : register(b2)
 		cmdList->SetGraphicsRootConstantBufferView(3, matCBAddress);
 
 		cmdList->DrawIndexedInstanced(ri->IndexCount, 1, ri->StartIndexLocation, ri->BaseVertexLocation, 0);
 	}
 }
 
+// 根签名中指定了静态采样器,采样器内部指明寄存器
 std::array<const CD3DX12_STATIC_SAMPLER_DESC, 6> TexColumnsApp::GetStaticSamplers()
 {
 	// Applications usually only need a handful of samplers.  So just define them all up front
@@ -957,4 +846,3 @@ std::array<const CD3DX12_STATIC_SAMPLER_DESC, 6> TexColumnsApp::GetStaticSampler
 		linearWrap, linearClamp,
 		anisotropicWrap, anisotropicClamp };
 }
-

@@ -4,6 +4,8 @@
 核心文件: d3dApp.h
 ## 参考
 [Github项目DXAppendixA: 为使用DX而创建Windows应用程序所需的最简代码](https://github.com/solairewrite/DXAppendixA)  
+### cpp/hlsl 注释详细的项目
+Chapter 9 Texturing: TexColumns  
 ## Tips
 >VS2017命令行: 安装插件 Alt+Space  
 
@@ -28,3 +30,45 @@ General -> Platform Toolset -> 选择合适的
 你看再多的书,不写代码,你还是不会编程.  
 但是写代码也要讲究方法循序渐进,不能刚学了几天语法,就像写个操作系统什么的.  
 树立这种不切实际的目标只会让你的自信受到严重打击迷失自我  
+# Windows 安装SourceTree跳过注册
+版本: SourceTreeSetup-3.1.3.exe  
+第一次打开需要注册  
+进入: C:\Users\jizhixin\AppData\Local\Atlassian\SourceTree  
+新建: accounts.json  
+```
+[
+    {
+        "$id":"1",
+        "$type":"SourceTree.Api.Host.Identity.Model.IdentityAccount, SourceTree.Api.Host.Identity",
+        "Authenticate":true,
+        "HostInstance":{
+            "$id":"2",
+            "$type":"SourceTree.Host.Atlassianaccount.AtlassianAccountInstance, SourceTree.Host.AtlassianAccount",
+            "Host":{
+                "$id":"3",
+                "$type":"SourceTree.Host.Atlassianaccount.AtlassianAccountHost, SourceTree.Host.AtlassianAccount",
+                "Id":"atlassian account"
+            },
+            "BaseUrl":"https://id.atlassian.com/"
+        },
+        "Credentials":{
+            "$id":"4",
+            "$type":"SourceTree.Model.BasicAuthCredentials, SourceTree.Api.Account",
+            "Username":"",
+            "Email":null
+        },
+        "IsDefault":false
+    }
+]
+```
+进入: C:\Users\jizhixin\AppData\Local\Atlassian\SourceTree.exe_Url_wxsixtweebey2e2x4fkohp3bqqmkyz3q\3.1.3.3158  
+修改: user.config  
+在 \<SourceTree.Properties.Settings> 下面加上:  
+```
+<setting name="AgreedToEULA"serializeAs="String">
+    <value>True</value>
+</setting>
+<setting name="AgreedToEULAVersion"serializeAs="String">
+    <value>20160201</value>
+</setting>
+```
