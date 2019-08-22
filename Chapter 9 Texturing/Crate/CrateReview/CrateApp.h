@@ -6,25 +6,17 @@ using Microsoft::WRL::ComPtr;
 using namespace DirectX;
 using namespace DirectX::PackedVector;
 
-
-
-
 const int gNumFrameResources = 3;
-
 
 struct RenderItem
 {
 	RenderItem() = default;
 
-
 	XMFLOAT4X4 World = MathHelper::Identity4x4();
 
 	XMFLOAT4X4 TexTransform = MathHelper::Identity4x4();
 
-
-
 	int NumFramesDirty = gNumFrameResources;
-
 
 	UINT ObjCBIndex = -1; // 这个渲染项的GPU常量缓存索引(它是第几个渲染项)
 
@@ -32,7 +24,6 @@ struct RenderItem
 	MeshGeometry* Geo = nullptr;
 
 	D3D12_PRIMITIVE_TOPOLOGY PrimitiveType = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
-
 
 	UINT IndexCount = 0;
 	UINT StartIndexLocation = 0;
@@ -99,9 +90,7 @@ private:
 
 	ComPtr<ID3D12PipelineState> mOpaquePSO = nullptr;
 
-
 	std::vector<std::unique_ptr<RenderItem>> mAllRitems;
-
 
 	std::vector<RenderItem*> mOpaqueRitems;
 

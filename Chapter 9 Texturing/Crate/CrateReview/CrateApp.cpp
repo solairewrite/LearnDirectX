@@ -209,7 +209,28 @@ void CrateApp::UpdateCamera(const GameTimer& gt)
 
 void CrateApp::AnimateMaterials(const GameTimer& gt)
 {
+	bool bShowAnim = true;
+	if (!bShowAnim)
+		return;
 
+	auto mat = mMaterials["woodCrate"].get();
+
+	// 变换矩阵的第四行控制平移
+	float& du = mat->MatTransform(3, 0);
+	float& dv = mat->MatTransform(3, 1);
+
+	du += 0.05f*gt.DeltaTime();
+	dv += 0.07f*gt.DeltaTime();
+
+	if (du >= 1.0f)
+		du -= 1.0f;
+	if (dv >= 1.0f)
+		dv -= 1.0f;
+
+	mat->MatTransform(3, 0) = du;
+	mat->MatTransform(3, 1) = dv;
+
+	mat->NumFramesDirty = gNumFrameResources;
 }
 
 void CrateApp::UpdateObjectCBs(const GameTimer& gt)

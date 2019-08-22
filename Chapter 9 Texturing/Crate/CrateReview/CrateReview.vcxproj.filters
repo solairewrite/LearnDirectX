@@ -90,7 +90,11 @@
     </Image>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Shaders\Default.hlsl" />
-    <None Include="Shaders\LightingUtil.hlsl" />
+    <None Include="Shaders\Default.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="Shaders\LightingUtil.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>

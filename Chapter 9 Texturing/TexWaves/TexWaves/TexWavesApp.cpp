@@ -214,6 +214,7 @@ void TexWavesApp::AnimateMaterials(const GameTimer& gt)
 	// 滚动水材质的纹理坐标
 	auto waterMat = mMaterials["water"].get();
 
+	// 变换矩阵的第四行控制平移
 	float& tu = waterMat->MatTransform(3, 0);
 	float& tv = waterMat->MatTransform(3, 1);
 
@@ -221,7 +222,7 @@ void TexWavesApp::AnimateMaterials(const GameTimer& gt)
 	tv += 0.02f*gt.DeltaTime();
 
 	if (tu >= 1.0f)
-		tu -= 0.1f;
+		tu -= 1.0f;
 
 	if (tv >= 1.0f)
 		tv -= 1.0f;
@@ -711,6 +712,8 @@ void TexWavesApp::BuildRenderItems()
 {
 	auto wavesRitem = std::make_unique<RenderItem>();
 	wavesRitem->World = MathHelper::Identity4x4();
+	// 指定重复寻址模式,并通过纹理变换矩阵使纹理坐标按比例放大5倍
+	// 纹理坐标被映射到[0,5]中,纹理在陆地网格曲面上铺设5*5次
 	XMStoreFloat4x4(&wavesRitem->TexTransform, XMMatrixScaling(5.0f, 5.0f, 1.0f));
 	wavesRitem->ObjCBIndex = 0;
 	wavesRitem->Mat = mMaterials["water"].get();
