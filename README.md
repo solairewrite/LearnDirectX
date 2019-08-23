@@ -5,7 +5,19 @@
 ## 参考
 [Github项目DXAppendixA: 为使用DX而创建Windows应用程序所需的最简代码](https://github.com/solairewrite/DXAppendixA)  
 ### cpp/hlsl 注释详细的项目
+Chapter 9 Texturing: Crate -> CrateReciew  
 Chapter 9 Texturing: TexColumns  
+### CrateReciew 项目的总结
++ 我所理解的DX  
+C++将资源传入GPU,GPU将资源传入register,hlsl通过VS,PS计算出rgb  
+#### CrateReview 项目资源的传递  
+| 资源 | 何时上传至GPU | 储存资源的变量 | 资源的索引 | 何时指定 register |
+| - | - | - | - | - |
+| 顶点/索引 | BuildShapeGeometry()<br/>CreateDefaultBuffer() | mGeometries[] | mGeometries[]->DrawArgs[]->StartIndexLocation | / |
+| 贴图 | LoadTextures()<br/>CreateDDSTextureFromFile12() | mTextures<br/>与 mSrvDescriptorHeap 通过句柄关联 | 句柄偏移<br>boxRitem->Mat->DiffuseSrvHeapIndex | DrawRenderItems()<br/>SetGraphicsRootDescriptorTable() |
+| ObjectCB | UpdateObjectCBs()<br/>CopyData() | mCurrFrameResource->ObjectCB | boxRitem->ObjCBIndex | DrawRenderItems()<br/>SetGraphicsRootConstantBufferView() |
+ MatCB | UpdateMaterialCBs()<br/>CopyData() | mCurrFrameResource->MaterialCB | boxRitem->Mat->MatCBIndex | DrawRenderItems()<br/>SetGraphicsRootConstantBufferView() |
+| PassCB | UpdateMainPassCB()<br/>CopyData() | mCurrFrameResource->PassCB | / | Draw()<br/>SetGraphicsRootConstantBufferView() |
 ## Tips
 >VS2017命令行: 安装插件 Alt+Space  
 

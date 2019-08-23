@@ -1,3 +1,4 @@
+// 请先看 README.md: CrateReview 项目资源的传递
 #include "CrateApp.h"
 
 int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
@@ -44,14 +45,41 @@ bool CrateApp::Initialize()
 
 	mCbvSrvDescriptorSize = md3dDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
+	// 载入贴图,存入mTextures,传入GPU
 	LoadTextures();
+
+	// 根签名(根参数数组)指定了register,constant buffer 通过指明根签名中的RootParameterIndex对应register
 	BuildRootSignature();
+
+	// 创建SRV堆,储存在mSrvDescriptorHeap,描述mTextures中的资源,通过句柄偏移绑定不同的tex
 	BuildDescriptorHeaps();
+
+	// 载入Shader,存在mShaders,指明VS,PS函数名
+	// mInputLayout通过字符串和Shader中的struct VertexIn绑定,通过顺序和C++中的struct Vertex绑定
 	BuildShadersAndInputLayout();
+
+	// 将顶点/索引数据存入mGeometries,mGeometries中的每个元素都是一个SubmeshGeometry的map
+	// struct MeshGeometry提供函数,将顶点数据放入内存,再通过上传堆传到默认堆,获取顶点/索引视图
 	BuildShapeGeometry();
+
+	// 将材质存入mMaterials[],设置MatCBIndex,DiffuseSrvHeapIndex对应mSrvDescriptorHeap中的句柄偏移(tex)
 	BuildMaterials();
+
+	// 渲染项存入mAllRitems和mOpaqueRitems,设置ObjectCB(World,TexTransform),ObjCBIndex,mat,Geo,顶点/索引起始位置
+	// 默认 NumFramesDirty = gNumFrameResources,所以UpdateObjectCBs(),UpdateMaterialCBs()会修改每个帧资源
+	// ObjCBIndex: BuildFrameResources()中,创建了空的ObjectCB数组
+	//		UpdateObjectCBs()中,将mAllRitems中的struct ObjectConstants存入mCurrFrameResource->ObjectCB
+	//		通过UploadBuffer<>提供的CopyData()函数传至GPU
+	//		DrawRenderItems()中,通过objectCB->GetGPUVirtualAddress()和ObjCBIndex偏移找到渲染项的objCBAddress
+	// mat: 储存了材质属性和MatCBIndex(作用类似ObjCBIndex),tex在mSrvDescriptorHeap中的句柄偏移
+	// Geo: (struct MeshGeometry)储存了顶点/索引,提供函数,返回顶点/索引视图
 	BuildRenderItems();
+
+	// 创建帧资源储存在mFrameResources[],指明passCount,objectCount,materialCount
+	// 帧资源的构造函数将这些常量储存在UploadBuffer<>中
 	BuildFrameResources();
+
+	// 创建PSO,存入mPSOs["opaque"],设置了 InputLayout, pRootSignature, Shader
 	BuildPSOs();
 
 	ThrowIfFailed(mCommandList->Close());
@@ -63,6 +91,7 @@ bool CrateApp::Initialize()
 	return true;
 }
 
+// 更新 mProj
 void CrateApp::OnResize()
 {
 	D3DApp::OnResize();
@@ -73,13 +102,13 @@ void CrateApp::OnResize()
 
 void CrateApp::Update(const GameTimer& gt)
 {
-	OnKeyboardInput(gt);
-	UpdateCamera(gt);
+	OnKeyboardInput(gt); // do nothing
+	UpdateCamera(gt); // 更新mView
 
 	mCurrFrameResourceIndex = (mCurrFrameResourceIndex + 1) % gNumFrameResources;
 	mCurrFrameResource = mFrameResources[mCurrFrameResourceIndex].get();
 
-	// 等待GPU完成命令
+	// 如果GPU没有完成'当前帧资源'的处理,CPU等待GPU处理完命令,到达这个围栏点
 	if (mCurrFrameResource->Fence != 0 && mFence->GetCompletedValue() < mCurrFrameResource->Fence)
 	{
 		HANDLE eventHandle = CreateEventEx(nullptr, false, false, EVENT_ALL_ACCESS);
@@ -88,10 +117,10 @@ void CrateApp::Update(const GameTimer& gt)
 		CloseHandle(eventHandle);
 	}
 
-	AnimateMaterials(gt);
-	UpdateObjectCBs(gt);
-	UpdateMaterialCBs(gt);
-	UpdateMainPassCB(gt);
+	AnimateMaterials(gt); // do nothing
+	UpdateObjectCBs(gt); // 更新每个帧资源的每个ObjectConstant,传至GPU
+	UpdateMaterialCBs(gt); // 更新每个帧资源的每个材质MaterialConstants, 传至GPU
+	UpdateMainPassCB(gt); // 修改了mCurrFrameResource->PassCB, struct PassConstants,传至GPU
 }
 
 void CrateApp::Draw(const GameTimer& gt)
@@ -100,7 +129,9 @@ void CrateApp::Draw(const GameTimer& gt)
 
 	ThrowIfFailed(cmdListAlloc->Reset());
 
-	// 命令列表关联PSO
+	// mPSOs["opaque"],设置了 InputLayout, pRootSignature, Shader
+	// mInputLayout通过字符串和Shader中的struct VertexIn绑定,通过顺序和C++中的struct Vertex绑定
+	// mRootSignature,指定了register: t0(SRV,tex), b0,b1,b2(CB)
 	ThrowIfFailed(mCommandList->Reset(cmdListAlloc.Get(), mOpaquePSO.Get()));
 
 	mCommandList->RSSetViewports(1, &mScreenViewport);
@@ -115,14 +146,23 @@ void CrateApp::Draw(const GameTimer& gt)
 	// 指明要渲染的缓存
 	mCommandList->OMSetRenderTargets(1, &CurrentBackBufferView(), true, &DepthStencilView());
 
+	// mSrvDescriptorHeap,描述了1张贴图,用句柄偏移区分
 	ID3D12DescriptorHeap* descriptorHeaps[] = { mSrvDescriptorHeap.Get() };
 	mCommandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
 
+	// mRootSignature, 指定了register: t0(SRV, tex), b0, b1, b2(CB)
 	mCommandList->SetGraphicsRootSignature(mRootSignature.Get());
 
+	// 根签名(根参数数组)指定了寄存器插槽,constant buffer 通过指明根签名中的根参数索引对应register
+	// RootParameterIndex:2, cbuffer cbPass : register(b1)
 	auto passCB = mCurrFrameResource->PassCB->Resource();
-	mCommandList->SetGraphicsRootConstantBufferView(2, passCB->GetGPUVirtualAddress()); // 2号插槽
+	mCommandList->SetGraphicsRootConstantBufferView(2, passCB->GetGPUVirtualAddress());
 
+	// 获取当前帧资源的objectCB,matCB
+	// 对于每一个渲染项,进行绘制
+	// 设置顶点/索引视图和偏移
+	// tex在mSrvDescriptorHeap中的handle偏移,register
+	// objCBAddress,matCBAddress偏移,register
 	DrawRenderItems(mCommandList.Get(), mOpaqueRitems);
 
 	mCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(CurrentBackBuffer(),
@@ -136,8 +176,12 @@ void CrateApp::Draw(const GameTimer& gt)
 	ThrowIfFailed(mSwapChain->Present(0, 0));
 	mCurrBackBuffer = (mCurrBackBuffer + 1) % SwapChainBufferCount;
 
+	// mCurrFrameResource->Fence只属于当前帧资源,每次+=3, mCurrentFence作用于所有帧资源,每次++
 	mCurrFrameResource->Fence = ++mCurrentFence;
 
+	// CPU为GPU设置围栏命令: 1,2,3,4... GPU依次达到1,2,3,4...
+	// 如果CPU再一次处理第一个帧资源,eg(mCurrFrameResource->Fence=4)
+	// CPU就会等待GPU(mFence->GetCompletedValue())增长:1->2->3->4
 	mCommandQueue->Signal(mFence.Get(), mCurrentFence);
 }
 
@@ -191,6 +235,7 @@ void CrateApp::OnKeyboardInput(const GameTimer& gt)
 
 }
 
+// 更新mView
 void CrateApp::UpdateCamera(const GameTimer& gt)
 {
 	// Convert Spherical to Cartesian coordinates.
@@ -233,6 +278,7 @@ void CrateApp::AnimateMaterials(const GameTimer& gt)
 	mat->NumFramesDirty = gNumFrameResources;
 }
 
+// 更新每个帧资源的每个ObjectConstant,传至GPU
 void CrateApp::UpdateObjectCBs(const GameTimer& gt)
 {
 	auto currObjectCB = mCurrFrameResource->ObjectCB.get();
@@ -247,6 +293,7 @@ void CrateApp::UpdateObjectCBs(const GameTimer& gt)
 			XMStoreFloat4x4(&objConstants.World, XMMatrixTranspose(world));
 			XMStoreFloat4x4(&objConstants.TexTransform, XMMatrixTranspose(texTransform));
 
+			// 上传GPU
 			currObjectCB->CopyData(e->ObjCBIndex, objConstants);
 
 			e->NumFramesDirty--;
@@ -254,6 +301,7 @@ void CrateApp::UpdateObjectCBs(const GameTimer& gt)
 	}
 }
 
+// 更新每个帧资源的每个材质MaterialConstants, 传至GPU
 void CrateApp::UpdateMaterialCBs(const GameTimer& gt)
 {
 	auto currMaterialCB = mCurrFrameResource->MaterialCB.get();
@@ -270,6 +318,7 @@ void CrateApp::UpdateMaterialCBs(const GameTimer& gt)
 			matConstants.Roughness = mat->Roughness;
 			XMStoreFloat4x4(&matConstants.MatTransform, XMMatrixTranspose(matTransform));
 
+			// 上传GPU
 			currMaterialCB->CopyData(mat->MatCBIndex, matConstants);
 
 			mat->NumFramesDirty--;
@@ -277,6 +326,7 @@ void CrateApp::UpdateMaterialCBs(const GameTimer& gt)
 	}
 }
 
+// 修改了mCurrFrameResource->PassCB, struct PassConstants,传至GPU
 void CrateApp::UpdateMainPassCB(const GameTimer& gt)
 {
 	XMMATRIX view = XMLoadFloat4x4(&mView);
@@ -309,14 +359,17 @@ void CrateApp::UpdateMainPassCB(const GameTimer& gt)
 	mMainPassCB.Lights[2].Strength = { 0.15f, 0.15f, 0.15f };
 
 	auto currPassCB = mCurrFrameResource->PassCB.get();
+	// 上传GPU
 	currPassCB->CopyData(0, mMainPassCB);
 }
 
+// 载入贴图,存入mTextures
 void CrateApp::LoadTextures()
 {
 	auto woodCrateTex = std::make_unique<Texture>();
 	woodCrateTex->Name = "woodCrateTex";
 	woodCrateTex->Filename = L"../../../Textures/WoodCrate01.dds";
+	// 上传GPU
 	ThrowIfFailed(DirectX::CreateDDSTextureFromFile12(md3dDevice.Get(),
 		mCommandList.Get(), woodCrateTex->Filename.c_str(),
 		woodCrateTex->Resource, woodCrateTex->UploadHeap));
@@ -324,19 +377,20 @@ void CrateApp::LoadTextures()
 	mTextures[woodCrateTex->Name] = std::move(woodCrateTex);
 }
 
+// 根签名(根参数数组)指定了register,constant buffer 通过指明根签名中的RootParameterIndex对应register
 void CrateApp::BuildRootSignature()
 {
 	CD3DX12_DESCRIPTOR_RANGE texTable;
-	texTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0);
+	texTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0); // register t0
 
 	CD3DX12_ROOT_PARAMETER slotRootParameter[4];
 
 	slotRootParameter[0].InitAsDescriptorTable(1, &texTable, D3D12_SHADER_VISIBILITY_PIXEL);
-	slotRootParameter[1].InitAsConstantBufferView(0);
-	slotRootParameter[2].InitAsConstantBufferView(1);
-	slotRootParameter[3].InitAsConstantBufferView(2);
+	slotRootParameter[1].InitAsConstantBufferView(0); // register b0
+	slotRootParameter[2].InitAsConstantBufferView(1); // register b1
+	slotRootParameter[3].InitAsConstantBufferView(2); // register b2
 
-	auto staticSamplers = GetStaticSamplers();
+	auto staticSamplers = GetStaticSamplers(); // register s0 ~ s6
 
 	// 根签名是根参数数组
 	CD3DX12_ROOT_SIGNATURE_DESC rootSigDesc(4, slotRootParameter,
@@ -362,6 +416,7 @@ void CrateApp::BuildRootSignature()
 		IID_PPV_ARGS(mRootSignature.GetAddressOf())));
 }
 
+// 创建SRV堆,储存在mSrvDescriptorHeap,描述mTextures中的资源
 void CrateApp::BuildDescriptorHeaps()
 {
 	// 创建SRV堆
@@ -388,6 +443,8 @@ void CrateApp::BuildDescriptorHeaps()
 	md3dDevice->CreateShaderResourceView(woodCrateTex.Get(), &srvDesc, hDescriptor);
 }
 
+// 载入Shader,存在mShaders,指明VS,PS函数名
+// mInputLayout通过字符串和Shader中的struct VertexIn绑定,通过顺序和C++中的struct Vertex绑定
 void CrateApp::BuildShadersAndInputLayout()
 {
 	mShaders["standardVS"] = d3dUtil::CompileShader(L"Shaders\\Default.hlsl", nullptr, "VS", "vs_5_0");
@@ -401,6 +458,8 @@ void CrateApp::BuildShadersAndInputLayout()
 	};
 }
 
+// 将所有顶点/索引数据存入mGeometries,并记录单个几何体的偏移,mGeometries中的每个元素都是一个SubmeshGeometry的map
+// struct MeshGeometry提供函数,将顶点数据放入内存,再通过上传堆传到默认堆,获取顶点/索引视图
 void CrateApp::BuildShapeGeometry()
 {
 	GeometryGenerator geoGen;
@@ -428,12 +487,14 @@ void CrateApp::BuildShapeGeometry()
 	auto geo = std::make_unique<MeshGeometry>();
 	geo->Name = "boxGeo";
 
+	// 将顶点数据放入内存
 	ThrowIfFailed(D3DCreateBlob(vbByteSize, &geo->VertexBufferCPU));
 	CopyMemory(geo->VertexBufferCPU->GetBufferPointer(), vertices.data(), vbByteSize);
 
 	ThrowIfFailed(D3DCreateBlob(ibByteSize, &geo->IndexBufferCPU));
 	CopyMemory(geo->IndexBufferCPU->GetBufferPointer(), indices.data(), ibByteSize);
 
+	// 将顶点数据通过上传堆传到默认堆,上传GPU
 	geo->VertexBufferGPU = d3dUtil::CreateDefaultBuffer(md3dDevice.Get(),
 		mCommandList.Get(), vertices.data(), vbByteSize, geo->VertexBufferUploader);
 
@@ -450,6 +511,7 @@ void CrateApp::BuildShapeGeometry()
 	mGeometries[geo->Name] = std::move(geo);
 }
 
+// 创建PSO,存入mPSOs["opaque"],设置了 InputLayout, pRootSignature, Shader
 void CrateApp::BuildPSOs()
 {
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC opaquePsoDesc;
@@ -481,6 +543,8 @@ void CrateApp::BuildPSOs()
 	ThrowIfFailed(md3dDevice->CreateGraphicsPipelineState(&opaquePsoDesc, IID_PPV_ARGS(&mOpaquePSO)));
 }
 
+// 创建帧资源储存在mFrameResources[],指明passCount,objectCount,materialCount
+// 帧资源的构造函数将这些常量储存在UploadBuffer<>中
 void CrateApp::BuildFrameResources()
 {
 	for (int i = 0; i < gNumFrameResources; ++i)
@@ -490,6 +554,7 @@ void CrateApp::BuildFrameResources()
 	}
 }
 
+// 将材质存入mMaterials[],设置MatCBIndex,DiffuseSrvHeapIndex对应tex
 void CrateApp::BuildMaterials()
 {
 	auto woodCrate = std::make_unique<Material>();
@@ -503,6 +568,14 @@ void CrateApp::BuildMaterials()
 	mMaterials["woodCrate"] = std::move(woodCrate);
 }
 
+// 渲染项存入mAllRitems和mOpaqueRitems,设置ObjectCB(World,TexTransform),ObjCBIndex,mat,Geo,顶点/索引起始位置
+// 默认 NumFramesDirty = gNumFrameResources,所以UpdateObjectCBs(),UpdateMaterialCBs()会修改每个帧资源
+// ObjCBIndex: BuildFrameResources()中,创建了空的ObjectCB数组
+// UpdateObjectCBs()中,将mAllRitems中的struct ObjectConstants存入mCurrFrameResource->ObjectCB
+// 通过UploadBuffer<>提供的CopyData()函数传至GPU
+// DrawRenderItems()中,通过objectCB->GetGPUVirtualAddress()和ObjCBIndex偏移找到渲染项的objCBAddress
+// mat: 储存了材质属性和MatCBIndex(作用类似ObjCBIndex),tex在mSrvDescriptorHeap中的句柄偏移
+// Geo: (struct MeshGeometry)储存了顶点/索引,提供函数,返回顶点/索引视图
 void CrateApp::BuildRenderItems()
 {
 	auto boxRitem = std::make_unique<RenderItem>();
@@ -520,6 +593,11 @@ void CrateApp::BuildRenderItems()
 		mOpaqueRitems.push_back(e.get());
 }
 
+// 获取当前帧资源的objectCB,matCB
+// 对于每一个渲染项,进行绘制
+// 设置顶点/索引视图和偏移
+// tex在mSrvDescriptorHeap中的handle偏移,register
+// objCBAddress,matCBAddress偏移,register
 void CrateApp::DrawRenderItems(ID3D12GraphicsCommandList* cmdList, const std::vector<RenderItem*>& ritems)
 {
 	UINT objCBByteSize = d3dUtil::CalcConstantBufferByteSize(sizeof(ObjectConstants));
@@ -533,18 +611,26 @@ void CrateApp::DrawRenderItems(ID3D12GraphicsCommandList* cmdList, const std::ve
 	{
 		auto ri = ritems[i];
 
+		// BuildShapeGeometry()中,d3dUtil::CreateDefaultBuffer()将所有顶点传到GPU默认堆
 		cmdList->IASetVertexBuffers(0, 1, &ri->Geo->VertexBufferView());
 		cmdList->IASetIndexBuffer(&ri->Geo->IndexBufferView());
 		cmdList->IASetPrimitiveTopology(ri->PrimitiveType);
 
 		CD3DX12_GPU_DESCRIPTOR_HANDLE tex(mSrvDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
+		// BuildRenderItems()中设置了Mat,struct Material内含有DiffuseSrvHeapIndex
 		tex.Offset(ri->Mat->DiffuseSrvHeapIndex, mCbvSrvDescriptorSize);
 
+		// BuildRenderItems()中,为每个几何体设置ObjCBIndex,ObjectConstants
+		// UpdateObjectCBs()中,读取每个mAllRenderItems,赋值给mCurrFrameResource->ObjectCB
 		D3D12_GPU_VIRTUAL_ADDRESS objCBAddress = objectCB->GetGPUVirtualAddress() + ri->ObjCBIndex * objCBByteSize;
 		D3D12_GPU_VIRTUAL_ADDRESS matCBAddress = matCB->GetGPUVirtualAddress() + ri->Mat->MatCBIndex * matCBByteSize;
 
+		// 根签名(根参数数组)指定了寄存器插槽,constant buffer 通过指明根签名中的根参数索引对应register
+		// RootParameterIndex:0, Texture2D gDiffuseMap : register(t0)
 		cmdList->SetGraphicsRootDescriptorTable(0, tex);
+		// RootParameterIndex:1, cbuffer cbPerObject : register(b0)
 		cmdList->SetGraphicsRootConstantBufferView(1, objCBAddress);
+		// RootParameterIndex:3, cbuffer cbMaterial : register(b2)
 		cmdList->SetGraphicsRootConstantBufferView(3, matCBAddress);
 
 		cmdList->DrawIndexedInstanced(ri->IndexCount, 1, ri->StartIndexLocation, ri->BaseVertexLocation, 0);
