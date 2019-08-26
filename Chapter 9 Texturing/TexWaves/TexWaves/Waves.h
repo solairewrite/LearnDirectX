@@ -1,11 +1,5 @@
-//***************************************************************************************
-// Waves.h by Frank Luna (C) 2011 All Rights Reserved.
-//
-// Performs the calculations for the wave simulation.  After the simulation has been
-// updated, the client must copy the current solution into vertex buffers for rendering.
-// This class only does the calculations, it does not do any drawing.
-//***************************************************************************************
-
+// 模拟波浪,模拟更新后,客户需要将数据复制到顶点缓存用来熏染
+// 这个类只计算,不渲染
 #ifndef WAVES_H
 #define WAVES_H
 
@@ -27,14 +21,21 @@ public:
 	float Width()const;
 	float Depth()const;
 
-	// Returns the solution at the ith grid point.
-	const DirectX::XMFLOAT3& Position(int i)const { return mCurrSolution[i]; }
+	const DirectX::XMFLOAT3& Position(int i)const
+	{
+		return mCurrSolution[i];
+	}
 
-	// Returns the solution normal at the ith grid point.
-	const DirectX::XMFLOAT3& Normal(int i)const { return mNormals[i]; }
+	const DirectX::XMFLOAT3& Normal(int i)const
+	{
+		return mNormals[i];
+	}
 
 	// Returns the unit tangent vector at the ith grid point in the local x-axis direction.
-	const DirectX::XMFLOAT3& TangentX(int i)const { return mTangentX[i]; }
+	const DirectX::XMFLOAT3& TangentX(int i)const
+	{
+		return mTangentX[i];
+	}
 
 	void Update(float dt);
 	void Disturb(int i, int j, float magnitude);
@@ -46,7 +47,7 @@ private:
 	int mVertexCount = 0;
 	int mTriangleCount = 0;
 
-	// Simulation constants we can precompute.
+	// 模拟系数
 	float mK1 = 0.0f;
 	float mK2 = 0.0f;
 	float mK3 = 0.0f;

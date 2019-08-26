@@ -46,14 +46,23 @@ bool TexWavesApp::Initialize()
 
 	mWaves = std::make_unique<Waves>(128, 128, 1.0f, 0.03f, 4.0f, 0.2f);
 
+	// 载贴图,存入mTextures,上传GPU
 	LoadTextures();
+	// 根签名是根参数数组,指明了寄存器
+	// tex和cb指明根参数索引,关联到寄存器
 	BuildRootSignature();
+	// tex通过句柄偏移和描述符堆绑定
 	BuildDescriptorHeaps();
+	// 着色器VS,PS,顶点结构体属性和hlsl中对应
 	BuildShadersAndInputLayout();
+	// 创建顶点,索引缓存,上传GPU; struct MeshGeometry提供函数获取顶点/索引视图
 	BuildLandGeometry();
+	// 创建索引,顶点需要动态计算
 	BuildWavesGeometry();
 	BuildBoxGeometry();
+	// 将材质存入mMaterials[],设置MatCBIndex,DiffuseSrvHeapIndex对应mSrvDescriptorHeap中的句柄偏移(tex)
 	BuildMaterials();
+	// 初始化mAllRitems,mOpaqueRitems,设置ObjectCB,ObjCBIndex,mat,Geo,顶点/索引起始位置
 	BuildRenderItems();
 	BuildFrameResources();
 	BuildPSOs();
@@ -92,6 +101,7 @@ void TexWavesApp::Update(const GameTimer& gt)
 	}
 
 	AnimateMaterials(gt);
+	// 上传GPU
 	UpdateObjectCBs(gt);
 	UpdateMaterialCBs(gt);
 	UpdateMainPassCB(gt);
@@ -123,6 +133,7 @@ void TexWavesApp::Draw(const GameTimer& gt)
 	mCommandList->SetGraphicsRootSignature(mRootSignature.Get());
 
 	auto passCB = mCurrFrameResource->PassCB->Resource();
+	// cbuffer cbPass : register(b1)
 	mCommandList->SetGraphicsRootConstantBufferView(2, passCB->GetGPUVirtualAddress());
 
 	DrawRenderItems(mCommandList.Get(), mRitemLayer[(int)RenderLayer::Opaque]);
@@ -229,7 +240,6 @@ void TexWavesApp::AnimateMaterials(const GameTimer& gt)
 
 	waterMat->MatTransform(3, 0) = tu;
 	waterMat->MatTransform(3, 1) = tv;
-
 
 	waterMat->NumFramesDirty = gNumFrameResources;
 }
@@ -408,7 +418,6 @@ void TexWavesApp::BuildRootSignature()
 		(UINT)staticSamplers.size(), staticSamplers.data(),
 		D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 
-	// create a root signature with a single slot which points to a descriptor range consisting of a single constant buffer
 	ComPtr<ID3DBlob> serializedRootSig = nullptr;
 	ComPtr<ID3DBlob> errorBlob = nullptr;
 	HRESULT hr = D3D12SerializeRootSignature(&rootSigDesc, D3D_ROOT_SIGNATURE_VERSION_1,
@@ -482,9 +491,6 @@ void TexWavesApp::BuildLandGeometry()
 	GeometryGenerator geoGen;
 	GeometryGenerator::MeshData grid = geoGen.CreateGrid(160.0f, 160.0f, 50, 50);
 
-	// Extract the vertex elements we are interested and apply the height function to
-	// each vertex.  In addition, color the vertices based on their height so we have
-	// sandy looking beaches, grassy low hills, and snow mountain peaks.
 	std::vector<Vertex> vertices(grid.Vertices.size());
 	for (size_t i = 0; i < grid.Vertices.size(); ++i)
 	{
@@ -780,8 +786,11 @@ void TexWavesApp::DrawRenderItems(ID3D12GraphicsCommandList* cmdList, const std:
 		D3D12_GPU_VIRTUAL_ADDRESS objCBAddress = objectCB->GetGPUVirtualAddress() + ri->ObjCBIndex*objCBByteSize;
 		D3D12_GPU_VIRTUAL_ADDRESS matCBAddress = matCB->GetGPUVirtualAddress() + ri->Mat->MatCBIndex*matCBByteSize;
 
+		// Texture2D gDiffuseMap : register(t0);
 		cmdList->SetGraphicsRootDescriptorTable(0, tex);
+		// cbuffer cbPerObject : register(b0)
 		cmdList->SetGraphicsRootConstantBufferView(1, objCBAddress);
+		// cbuffer cbMaterial : register(b2)
 		cmdList->SetGraphicsRootConstantBufferView(3, matCBAddress);
 
 		cmdList->DrawIndexedInstanced(ri->IndexCount, 1, ri->StartIndexLocation, ri->BaseVertexLocation, 0);

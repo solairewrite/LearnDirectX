@@ -42,9 +42,12 @@ float3 SchlickFresnel(float3 R0, float3 normal, float3 lightVec)
 }
 
 // 漫反射+镜面反射
-// Cs=max(L·n,0)·BL (x) RF(αh) * (m+8)/8 * (n·h)^m
-// Cs: 粗糙度+菲涅尔效应, BL: 入射光量, (x): 颜色分量式乘法
-// 传入已应用过朗伯余弦定律和衰减的lightStrength
+// 镜面反射 Cs=max(L·n,0)·BL (x) RF(αh) * (m+8)/8 * (n·h)^m
+// Cs: 镜面反射到观察者眼中的实际光量,粗糙度+菲涅尔效应
+// max(L·n,0)·BL: 入射光照射到表面上一点的光量
+// (x): 分量式颜色乘法
+// RF(αh): 菲涅尔效应,αh: 光向量L与中间向量h之间的夹角
+// (m+8)/8 * (n·h)^m: 粗糙度
 float3 BlinnPhong(float3 lightStrength, float3 lightVec, float3 normal, float3 toEye, Material mat)
 {
 	// m由光泽度推导而来,光泽度根据粗糙度求得
