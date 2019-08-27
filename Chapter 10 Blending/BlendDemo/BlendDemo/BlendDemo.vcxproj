@@ -174,6 +174,11 @@
       <FileType>Document</FileType>
     </None>
   </ItemGroup>
+  <ItemGroup>
+    <Image Include="..\..\..\Textures\grass.dds" />
+    <Image Include="..\..\..\Textures\water1.dds" />
+    <Image Include="..\..\..\Textures\WireFence.dds" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

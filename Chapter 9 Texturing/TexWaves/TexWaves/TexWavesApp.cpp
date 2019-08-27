@@ -46,7 +46,7 @@ bool TexWavesApp::Initialize()
 
 	mWaves = std::make_unique<Waves>(128, 128, 1.0f, 0.03f, 4.0f, 0.2f);
 
-	// 载贴图,存入mTextures,上传GPU
+	// 载入贴图,存入mTextures,上传GPU
 	LoadTextures();
 	// 根签名是根参数数组,指明了寄存器
 	// tex和cb指明根参数索引,关联到寄存器

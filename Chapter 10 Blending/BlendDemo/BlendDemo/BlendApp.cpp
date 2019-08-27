@@ -46,17 +46,26 @@ bool BlendApp::Initialize()
 	// Waves(int m, int n, float dx, float dt, float speed, float damping);
 	mWaves = std::make_unique<Waves>(128, 128, 1.0f, 0.03f, 4.0f, 0.2f);
 
-	LoadTextures();	// 将贴图加载到 mTextures
-	BuildRootSignature(); // 赋值 mRootSignature
-	BuildDescriptorHeaps(); // mSrvDescriptorHeap, md3dDevice->CreateShaderResourceView 参数传入 mTextures
-	BuildShadersAndInputLayout(); // 赋值 mShaders, mInputLayout
-	BuildLandGeometry(); // 赋值 mGeometries["landGeo"], 将顶点和索引传到GPU常量缓存区
-	BuildWavesGeometry(); // 赋值 mGeometries["waterGeo"]
-	BuildBoxGeometry(); // 赋值 mGeometries["boxGeo"]
-	BuildMaterials(); // 赋值 mMaterials["grass"] 等,确定材质参数,如反射系数,粗糙度等
-	BuildRenderItems(); // 赋值 mRitemLayer, mAllRitems 的 RenderItem 结构体
-	BuildFrameResources(); // 赋值空的 mFrameResources
-	BuildPSOs(); // 赋值 mPSOs["opaque"] 等, md3dDevice->CreateGraphicsPipelineState
+	// 载入贴图,存入mTextures,上传GPU
+	LoadTextures();
+	// 根签名是根参数数组,指明了寄存器,tex和cb指明根参数索引,关联到寄存器
+	BuildRootSignature();
+	// tex通过句柄偏移和描述符堆绑定
+	BuildDescriptorHeaps();
+	// 着色器VS,PS,并定义hlsl中的宏,以启用雾气和alpha clip效果,顶点结构体属性和hlsl中对应
+	BuildShadersAndInputLayout();
+	// 创建顶点,索引缓存,上传GPU; struct MeshGeometry提供函数获取顶点/索引视图
+	BuildLandGeometry();
+	// 创建索引,顶点需要动态计算,在UpdateWaves()
+	BuildWavesGeometry();
+	BuildBoxGeometry();
+	// 将材质存入mMaterials[],设置MatCBIndex,DiffuseSrvHeapIndex对应mSrvDescriptorHeap中的句柄偏移(tex)
+	BuildMaterials();
+	// 将不同的渲染项放入mAllRitems,mRitemLayer[]中
+	BuildRenderItems();
+	BuildFrameResources();
+	// 不透明PSO,混合PSO,无背面剔除PSO
+	BuildPSOs();
 
 	ThrowIfFailed(mCommandList->Close());
 	ID3D12CommandList* cmdLists[] = { mCommandList.Get() };
@@ -78,7 +87,7 @@ void BlendApp::OnResize()
 void BlendApp::Update(const GameTimer& gt)
 {
 	OnKeyboardInput(gt);
-	UpdateCamera(gt);
+	UpdateCamera(gt); // mView
 
 	mCurrFrameResourceIndex = (mCurrFrameResourceIndex + 1) % gNumFrameResources;
 	mCurrFrameResource = mFrameResources[mCurrFrameResourceIndex].get();
@@ -92,10 +101,10 @@ void BlendApp::Update(const GameTimer& gt)
 	}
 
 	AnimateMaterials(gt); // 贴图动画,使水流动
-	UpdateObjectCBs(gt); // 更新 world, texTransforms
-	UpdateMaterialCBs(gt); // 用 mMaterials 更新 currMaterialCB, 材质的反射系数,粗糙度等
-	UpdateMainPassCB(gt); // 赋值 mCurrFrameResource->PassCB, 更新 view, proj, 远近平面, 环境光, 各种灯光
-	UpdateWaves(gt);
+	UpdateObjectCBs(gt); // mCurrFrameResource->ObjectCB
+	UpdateMaterialCBs(gt); // mCurrFrameResource->MaterialCB
+	UpdateMainPassCB(gt); // mCurrFrameResource->PassCB
+	UpdateWaves(gt); // mWavesRitem->Geo->VertexBufferGPU,动态设置波浪顶点数据
 }
 
 void BlendApp::Draw(const GameTimer& gt)
@@ -112,19 +121,22 @@ void BlendApp::Draw(const GameTimer& gt)
 	mCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(CurrentBackBuffer(),
 		D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
 
+	// 设置背景颜色为雾色,结构体中的默认值
 	mCommandList->ClearRenderTargetView(CurrentBackBufferView(), (float*)&mMainPassCB.FogColor, 0, nullptr);
 	mCommandList->ClearDepthStencilView(DepthStencilView(), D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
 
 	mCommandList->OMSetRenderTargets(1, &CurrentBackBufferView(), true, &DepthStencilView());
-	// BuildDescriptorHeaps() 赋值 mSrvDescriptorHeap
+	
 	ID3D12DescriptorHeap* descriptorHeaps[] = { mSrvDescriptorHeap.Get() };
 	mCommandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
 
 	mCommandList->SetGraphicsRootSignature(mRootSignature.Get());
-	// UpdateMainPassCB() 赋值 mCurrFrameResource->PassCB
+	
+	// cbuffer cbPass : register(b1)
 	auto passCB = mCurrFrameResource->PassCB->Resource();
 	mCommandList->SetGraphicsRootConstantBufferView(2, passCB->GetGPUVirtualAddress());
-	// BuildRenderItems() 赋值 mRitemLayer[(int)RenderLayer::Opaque]
+	
+	// 先绘制不透明物体,再绘制需要混合的物体
 	DrawRenderItems(mCommandList.Get(), mRitemLayer[(int)RenderLayer::Opaque]);
 
 	mCommandList->SetPipelineState(mPSOs["alphaTested"].Get());
@@ -136,22 +148,16 @@ void BlendApp::Draw(const GameTimer& gt)
 	mCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(CurrentBackBuffer(),
 		D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
 
-	// Done recording commands.
 	ThrowIfFailed(mCommandList->Close());
 
-	// Add the command list to the queue for execution.
 	ID3D12CommandList* cmdLists[] = { mCommandList.Get() };
 	mCommandQueue->ExecuteCommandLists(_countof(cmdLists), cmdLists);
 
 	ThrowIfFailed(mSwapChain->Present(0, 0));
 	mCurrBackBuffer = (mCurrBackBuffer + 1) % SwapChainBufferCount;
 
-	// Advance the fence value to mark commands up to this fence point.
 	mCurrFrameResource->Fence = ++mCurrentFence;
 
-	// Add an instruction to the command queue to set a new fence point. 
-	// Because we are on the GPU timeline, the new fence point won't be 
-	// set until the GPU finishes processing all the commands prior to this Signal().
 	mCommandQueue->Signal(mFence.Get(), mCurrentFence);
 }
 
@@ -400,7 +406,6 @@ void BlendApp::BuildRootSignature()
 		(UINT)staticSamplers.size(), staticSamplers.data(),
 		D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 
-	// create a root signature with a single slot which points to a descriptor range consisting of a single constant buffer
 	ComPtr<ID3DBlob> serializedRootSig = nullptr;
 	ComPtr<ID3DBlob> errorBlob = nullptr;
 	HRESULT hr = D3D12SerializeRootSignature(&rootSigDesc, D3D_ROOT_SIGNATURE_VERSION_1,
@@ -443,13 +448,11 @@ void BlendApp::BuildDescriptorHeaps()
 	srvDesc.Texture2D.MipLevels = -1;
 	md3dDevice->CreateShaderResourceView(grassTex.Get(), &srvDesc, hDescriptor);
 
-	// next descriptor
 	hDescriptor.Offset(1, mCbvSrvDescriptorSize);
 
 	srvDesc.Format = waterTex->GetDesc().Format;
 	md3dDevice->CreateShaderResourceView(waterTex.Get(), &srvDesc, hDescriptor);
 
-	// next descriptor
 	hDescriptor.Offset(1, mCbvSrvDescriptorSize);
 
 	srvDesc.Format = fenceTex->GetDesc().Format;
@@ -458,6 +461,7 @@ void BlendApp::BuildDescriptorHeaps()
 
 void BlendApp::BuildShadersAndInputLayout()
 {
+	// 着色器中的宏: #ifdef FOG
 	const D3D_SHADER_MACRO defines[] =
 	{
 		"FOG","1",
@@ -670,18 +674,22 @@ void BlendApp::BuildPSOs()
 	// PSO for transparent objects
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC transparentPsoDesc = opaquePsoDesc;
 
+	// 混合方程: C = Csrc (x) Fsrc 田 Cdst (x) Fdst
+	// Csrc: 当前正在光栅化的颜色值(源颜色来自于像素着色器), Cdst: 后台缓冲区中的颜色值
+	// (x): 颜色向量分量式乘法, 田: 二元运算符
 	D3D12_RENDER_TARGET_BLEND_DESC transaprentBlendDesc;
-	transaprentBlendDesc.BlendEnable = true;
-	transaprentBlendDesc.LogicOpEnable = false;
-	transaprentBlendDesc.SrcBlend = D3D12_BLEND_SRC_ALPHA;
-	transaprentBlendDesc.DestBlend = D3D12_BLEND_INV_SRC_ALPHA;
-	transaprentBlendDesc.BlendOp = D3D12_BLEND_OP_ADD;
+	transaprentBlendDesc.BlendEnable = true; //启用常规混合功能
+	transaprentBlendDesc.LogicOpEnable = false; // 启用逻辑混合运算,二选一
+	transaprentBlendDesc.SrcBlend = D3D12_BLEND_SRC_ALPHA; // RGB混合中的源因子Fsrc
+	transaprentBlendDesc.DestBlend = D3D12_BLEND_INV_SRC_ALPHA; // RGB混合运算中的目标混合因子Fdst
+	transaprentBlendDesc.BlendOp = D3D12_BLEND_OP_ADD; // RGB混合运算符
 	transaprentBlendDesc.SrcBlendAlpha = D3D12_BLEND_ONE;
 	transaprentBlendDesc.DestBlendAlpha = D3D12_BLEND_ZERO;
 	transaprentBlendDesc.BlendOpAlpha = D3D12_BLEND_OP_ADD;
 	transaprentBlendDesc.LogicOp = D3D12_LOGIC_OP_NOOP;
-	transaprentBlendDesc.RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
+	transaprentBlendDesc.RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL; // 混合后的数据可被写入后台缓冲区中的哪些颜色通道
 
+	// RenderTarget: 具有8个D3D12_RENDER_TARGET_BLEND_DESC元素的数组,默认使用第一个元素
 	transparentPsoDesc.BlendState.RenderTarget[0] = transaprentBlendDesc;
 	ThrowIfFailed(md3dDevice->CreateGraphicsPipelineState(&transparentPsoDesc, IID_PPV_ARGS(&mPSOs["transparent"])));
 
@@ -692,6 +700,7 @@ void BlendApp::BuildPSOs()
 		reinterpret_cast<BYTE*>(mShaders["alphaTestedPS"]->GetBufferPointer()),
 		mShaders["alphaTestedPS"]->GetBufferSize()
 	};
+	// 铁丝网禁用背面剔除
 	alphaTestedPsoDesc.RasterizerState.CullMode = D3D12_CULL_MODE_NONE;
 	ThrowIfFailed(md3dDevice->CreateGraphicsPipelineState(&alphaTestedPsoDesc, IID_PPV_ARGS(&mPSOs["alphaTested"])));
 }
@@ -805,8 +814,11 @@ void BlendApp::DrawRenderItems(ID3D12GraphicsCommandList* cmdList, const std::ve
 		D3D12_GPU_VIRTUAL_ADDRESS objCBAddress = objectCB->GetGPUVirtualAddress() + ri->ObjCBIndex*objCBByteSize;
 		D3D12_GPU_VIRTUAL_ADDRESS matCBAddress = matCB->GetGPUVirtualAddress() + ri->Mat->MatCBIndex*matCBByteSize;
 
+		// Texture2D    gDiffuseMap : register(t0)
 		cmdList->SetGraphicsRootDescriptorTable(0, tex);
+		// cbuffer cbPerObject : register(b0)
 		cmdList->SetGraphicsRootConstantBufferView(1, objCBAddress);
+		// cbuffer cbMaterial : register(b2)
 		cmdList->SetGraphicsRootConstantBufferView(3, matCBAddress);
 
 		cmdList->DrawIndexedInstanced(ri->IndexCount, 1, ri->StartIndexLocation, ri->BaseVertexLocation, 0);
