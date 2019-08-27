@@ -111,7 +111,13 @@ void StencilApp::Draw(const GameTimer& gt)
 		D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
 
 	mCommandList->ClearRenderTargetView(CurrentBackBufferView(), (float*)&mMainPassCB.FogColor, 0, nullptr);
-	mCommandList->ClearDepthStencilView(DepthStencilView(), D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
+	mCommandList->ClearDepthStencilView(
+		DepthStencilView(), // 待清理的深度/模板缓冲区视图的描述符
+		D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 
+		1.0f, // 将此值设置到深度缓冲区中的每一个像素
+		0, // 将此值设置到模板缓冲区中的每一个像素
+		0, // 数组pRects中所指引的矩形数量
+		nullptr); // pRects,标定了一系列深度/模板缓冲区内要清理的区域,nullptr清理整个深度/模板缓冲区
 
 	mCommandList->OMSetRenderTargets(1, &CurrentBackBufferView(), true, &DepthStencilView());
 

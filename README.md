@@ -33,7 +33,8 @@ C++将资源传入GPU,GPU将资源传入register,hlsl通过VS,PS计算出rgb
 
 >报错: The build tools for v142 (Platform Toolset = 'v142') cannot be found  
 解决方法: 配置项目属性  
-General -> Platform Toolset -> 选择合适的
+General -> Platform Toolset -> 选择合适的  
+Window SDK Version -> 选择合适的  
 
 >VS C++ .自动变成->
 >选项Text Editor -> C/C++ -> Advanced -> IntelliSense -> Enable Member List Dot-To-Arrow : false  
