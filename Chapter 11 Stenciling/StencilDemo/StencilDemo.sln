@@ -22,6 +22,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Notes", "Notes", "{21E1ACB2
 		..\..\Notes\第8章 光照.md = ..\..\Notes\第8章 光照.md
 	EndProjectSection
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "StencilDemoReview", "StencilDemoReview\StencilDemoReview.vcxproj", "{67580730-4283-4613-A79F-12BF9EB7E7F2}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -38,6 +40,14 @@ Global
 		{5DC36CD8-E6AE-45DE-9F69-A0DEC6777DEF}.Release|x64.Build.0 = Release|x64
 		{5DC36CD8-E6AE-45DE-9F69-A0DEC6777DEF}.Release|x86.ActiveCfg = Release|Win32
 		{5DC36CD8-E6AE-45DE-9F69-A0DEC6777DEF}.Release|x86.Build.0 = Release|Win32
+		{67580730-4283-4613-A79F-12BF9EB7E7F2}.Debug|x64.ActiveCfg = Debug|x64
+		{67580730-4283-4613-A79F-12BF9EB7E7F2}.Debug|x64.Build.0 = Debug|x64
+		{67580730-4283-4613-A79F-12BF9EB7E7F2}.Debug|x86.ActiveCfg = Debug|Win32
+		{67580730-4283-4613-A79F-12BF9EB7E7F2}.Debug|x86.Build.0 = Debug|Win32
+		{67580730-4283-4613-A79F-12BF9EB7E7F2}.Release|x64.ActiveCfg = Release|x64
+		{67580730-4283-4613-A79F-12BF9EB7E7F2}.Release|x64.Build.0 = Release|x64
+		{67580730-4283-4613-A79F-12BF9EB7E7F2}.Release|x86.ActiveCfg = Release|Win32
+		{67580730-4283-4613-A79F-12BF9EB7E7F2}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
