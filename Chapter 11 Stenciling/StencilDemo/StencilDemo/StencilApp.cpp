@@ -1,3 +1,4 @@
+// 参考 Notes/第11章 模板.md
 #include "StencilApp.h"
 
 int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
@@ -44,16 +45,24 @@ bool StencilApp::Initialize()
 
 	mCbvSrvDescriptorSize = md3dDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
-	LoadTextures(); // 读取 .dds 贴图文件存入 mTextures
-	BuildRootSignature(); // 初始化空的 mRootSignature
-	BuildDescriptorHeaps(); // 将贴图信息 mTextures["bricksTex","checkboardTex","iceTex","white1x1Tex"] 放进 mSrvDescriptorHeap
-	BuildShadersAndInputLayout(); // 读取 .hlsl 着色器存入 mShaders, 初始化 mInputLayout 对应 struct Vertex {Pos, Normal, TexC}
-	BuildRoomGeometry(); // 手写顶点数组和索引数组,存入 mGeometries["roomGeo"]->DrawArgs["floor","wall","mirror"]
-	BuildSkullGeometry(); // 读取骷髅顶点txt, 存入mGeometries["skullGeo"]->DrawArgs["skull"]
-	BuildMaterials(); // 手写各材质的属性(主要是漫反射和镜面反射),存入 mMaterials["bricks","checkertile","icemirror","skullMat","shadowMat"]
-	BuildRenderItems(); // 创建RenderItem,主要属性: World,TexTransform,Mat,Geo顶点 // 不同的渲染项目先加入不同的mRitemLayer[theIndex]中(mRitemLayer是二维数组),最后全部加入mAllRitems
-	BuildFrameResources(); // 初始化空的 mFrameResources
-	BuildPSOs(); // mPSOs["opaque","transparent","markStencilMirrors","drawStencilReflections","shadow"], 设置了混合,模板等
+	// 载入贴图,存入mTextures,上传GPU
+	LoadTextures();
+	// 根签名是根参数数组,指明了寄存器,tex和cb指明根参数索引,关联到寄存器
+	BuildRootSignature();
+	// tex通过句柄偏移和描述符堆绑定
+	BuildDescriptorHeaps();
+	// 着色器VS,PS,并定义hlsl中的宏,以启用雾气和alpha clip效果,顶点结构体属性和hlsl中对应
+	BuildShadersAndInputLayout();
+	// 创建顶点,索引缓存,上传GPU; struct MeshGeometry提供函数获取顶点/索引视图
+	BuildRoomGeometry();
+	BuildSkullGeometry();
+	// 将材质存入mMaterials[],设置MatCBIndex,DiffuseSrvHeapIndex对应mSrvDescriptorHeap中的句柄偏移(tex)
+	BuildMaterials();
+	// 将不同的渲染项放入mAllRitems[],mRitemLayer[][]中
+	BuildRenderItems();
+	BuildFrameResources();
+	// mPSOs["opaque","transparent","markStencilMirrors","drawStencilReflections","shadow"]
+	BuildPSOs();
 
 	ThrowIfFailed(mCommandList->Close());
 	ID3D12CommandList* cmdLists[] = { mCommandList.Get() };
@@ -89,7 +98,7 @@ void StencilApp::Update(const GameTimer& gt)
 		CloseHandle(eventHandle);
 	}
 
-	AnimateMaterials(gt); // empty func
+	AnimateMaterials(gt);
 	UpdateObjectCBs(gt); // 修改了 mCurrFrameResource->ObjectCB
 	UpdateMaterialCBs(gt); // 修改了 mCurrFrameResource->MaterialCB
 	UpdateMainPassCB(gt); // 修改了 mCurrFrameResource->PassCB 索引值为0处, 存入 mMainPassCB
@@ -113,7 +122,7 @@ void StencilApp::Draw(const GameTimer& gt)
 	mCommandList->ClearRenderTargetView(CurrentBackBufferView(), (float*)&mMainPassCB.FogColor, 0, nullptr);
 	mCommandList->ClearDepthStencilView(
 		DepthStencilView(), // 待清理的深度/模板缓冲区视图的描述符
-		D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 
+		D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL,
 		1.0f, // 将此值设置到深度缓冲区中的每一个像素
 		0, // 将此值设置到模板缓冲区中的每一个像素
 		0, // 数组pRects中所指引的矩形数量
@@ -130,21 +139,23 @@ void StencilApp::Draw(const GameTimer& gt)
 
 	// draw opaque items: floor, wall, skull
 	auto passCB = mCurrFrameResource->PassCB->Resource();
-	mCommandList->SetGraphicsRootConstantBufferView(2, passCB->GetGPUVirtualAddress()); // RootParameterIndex: 2
+	// cbuffer cbPass : register(b1)
+	mCommandList->SetGraphicsRootConstantBufferView(2, passCB->GetGPUVirtualAddress());
 	DrawRenderItems(mCommandList.Get(), mRitemLayer[(int)RenderLayer::Opaque]);
 
-	// mark(不是 draw) 将模板缓冲区中可见的镜面像素标记为1
+	// 将模板缓冲区中可见的镜面像素标记为1
 	mCommandList->OMSetStencilRef(1); // StencilRef: 模板测试的模板参考值
 	mCommandList->SetPipelineState(mPSOs["markStencilMirrors"].Get());
 	DrawRenderItems(mCommandList.Get(), mRitemLayer[(int)RenderLayer::Mirrors]);
 
 	// draw 只绘制镜子范围内的镜像(即仅绘制模板缓冲区中标记为1的像素)
-	// 使用两个渲染过程常量缓冲区,一个储存物体镜像,另一个保存光照镜像
+	// 使用两个渲染过程常量缓冲区,物体的镜像也要有与之对应的光照
+	// cbuffer cbPass : register(b1)
 	mCommandList->SetGraphicsRootConstantBufferView(2, passCB->GetGPUVirtualAddress() + 1 * passCBByteSize);
 	mCommandList->SetPipelineState(mPSOs["drawStencilReflections"].Get());
 	DrawRenderItems(mCommandList.Get(), mRitemLayer[(int)RenderLayer::Reflected]);
 
-	// restore main pass constants and stencil ref
+	// 恢复主渲染过程常量数据和模板参考值StencilRef
 	mCommandList->SetGraphicsRootConstantBufferView(2, passCB->GetGPUVirtualAddress());
 	mCommandList->OMSetStencilRef(0);
 
@@ -252,7 +263,7 @@ void StencilApp::OnKeyboardInput(const GameTimer& gt)
 	XMMATRIX R = XMMatrixReflect(mirrorPlane);
 	XMStoreFloat4x4(&mReflectedSkullRitem->World, skullworld * R); // 镜像*镜像矩阵即可
 
-	// update shadow world matrix
+	// 更新阴影世界矩阵
 	XMVECTOR shadowPlane = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f); // xz plane
 	XMVECTOR toMainLight = -XMLoadFloat3(&mMainPassCB.Lights[0].Direction);
 	XMMATRIX S = XMMatrixShadow(shadowPlane, toMainLight);
@@ -367,10 +378,11 @@ void StencilApp::UpdateReflectedPassCB(const GameTimer& gt)
 {
 	mReflectedPassCB = mMainPassCB;
 
+	// 平面方程: Ax+By+Cz+D=0, Z=0
 	XMVECTOR mirrorPlane = XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f); // xy plane
 	XMMATRIX R = XMMatrixReflect(mirrorPlane);
 
-	// reflect the lighting
+	// 光照镜像
 	for (int i = 0; i < 3; ++i)
 	{
 		XMVECTOR lightDir = XMLoadFloat3(&mMainPassCB.Lights[i].Direction);
@@ -529,18 +541,19 @@ void StencilApp::BuildShadersAndInputLayout()
 void StencilApp::BuildRoomGeometry()
 {
 	// Create and specify geometry.  For this sample we draw a floor
-// and a wall with a mirror on it.  We put the floor, wall, and
-// mirror geometry in one vertex buffer.
-//
-//   |--------------|
-//   |              |
-//   |----|----|----|
-//   |Wall|Mirr|Wall|
-//   |    | or |    |
-//   /--------------/
-//  /   Floor      /
-// /--------------/
+	// and a wall with a mirror on it.  We put the floor, wall, and
+	// mirror geometry in one vertex buffer.
+	//
+	//   |--------------|
+	//   |              |
+	//   |----|----|----|
+	//   |Wall|Mirr|Wall|
+	//   |    | or |    |
+	//   /--------------/
+	//  /   Floor      /
+	// /--------------/
 
+		// 参考P401绘图
 	std::array<Vertex, 20> vertices = // Pos, Normal, TexC
 	{
 		// Floor: Observe we tile texture coordinates.
@@ -653,9 +666,9 @@ void StencilApp::BuildSkullGeometry()
 	UINT tcount = 0;
 	std::string ignore;
 
-	fin >> ignore >> vcount; // 文件内容: VertexCount: 31076\n
-	fin >> ignore >> tcount; // TriangleCount: 60339\n
-	fin >> ignore >> ignore >> ignore >> ignore; // VertexList (pos, normal)\n{\n
+	fin >> ignore >> vcount; // 文件内容: "VertexCount:" 31076
+	fin >> ignore >> tcount; // "TriangleCount:" 60339
+	fin >> ignore >> ignore >> ignore >> ignore; // "VertexList" "(pos," "normal)" "{"
 
 	std::vector<Vertex> vertices(vcount);
 	for (UINT i = 0; i < vcount; ++i)
@@ -667,9 +680,9 @@ void StencilApp::BuildSkullGeometry()
 		vertices[i].TexC = { 0.0f,0.0f };
 	}
 
-	fin >> ignore; // }\n
-	fin >> ignore; // TriangleList\n
-	fin >> ignore; // {\n
+	fin >> ignore; // "}"
+	fin >> ignore; // "TriangleList"
+	fin >> ignore; // "{"
 
 	std::vector<std::int32_t> indices(3 * tcount);
 	for (UINT i = 0; i < tcount; ++i)
@@ -765,22 +778,23 @@ void StencilApp::BuildPSOs()
 	ThrowIfFailed(md3dDevice->CreateGraphicsPipelineState(&transparentPsoDesc, IID_PPV_ARGS(&mPSOs["transparent"])));
 
 	// 模板缓冲区中镜面部分的PSO
+	// 仅将镜面绘制到模板缓冲区中,不写入后台缓冲区,也不写入深度缓冲区
 
-	// 禁止对渲染目标的写操作
 	CD3DX12_BLEND_DESC mirrorBlendState(D3D12_DEFAULT);
-	mirrorBlendState.RenderTarget[0].RenderTargetWriteMask = 0; // 仅将镜面渲染到模板缓冲区中,禁止其他颜色数据写入到后台缓冲区
+	mirrorBlendState.RenderTarget[0].RenderTargetWriteMask = 0; // 禁止写入到后台缓冲区
 
 	D3D12_DEPTH_STENCIL_DESC mirrorDSS;
 	mirrorDSS.DepthEnable = true; // 开启深度缓冲
-	mirrorDSS.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ZERO; // 禁止对深度缓冲区的写操作
+	mirrorDSS.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ZERO; // 禁止对深度缓冲区的写操作,但仍可执行深度测试
 	mirrorDSS.DepthFunc = D3D12_COMPARISON_FUNC_LESS; // 深度测试比较函数 <
 	mirrorDSS.StencilEnable = true; // 开启模板测试
-	mirrorDSS.StencilReadMask = 0xff; // 设置模板测试屏蔽的位
+	mirrorDSS.StencilReadMask = 0xff; // 设置模板测试屏蔽的位,这里不屏蔽
 	mirrorDSS.StencilWriteMask = 0xff; // 设置屏蔽写入的位, eg:0x0f防止前4位数据被改写
 	// 镜面可见部分的对应像素为1,其他像素皆为0
+	// 正面朝向的三角形进行何种模板运算
 	mirrorDSS.FrontFace.StencilFailOp = D3D12_STENCIL_OP_KEEP; // 当模板测试失败时,不修改模板缓冲区,保持当前的数据
-	mirrorDSS.FrontFace.StencilDepthFailOp = D3D12_STENCIL_OP_KEEP; // 通过模板测试,深度测试失败, Keep 0
-	mirrorDSS.FrontFace.StencilPassOp = D3D12_STENCIL_OP_REPLACE; // 将模板缓冲区中的元素替换为模板参考值 StencilRef(1)
+	mirrorDSS.FrontFace.StencilDepthFailOp = D3D12_STENCIL_OP_KEEP; // 通过模板测试,但是深度测试失败,模板缓冲区 Keep 0(被骷髅挡住)
+	mirrorDSS.FrontFace.StencilPassOp = D3D12_STENCIL_OP_REPLACE; // 将模板缓冲区中的元素,替换为模板参考值 StencilRef(1)
 	mirrorDSS.FrontFace.StencilFunc = D3D12_COMPARISON_FUNC_ALWAYS; // 模板测试比较函数,这里总是返回true
 
 	// 不渲染背面,所以不关心这些参数
@@ -794,7 +808,7 @@ void StencilApp::BuildPSOs()
 	markMirrorsPsoDesc.DepthStencilState = mirrorDSS;
 	ThrowIfFailed(md3dDevice->CreateGraphicsPipelineState(&markMirrorsPsoDesc, IID_PPV_ARGS(&mPSOs["markStencilMirrors"])));
 
-	// PSO for stencil reflections
+	// PSO for stencil reflections 骷髅镜像
 	D3D12_DEPTH_STENCIL_DESC reflectionsDSS;
 	reflectionsDSS.DepthEnable = true;
 	reflectionsDSS.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL; // 通过深度测试与模板测试的深度数据将被写入深度缓冲区
@@ -803,6 +817,8 @@ void StencilApp::BuildPSOs()
 	reflectionsDSS.StencilReadMask = 0xff;
 	reflectionsDSS.StencilWriteMask = 0xff;
 
+	// 设置模板参考值StencilRef=1,比较函数为"=="
+	// 因为模板缓冲区中,仅有镜面可见(可能被实体骷髅遮挡)部分的元素值为1,所以仅绘制这一范围内的骷髅
 	reflectionsDSS.FrontFace.StencilFailOp = D3D12_STENCIL_OP_KEEP;
 	reflectionsDSS.FrontFace.StencilDepthFailOp = D3D12_STENCIL_OP_KEEP;
 	reflectionsDSS.FrontFace.StencilPassOp = D3D12_STENCIL_OP_KEEP;
@@ -817,7 +833,7 @@ void StencilApp::BuildPSOs()
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC drawReflectionsPsoDesc = opaquePsoDesc;
 	drawReflectionsPsoDesc.DepthStencilState = reflectionsDSS;
 	drawReflectionsPsoDesc.RasterizerState.CullMode = D3D12_CULL_MODE_BACK; // 不绘制背面
-	drawReflectionsPsoDesc.RasterizerState.FrontCounterClockwise = true; // 绕序
+	drawReflectionsPsoDesc.RasterizerState.FrontCounterClockwise = true; // 绕序,使镜像法线外向朝向
 	ThrowIfFailed(md3dDevice->CreateGraphicsPipelineState(&drawReflectionsPsoDesc, IID_PPV_ARGS(&mPSOs["drawStencilReflections"])));
 
 	// PSO for shadow objects
@@ -837,7 +853,7 @@ void StencilApp::BuildPSOs()
 	// 第一次渲染阴影,由于模板缓冲区元素为0,因而模板测试成功
 	// 渲染该像素的同时,将对应的模板缓冲区元素增加为1
 	// 如果覆写已被渲染过的区域,模板测试失败
-	shadowDSS.FrontFace.StencilPassOp = D3D12_STENCIL_OP_INCR;
+	shadowDSS.FrontFace.StencilPassOp = D3D12_STENCIL_OP_INCR; // 递增
 	shadowDSS.FrontFace.StencilFunc = D3D12_COMPARISON_FUNC_EQUAL;
 
 	// 不渲染背面,所以不关心这些参数
@@ -898,7 +914,7 @@ void StencilApp::BuildMaterials()
 	shadowMat->Name = "shadowMat";
 	shadowMat->MatCBIndex = 4;
 	shadowMat->DiffuseSrvHeapIndex = 3;
-	shadowMat->DiffuseAlbedo = XMFLOAT4(0.0f, 0.0f, 0.0f, 0.5f);
+	shadowMat->DiffuseAlbedo = XMFLOAT4(0.0f, 0.0f, 0.0f, 0.5f); // 0.5透明度黑色材质
 	shadowMat->FresnelR0 = XMFLOAT3(0.001f, 0.001f, 0.001f);
 	shadowMat->Roughness = 0.0f;
 
@@ -1007,8 +1023,11 @@ void StencilApp::DrawRenderItems(ID3D12GraphicsCommandList* cmdList, const std::
 		D3D12_GPU_VIRTUAL_ADDRESS objCBAddress = objectCB->GetGPUVirtualAddress() + ri->ObjCBIndex*objCBByteSize;
 		D3D12_GPU_VIRTUAL_ADDRESS matCBAddress = matCB->GetGPUVirtualAddress() + ri->Mat->MatCBIndex*matCBByteSize;
 
+		// Texture2D    gDiffuseMap : register(t0)
 		cmdList->SetGraphicsRootDescriptorTable(0, tex);
+		// cbuffer cbPerObject : register(b0)
 		cmdList->SetGraphicsRootConstantBufferView(1, objCBAddress);
+		// cbuffer cbMaterial : register(b2)
 		cmdList->SetGraphicsRootConstantBufferView(3, matCBAddress);
 
 		cmdList->DrawIndexedInstanced(ri->IndexCount, 1, ri->StartIndexLocation, ri->BaseVertexLocation, 0);

@@ -38,9 +38,9 @@ struct RenderItem
 enum class RenderLayer : int
 {
 	Opaque = 0, // floor, wall, skull
-	Mirrors, // mirror
+	Mirrors, // mirror(仅设置模板缓存区)
 	Reflected, // reflectedSkull
-	Transparent, // mirror
+	Transparent, // mirror(渲染)
 	Shadow, // shadowedSkull
 	Count
 };
@@ -118,7 +118,7 @@ private:
 	std::vector<RenderItem*> mRitemLayer[(int)RenderLayer::Count];
 
 	PassConstants mMainPassCB;
-	PassConstants mReflectedPassCB;
+	PassConstants mReflectedPassCB; // 光照的镜像(物体的镜像也要有与之对应的光照)
 
 	XMFLOAT3 mSkullTranslation = { 0.0f, 1.0f, -5.0f };
 
