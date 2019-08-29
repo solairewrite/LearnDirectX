@@ -111,7 +111,14 @@ void StencilApp::Draw(const GameTimer& gt)
 
 	ThrowIfFailed(cmdListAlloc->Reset());
 
-	ThrowIfFailed(mCommandList->Reset(cmdListAlloc.Get(), mPSOs["opaque"].Get()));
+	if (bWireframe)
+	{
+		ThrowIfFailed(mCommandList->Reset(cmdListAlloc.Get(), mPSOs["opaque_wireframe"].Get()));
+	}
+	else
+	{
+		ThrowIfFailed(mCommandList->Reset(cmdListAlloc.Get(), mPSOs["opaque"].Get()));
+	}
 
 	mCommandList->RSSetViewports(1, &mScreenViewport);
 	mCommandList->RSSetScissorRects(1, &mScissorRect);
@@ -232,10 +239,14 @@ void StencilApp::OnMouseMove(WPARAM btnState, int x, int y)
 
 void StencilApp::OnKeyboardInput(const GameTimer& gt)
 {
+	// F线框模式绘制骷髅
+	if (GetAsyncKeyState('F') & 0x8000)
+		bWireframe = true;
+	else
+		bWireframe = false;
+
 	// WASD移动骷髅
-
 	const float dt = gt.DeltaTime();
-
 	if (GetAsyncKeyState('A') & 0x8000)
 		mSkullTranslation.x -= 1.0f*dt;
 
@@ -730,7 +741,7 @@ void StencilApp::BuildPSOs()
 {
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC opaquePsoDesc;
 
-	// PSO for opaque objects
+	// 不透明对象PSO
 	ZeroMemory(&opaquePsoDesc, sizeof(D3D12_GRAPHICS_PIPELINE_STATE_DESC));
 	opaquePsoDesc.InputLayout = { mInputLayout.data(),(UINT)mInputLayout.size() };
 	opaquePsoDesc.pRootSignature = mRootSignature.Get();
@@ -756,29 +767,35 @@ void StencilApp::BuildPSOs()
 	opaquePsoDesc.DSVFormat = mDepthStencilFormat;
 	ThrowIfFailed(md3dDevice->CreateGraphicsPipelineState(&opaquePsoDesc, IID_PPV_ARGS(&mPSOs["opaque"])));
 
+	// 不透明对象线框模式PSO
+	D3D12_GRAPHICS_PIPELINE_STATE_DESC opaqueWireframePsoDesc = opaquePsoDesc;
+	opaqueWireframePsoDesc.RasterizerState.FillMode = D3D12_FILL_MODE_WIREFRAME;
+	ThrowIfFailed(md3dDevice->CreateGraphicsPipelineState(&opaqueWireframePsoDesc, IID_PPV_ARGS(&mPSOs["opaque_wireframe"])));
+
 	// 混合:将源像素(当前要光栅化的像素)与目标像素(已光栅化至后台缓冲区的像素)相融合.可用于渲染水,玻璃之类的半透明物体
 	// 混合方程: C = C(src) (*) F(src) 田 C(dst) (*) F(dst)
-	// C(src):源像素颜色, F(src):源混合因子, C(dst):目标像素颜色值, F(dst):目标混合因子. (*):分量式乘法, 田:二元运算符D3D12_BLEND_OP
-	// PSO for transparent objects
+	// C(src):源像素颜色, F(src):源混合因子, C(dst):目标像素颜色值, F(dst):目标混合因子
+	// (*):分量式乘法, 田:二元运算符D3D12_BLEND_OP
+	// 透明对象PSO
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC transparentPsoDesc = opaquePsoDesc;
 
 	D3D12_RENDER_TARGET_BLEND_DESC transparencyBlendDesc;
-	transparencyBlendDesc.BlendEnable = true; // 启用常规混合功能,只能从常规混合和逻辑混合中选一种
-	transparencyBlendDesc.LogicOpEnable = false; // 启用逻辑混合运算(新特性)
-	transparencyBlendDesc.SrcBlend = D3D12_BLEND_SRC_ALPHA; // F(src),D3D12_BLEND, 这里采用源像素的alpha(a,a,a)
-	transparencyBlendDesc.DestBlend = D3D12_BLEND_INV_SRC_ALPHA; // (1-a,1-a,1-a)
-	transparencyBlendDesc.BlendOp = D3D12_BLEND_OP_ADD; // 二元运算符 田,这里是 +
-	transparencyBlendDesc.SrcBlendAlpha = D3D12_BLEND_ONE; // (1,1,1)
-	transparencyBlendDesc.DestBlendAlpha = D3D12_BLEND_ZERO; // (0,0,0)
+	transparencyBlendDesc.BlendEnable = true; // 启用常规混合
+	transparencyBlendDesc.LogicOpEnable = false; // 逻辑混合(与常规混合二选一)
+	transparencyBlendDesc.SrcBlend = D3D12_BLEND_SRC_ALPHA; // F(src) = (a, a, a)
+	transparencyBlendDesc.DestBlend = D3D12_BLEND_INV_SRC_ALPHA; // (1-a, 1-a, 1-a)
+	transparencyBlendDesc.BlendOp = D3D12_BLEND_OP_ADD; // 田 = +
+	transparencyBlendDesc.SrcBlendAlpha = D3D12_BLEND_ONE; // (1, 1, 1)
+	transparencyBlendDesc.DestBlendAlpha = D3D12_BLEND_ZERO; // (0, 0, 0)
 	transparencyBlendDesc.BlendOpAlpha = D3D12_BLEND_OP_ADD;
-	transparencyBlendDesc.LogicOp = D3D12_LOGIC_OP_NOOP; // 逻辑运算符
-	transparencyBlendDesc.RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL; // 混合后的数据可被写入后台缓冲区的哪些颜色通道
+	transparencyBlendDesc.LogicOp = D3D12_LOGIC_OP_NOOP;
+	transparencyBlendDesc.RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL; // 混合后的数据可被写入后台缓冲器哪些颜色通道
 
-	transparentPsoDesc.BlendState.RenderTarget[0] = transparencyBlendDesc; // RenderTarget有8个元素,默认都用[0]
+	transparentPsoDesc.BlendState.RenderTarget[0] = transparencyBlendDesc;
 	ThrowIfFailed(md3dDevice->CreateGraphicsPipelineState(&transparentPsoDesc, IID_PPV_ARGS(&mPSOs["transparent"])));
 
 	// 模板缓冲区中镜面部分的PSO
-	// 仅将镜面绘制到模板缓冲区中,不写入后台缓冲区,也不写入深度缓冲区
+	// 仅将镜面绘制到模板缓冲区中,不写入后台缓冲区(混合),也不写入深度缓冲区
 
 	CD3DX12_BLEND_DESC mirrorBlendState(D3D12_DEFAULT);
 	mirrorBlendState.RenderTarget[0].RenderTargetWriteMask = 0; // 禁止写入到后台缓冲区
@@ -788,16 +805,16 @@ void StencilApp::BuildPSOs()
 	mirrorDSS.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ZERO; // 禁止对深度缓冲区的写操作,但仍可执行深度测试
 	mirrorDSS.DepthFunc = D3D12_COMPARISON_FUNC_LESS; // 深度测试比较函数 <
 	mirrorDSS.StencilEnable = true; // 开启模板测试
-	mirrorDSS.StencilReadMask = 0xff; // 设置模板测试屏蔽的位,这里不屏蔽
-	mirrorDSS.StencilWriteMask = 0xff; // 设置屏蔽写入的位, eg:0x0f防止前4位数据被改写
-	// 镜面可见部分的对应像素为1,其他像素皆为0
+	mirrorDSS.StencilReadMask = 0xff; // 模板测试屏蔽的bit,这里不屏蔽
+	mirrorDSS.StencilWriteMask = 0xff;
+	// 镜面可见部分的对应像素为1,其它皆为0
 	// 正面朝向的三角形进行何种模板运算
 	mirrorDSS.FrontFace.StencilFailOp = D3D12_STENCIL_OP_KEEP; // 当模板测试失败时,不修改模板缓冲区,保持当前的数据
-	mirrorDSS.FrontFace.StencilDepthFailOp = D3D12_STENCIL_OP_KEEP; // 通过模板测试,但是深度测试失败,模板缓冲区 Keep 0(被骷髅挡住)
+	mirrorDSS.FrontFace.StencilDepthFailOp = D3D12_STENCIL_OP_KEEP; // 通过模板测试,但是深度测试失败(镜面被骷髅挡住的部分)
 	mirrorDSS.FrontFace.StencilPassOp = D3D12_STENCIL_OP_REPLACE; // 将模板缓冲区中的元素,替换为模板参考值 StencilRef(1)
-	mirrorDSS.FrontFace.StencilFunc = D3D12_COMPARISON_FUNC_ALWAYS; // 模板测试比较函数,这里总是返回true
+	mirrorDSS.FrontFace.StencilFunc = D3D12_COMPARISON_FUNC_ALWAYS; // 模板测试比较函数
 
-	// 不渲染背面,所以不关心这些参数
+	// 不渲染背面,不关心这些参数
 	mirrorDSS.BackFace.StencilFailOp = D3D12_STENCIL_OP_KEEP;
 	mirrorDSS.BackFace.StencilDepthFailOp = D3D12_STENCIL_OP_KEEP;
 	mirrorDSS.BackFace.StencilPassOp = D3D12_STENCIL_OP_REPLACE;
@@ -808,7 +825,7 @@ void StencilApp::BuildPSOs()
 	markMirrorsPsoDesc.DepthStencilState = mirrorDSS;
 	ThrowIfFailed(md3dDevice->CreateGraphicsPipelineState(&markMirrorsPsoDesc, IID_PPV_ARGS(&mPSOs["markStencilMirrors"])));
 
-	// PSO for stencil reflections 骷髅镜像
+	// 骷髅镜像PSO
 	D3D12_DEPTH_STENCIL_DESC reflectionsDSS;
 	reflectionsDSS.DepthEnable = true;
 	reflectionsDSS.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL; // 通过深度测试与模板测试的深度数据将被写入深度缓冲区
@@ -818,7 +835,7 @@ void StencilApp::BuildPSOs()
 	reflectionsDSS.StencilWriteMask = 0xff;
 
 	// 设置模板参考值StencilRef=1,比较函数为"=="
-	// 因为模板缓冲区中,仅有镜面可见(可能被实体骷髅遮挡)部分的元素值为1,所以仅绘制这一范围内的骷髅
+	// 模板缓冲区中,仅有镜面可见部分的元素值为1,所以仅绘制这一范围内的骷髅
 	reflectionsDSS.FrontFace.StencilFailOp = D3D12_STENCIL_OP_KEEP;
 	reflectionsDSS.FrontFace.StencilDepthFailOp = D3D12_STENCIL_OP_KEEP;
 	reflectionsDSS.FrontFace.StencilPassOp = D3D12_STENCIL_OP_KEEP;
@@ -834,11 +851,11 @@ void StencilApp::BuildPSOs()
 	drawReflectionsPsoDesc.DepthStencilState = reflectionsDSS;
 	drawReflectionsPsoDesc.RasterizerState.CullMode = D3D12_CULL_MODE_BACK; // 不绘制背面
 	drawReflectionsPsoDesc.RasterizerState.FrontCounterClockwise = true; // 绕序,使镜像法线外向朝向
-	ThrowIfFailed(md3dDevice->CreateGraphicsPipelineState(&drawReflectionsPsoDesc, IID_PPV_ARGS(&mPSOs["drawStencilReflections"])));
+	ThrowIfFailed(md3dDevice->CreateGraphicsPipelineState(&drawReflectionsPsoDesc,IID_PPV_ARGS(&mPSOs["drawStencilReflections"])));
 
-	// PSO for shadow objects
+	// 阴影PSO
 
-	// 以下列深度/模板状态来防止双重混合的发生
+	// 防止双重混合,导致阴影变暗
 	D3D12_DEPTH_STENCIL_DESC shadowDSS;
 	shadowDSS.DepthEnable = true;
 	shadowDSS.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;

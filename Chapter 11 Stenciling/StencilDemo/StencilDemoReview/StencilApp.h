@@ -37,11 +37,11 @@ struct RenderItem
 
 enum class RenderLayer : int
 {
-	Opaque = 0, // floor, wall, skull
-	Mirrors, // mirror(仅设置模板缓存区)
-	Reflected, // reflectedSkull
-	Transparent, // mirror(渲染)
-	Shadow, // shadowedSkull
+	Opaque = 0, // 地面,墙壁,骷髅
+	Mirrors, // 镜子(仅设置模板缓冲区)
+	Reflected, // 骷髅镜像
+	Transparent, // 镜子(渲染)
+	Shadow,
 	Count
 };
 
@@ -131,4 +131,6 @@ private:
 	float mRadius = 12.0f;
 
 	POINT mLastMousePos;
+
+	bool bWireframe = false;
 };

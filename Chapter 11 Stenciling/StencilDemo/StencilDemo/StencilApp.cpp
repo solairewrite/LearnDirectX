@@ -251,22 +251,22 @@ void StencilApp::OnKeyboardInput(const GameTimer& gt)
 	// 禁止低于地面
 	mSkullTranslation.y = MathHelper::Max(mSkullTranslation.y, 0.0f);
 
-	// update skull world matrix
+	// 更新骷髅世界矩阵
 	XMMATRIX skullRotate = XMMatrixRotationY(0.5f*MathHelper::Pi);
 	XMMATRIX skullScale = XMMatrixScaling(0.45f, 0.45f, 0.45f);
 	XMMATRIX skullOffset = XMMatrixTranslation(mSkullTranslation.x, mSkullTranslation.y, mSkullTranslation.z);
 	XMMATRIX skullworld = skullRotate * skullScale * skullOffset;
 	XMStoreFloat4x4(&mSkullRitem->World, skullworld);
 
-	// update reflection world matrix
+	// 更新骷髅镜像世界矩阵
 	XMVECTOR mirrorPlane = XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f); // xy plane
-	XMMATRIX R = XMMatrixReflect(mirrorPlane);
-	XMStoreFloat4x4(&mReflectedSkullRitem->World, skullworld * R); // 镜像*镜像矩阵即可
+	XMMATRIX R = XMMatrixReflect(mirrorPlane); // 镜面反射矩阵
+	XMStoreFloat4x4(&mReflectedSkullRitem->World, skullworld * R);
 
 	// 更新阴影世界矩阵
-	XMVECTOR shadowPlane = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f); // xz plane
+	XMVECTOR shadowPlane = (0.0f, 1.0f, 0.0f, 0.0f); // xz plane
 	XMVECTOR toMainLight = -XMLoadFloat3(&mMainPassCB.Lights[0].Direction);
-	XMMATRIX S = XMMatrixShadow(shadowPlane, toMainLight);
+	XMMATRIX S = XMMatrixShadow(shadowPlane, toMainLight); // 阴影矩阵
 	// 防止深度冲突,阴影略高于地面
 	XMMATRIX shadowOffsetY = XMMatrixTranslation(0.0f, 0.001f, 0.0f);
 	XMStoreFloat4x4(&mShadowedSkullRitem->World, skullworld * S * shadowOffsetY);
@@ -378,19 +378,19 @@ void StencilApp::UpdateReflectedPassCB(const GameTimer& gt)
 {
 	mReflectedPassCB = mMainPassCB;
 
-	// 平面方程: Ax+By+Cz+D=0, Z=0
+
 	XMVECTOR mirrorPlane = XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f); // xy plane
 	XMMATRIX R = XMMatrixReflect(mirrorPlane);
 
 	// 光照镜像
-	for (int i = 0; i < 3; ++i)
+	for (int i=0;i<3;i++)
 	{
 		XMVECTOR lightDir = XMLoadFloat3(&mMainPassCB.Lights[i].Direction);
 		XMVECTOR reflectedLightDir = XMVector3TransformNormal(lightDir, R);
 		XMStoreFloat3(&mReflectedPassCB.Lights[i].Direction, reflectedLightDir);
 	}
 
-	// reflected pass stored in index 1
+	// 反射光的过程常量index=1
 	auto currPassCB = mCurrFrameResource->PassCB.get();
 	currPassCB->CopyData(1, mReflectedPassCB);
 }
