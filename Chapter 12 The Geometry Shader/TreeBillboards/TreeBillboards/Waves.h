@@ -1,11 +1,3 @@
-//***************************************************************************************
-// Waves.h by Frank Luna (C) 2011 All Rights Reserved.
-//
-// Performs the calculations for the wave simulation.  After the simulation has been
-// updated, the client must copy the current solution into vertex buffers for rendering.
-// This class only does the calculations, it does not do any drawing.
-//***************************************************************************************
-
 #ifndef WAVES_H
 #define WAVES_H
 

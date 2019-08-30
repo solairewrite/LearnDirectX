@@ -86,6 +86,9 @@
     <ClInclude Include="Waves.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="TreeBillboardsApp.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\TreeSprite.hlsl">
@@ -97,5 +100,19 @@
     <None Include="Shaders\Default.hlsl">
       <Filter>Shaders</Filter>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="..\..\..\Textures\grass.dds">
+      <Filter>Textures</Filter>
+    </Image>
+    <Image Include="..\..\..\Textures\treeArray2.dds">
+      <Filter>Textures</Filter>
+    </Image>
+    <Image Include="..\..\..\Textures\water1.dds">
+      <Filter>Textures</Filter>
+    </Image>
+    <Image Include="..\..\..\Textures\WireFence.dds">
+      <Filter>Textures</Filter>
+    </Image>
   </ItemGroup>
 </Project>

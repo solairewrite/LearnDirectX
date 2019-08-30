@@ -5,6 +5,19 @@ VisualStudioVersion = 15.0.28307.645
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TreeBillboards", "TreeBillboards\TreeBillboards.vcxproj", "{7401304E-5E80-4528-B09F-CBE383C2DC4B}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Notes", "Notes", "{123ACA7A-8FD3-4769-BF79-FD10C1365937}"
+	ProjectSection(SolutionItems) = preProject
+		..\..\Notes\第10章 混合.md = ..\..\Notes\第10章 混合.md
+		..\..\Notes\第11章 模板.md = ..\..\Notes\第11章 模板.md
+		..\..\Notes\第12章 几何着色器.md = ..\..\Notes\第12章 几何着色器.md
+		..\..\Notes\第4章 Direct3D的初始化.md = ..\..\Notes\第4章 Direct3D的初始化.md
+		..\..\Notes\第5章 渲染流水线.md = ..\..\Notes\第5章 渲染流水线.md
+		..\..\Notes\第6章 利用Direct3D绘制几何体.md = ..\..\Notes\第6章 利用Direct3D绘制几何体.md
+		..\..\Notes\第7章 利用Direct3D绘制几何体(续)-LandAndWaves.md = ..\..\Notes\第7章 利用Direct3D绘制几何体(续)-LandAndWaves.md
+		..\..\Notes\第7章 利用Direct3D绘制几何体(续)-Shapes.md = ..\..\Notes\第7章 利用Direct3D绘制几何体(续)-Shapes.md
+		..\..\Notes\第8章 光照.md = ..\..\Notes\第8章 光照.md
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64

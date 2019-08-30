@@ -1,7 +1,3 @@
-//***************************************************************************************
-// Waves.cpp by Frank Luna (C) 2011 All Rights Reserved.
-//***************************************************************************************
-
 #include "Waves.h"
 #include <ppl.h>
 #include <algorithm>
@@ -169,4 +165,3 @@ void Waves::Disturb(int i, int j, float magnitude)
 	mCurrSolution[(i + 1)*mNumCols + j].y += halfMag;
 	mCurrSolution[(i - 1)*mNumCols + j].y += halfMag;
 }
-
