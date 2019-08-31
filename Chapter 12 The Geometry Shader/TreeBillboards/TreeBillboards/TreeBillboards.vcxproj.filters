@@ -25,6 +25,9 @@
     <Filter Include="Textures">
       <UniqueIdentifier>{75e2d387-1167-4349-b547-89a7b04b8507}</UniqueIdentifier>
     </Filter>
+    <Filter Include="PetalDancing">
+      <UniqueIdentifier>{03cc7af2-7afb-49af-a18c-7eef64621778}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\Common\d3dApp.cpp">
@@ -53,6 +56,9 @@
     </ClCompile>
     <ClCompile Include="TreeBillboardsApp.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="PetalDancing\PetalDancing.cpp">
+      <Filter>PetalDancing</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -89,6 +95,9 @@
     <ClInclude Include="TreeBillboardsApp.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="PetalDancing\PetalDancing.h">
+      <Filter>PetalDancing</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\TreeSprite.hlsl">
@@ -99,6 +108,9 @@
     </None>
     <None Include="Shaders\Default.hlsl">
       <Filter>Shaders</Filter>
+    </None>
+    <None Include="PetalDancing\readme.md">
+      <Filter>PetalDancing</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>

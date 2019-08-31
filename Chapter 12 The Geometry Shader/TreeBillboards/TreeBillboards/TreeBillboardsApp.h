@@ -6,10 +6,15 @@ using Microsoft::WRL::ComPtr;
 using namespace DirectX;
 using namespace DirectX::PackedVector;
 
+class PetalDancing;
+
 #pragma comment(lib, "d3dcompiler.lib")
 #pragma comment(lib, "D3D12.lib")
 
-const int gNumFrameResources = 3;
+#ifndef TREE_H
+#define TREE_H
+extern const int gNumFrameResources;
+
 
 struct RenderItem
 {
@@ -125,9 +130,13 @@ private:
 	XMFLOAT4X4 mView = MathHelper::Identity4x4();
 	XMFLOAT4X4 mProj = MathHelper::Identity4x4();
 
-	float mTheta = 1.5f*XM_PI;
-	float mPhi = XM_PIDIV2 - 0.1f;
-	float mRadius = 50.0f;
+	float mTheta = 1.5f * XM_PI;
+	//float mPhi = XM_PIDIV2 - 0.1f;
+	float mPhi = XM_PIDIV4;
+	float mRadius = 120.0f;
 
 	POINT mLastMousePos;
+
+	std::unique_ptr<PetalDancing> Petals;
 };
+#endif

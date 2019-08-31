@@ -1,5 +1,8 @@
 #include "TreeBillboardsApp.h"
 #include "../../../Common/GeometryGenerator.h"
+#include "PetalDancing/PetalDancing.h"
+
+const int gNumFrameResources = 3;
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance,
 	PSTR cmdLine, int showCmd)
@@ -59,6 +62,14 @@ bool TreeBillboardsApp::Initialize()
 	BuildTreeSpritesGeometry();
 	BuildMaterials();
 	BuildRenderItems();
+
+	Petals = std::make_unique<PetalDancing>(
+		md3dDevice.Get(),
+		mCommandList.Get(),
+		mGeometries,
+		mMaterials["treeSprites"].get(),
+		mRitemLayer[(int)RenderLayer::AlphaTestedTreeSprites],
+		mAllRitems);
 	BuildFrameResources();
 	BuildPSOs(); // 树木的属性都需要特别设置
 
@@ -78,7 +89,7 @@ void TreeBillboardsApp::OnResize()
 	D3DApp::OnResize();
 
 	// The window resized, so update the aspect ratio and recompute the projection matrix.
-	XMMATRIX P = XMMatrixPerspectiveFovLH(0.25f*MathHelper::Pi, AspectRatio(), 1.0f, 1000.0f);
+	XMMATRIX P = XMMatrixPerspectiveFovLH(0.25f * MathHelper::Pi, AspectRatio(), 1.0f, 1000.0f);
 	XMStoreFloat4x4(&mProj, P);
 }
 
@@ -106,6 +117,7 @@ void TreeBillboardsApp::Update(const GameTimer& gt)
 	UpdateMaterialCBs(gt);
 	UpdateMainPassCB(gt);
 	UpdateWaves(gt);
+	Petals->Update(gt);
 }
 
 void TreeBillboardsApp::Draw(const GameTimer& gt)
@@ -128,7 +140,7 @@ void TreeBillboardsApp::Draw(const GameTimer& gt)
 		D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
 
 	// Clear the back buffer and depth buffer.
-	mCommandList->ClearRenderTargetView(CurrentBackBufferView(), (float*)&mMainPassCB.FogColor, 0, nullptr);
+	mCommandList->ClearRenderTargetView(CurrentBackBufferView(), (float*)& mMainPassCB.FogColor, 0, nullptr);
 	mCommandList->ClearDepthStencilView(DepthStencilView(), D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
 
 	// Specify the buffers we are going to render to.
@@ -199,8 +211,8 @@ void TreeBillboardsApp::OnMouseMove(WPARAM btnState, int x, int y)
 	if ((btnState & MK_LBUTTON) != 0)
 	{
 		// Make each pixel correspond to a quarter of a degree.
-		float dx = XMConvertToRadians(0.25f*static_cast<float>(x - mLastMousePos.x));
-		float dy = XMConvertToRadians(0.25f*static_cast<float>(y - mLastMousePos.y));
+		float dx = XMConvertToRadians(0.25f * static_cast<float>(x - mLastMousePos.x));
+		float dy = XMConvertToRadians(0.25f * static_cast<float>(y - mLastMousePos.y));
 
 		// Update angles based on input to orbit camera around box.
 		mTheta += dx;
@@ -212,8 +224,8 @@ void TreeBillboardsApp::OnMouseMove(WPARAM btnState, int x, int y)
 	else if ((btnState & MK_RBUTTON) != 0)
 	{
 		// Make each pixel correspond to 0.2 unit in the scene.
-		float dx = 0.2f*static_cast<float>(x - mLastMousePos.x);
-		float dy = 0.2f*static_cast<float>(y - mLastMousePos.y);
+		float dx = 0.2f * static_cast<float>(x - mLastMousePos.x);
+		float dy = 0.2f * static_cast<float>(y - mLastMousePos.y);
 
 		// Update the camera radius based on input.
 		mRadius += dx - dy;
@@ -233,8 +245,8 @@ void TreeBillboardsApp::OnKeyboardInput(const GameTimer& gt)
 void TreeBillboardsApp::UpdateCamera(const GameTimer& gt)
 {
 	// Convert Spherical to Cartesian coordinates.
-	mEyePos.x = mRadius * sinf(mPhi)*cosf(mTheta);
-	mEyePos.z = mRadius * sinf(mPhi)*sinf(mTheta);
+	mEyePos.x = mRadius * sinf(mPhi) * cosf(mTheta);
+	mEyePos.z = mRadius * sinf(mPhi) * sinf(mTheta);
 	mEyePos.y = mRadius * cosf(mPhi);
 
 	// Build the view matrix.
@@ -624,11 +636,11 @@ void TreeBillboardsApp::BuildWavesGeometry()
 		{
 			indices[k] = i * n + j;
 			indices[k + 1] = i * n + j + 1;
-			indices[k + 2] = (i + 1)*n + j;
+			indices[k + 2] = (i + 1) * n + j;
 
-			indices[k + 3] = (i + 1)*n + j;
+			indices[k + 3] = (i + 1) * n + j;
 			indices[k + 4] = i * n + j + 1;
-			indices[k + 5] = (i + 1)*n + j + 1;
+			indices[k + 5] = (i + 1) * n + j + 1;
 
 			k += 6; // next quad
 		}
@@ -988,8 +1000,8 @@ void TreeBillboardsApp::DrawRenderItems(ID3D12GraphicsCommandList* cmdList, cons
 		CD3DX12_GPU_DESCRIPTOR_HANDLE tex(mSrvDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
 		tex.Offset(ri->Mat->DiffuseSrvHeapIndex, mCbvSrvDescriptorSize);
 
-		D3D12_GPU_VIRTUAL_ADDRESS objCBAddress = objectCB->GetGPUVirtualAddress() + ri->ObjCBIndex*objCBByteSize;
-		D3D12_GPU_VIRTUAL_ADDRESS matCBAddress = matCB->GetGPUVirtualAddress() + ri->Mat->MatCBIndex*matCBByteSize;
+		D3D12_GPU_VIRTUAL_ADDRESS objCBAddress = objectCB->GetGPUVirtualAddress() + ri->ObjCBIndex * objCBByteSize;
+		D3D12_GPU_VIRTUAL_ADDRESS matCBAddress = matCB->GetGPUVirtualAddress() + ri->Mat->MatCBIndex * matCBByteSize;
 
 		cmdList->SetGraphicsRootDescriptorTable(0, tex);
 		cmdList->SetGraphicsRootConstantBufferView(1, objCBAddress);
@@ -1058,16 +1070,16 @@ std::array<const CD3DX12_STATIC_SAMPLER_DESC, 6> TreeBillboardsApp::GetStaticSam
 
 float TreeBillboardsApp::GetHillsHeight(float x, float z)const
 {
-	return 0.3f*(z*sinf(0.1f*x) + x * cosf(0.1f*z));
+	return 0.3f * (z * sinf(0.1f * x) + x * cosf(0.1f * z));
 }
 
 XMFLOAT3 TreeBillboardsApp::GetHillsNormal(float x, float z)const
 {
 	// n = (-df/dx, 1, -df/dz)
 	XMFLOAT3 n(
-		-0.03f*z*cosf(0.1f*x) - 0.3f*cosf(0.1f*z),
+		-0.03f * z * cosf(0.1f * x) - 0.3f * cosf(0.1f * z),
 		1.0f,
-		-0.3f*sinf(0.1f*x) + 0.03f*x*sinf(0.1f*z));
+		-0.3f * sinf(0.1f * x) + 0.03f * x * sinf(0.1f * z));
 
 	XMVECTOR unitNormal = XMVector3Normalize(XMLoadFloat3(&n));
 	XMStoreFloat3(&n, unitNormal);

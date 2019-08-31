@@ -89,7 +89,9 @@ VertexOut VS(VertexIn vin)
     VertexOut vout;
 
 	// 直接将数据传入几何着色器
-    vout.CenterW = vin.PosW;
+    //vout.CenterW = vin.PosW;
+	// 这里是为了樱花飘落的效果启用世界矩阵
+    vout.CenterW = mul(float4(vin.PosW, 1.0f), gWorld).xyz;
     vout.SizeW = vin.SizeW;
 
     return vout;
@@ -150,7 +152,7 @@ float4 PS(GeoOut pin) : SV_Target
 {
 	// 对纹理数组进行采样,(u, v, 纹理数组index)
     float3 uvw = float3(pin.TexC, pin.PrimID % 3);
-    float4 diffuseAlbedo = gTreeMapArray.Sample(gsamAnisotropicWrap, uvw) * gDiffuseAlbedo;
+    float4 diffuseAlbedo = gTreeMapArray.Sample(gsamLinearWrap, uvw) * gDiffuseAlbedo;
 
 #ifdef ALPHA_TEST
 	// 忽略纹理 alpha < 0.1 的像素.这个测试要尽早完成,以便提前退出着色器
