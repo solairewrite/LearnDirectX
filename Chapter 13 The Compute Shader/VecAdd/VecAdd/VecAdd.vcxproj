@@ -20,9 +20,9 @@
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
-    <ProjectGuid>{7401304E-5E80-4528-B09F-CBE383C2DC4B}</ProjectGuid>
+    <ProjectGuid>{049895FF-8CB7-4967-A9B8-8DF3C9227466}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>TreeBillboards</RootNamespace>
+    <RootNamespace>VecAdd</RootNamespace>
     <WindowsTargetPlatformVersion>10.0.17763.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -35,20 +35,20 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v141</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v141</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v141</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
@@ -150,9 +150,7 @@
     <ClCompile Include="..\..\..\Common\GeometryGenerator.cpp" />
     <ClCompile Include="..\..\..\Common\MathHelper.cpp" />
     <ClCompile Include="FrameResource.cpp" />
-    <ClCompile Include="PetalDancing\PetalDancing.cpp" />
-    <ClCompile Include="TreeBillboardsApp.cpp" />
-    <ClCompile Include="Waves.cpp" />
+    <ClCompile Include="VecAddCSApp.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\Common\d3dApp.h" />
@@ -164,27 +162,12 @@
     <ClInclude Include="..\..\..\Common\MathHelper.h" />
     <ClInclude Include="..\..\..\Common\UploadBuffer.h" />
     <ClInclude Include="FrameResource.h" />
-    <ClInclude Include="PetalDancing\PetalDancing.h" />
-    <ClInclude Include="TreeBillboardsApp.h" />
-    <ClInclude Include="Waves.h" />
+    <ClInclude Include="VecAddCSApp.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="PetalDancing\readme.md" />
-    <None Include="Shaders\Default.hlsl">
+    <None Include="Shaders\VecAdd.hlsl">
       <FileType>Document</FileType>
     </None>
-    <None Include="Shaders\LightingUtil.hlsl">
-      <FileType>Document</FileType>
-    </None>
-    <None Include="Shaders\TreeSprite.hlsl">
-      <FileType>Document</FileType>
-    </None>
-  </ItemGroup>
-  <ItemGroup>
-    <Image Include="..\..\..\Textures\grass.dds" />
-    <Image Include="..\..\..\Textures\treeArray2.dds" />
-    <Image Include="..\..\..\Textures\water1.dds" />
-    <Image Include="..\..\..\Textures\WireFence.dds" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
