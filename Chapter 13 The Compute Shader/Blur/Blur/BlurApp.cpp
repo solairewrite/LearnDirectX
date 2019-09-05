@@ -211,7 +211,7 @@ bool BlurApp::Initialize()
 	BuildMaterials();
 	BuildRenderItems();
 	BuildFrameResources();
-	BuildPSOs();
+	BuildPSOs(); // 模糊PSO指定了CS和pRootSignature
 
 
 	ThrowIfFailed(mCommandList->Close());
@@ -296,7 +296,7 @@ void BlurApp::Draw(const GameTimer& gt)
 	mCommandList->SetGraphicsRootSignature(mRootSignature.Get());
 
 	auto passCB = mCurrFrameResource->PassCB->Resource();
-	mCommandList->SetGraphicsRootConstantBufferView(2, passCB->GetGPUVirtualAddress());
+	mCommandList->SetGraphicsRootConstantBufferView(2, passCB->GetGPUVirtualAddress()); // cbuffer cbPass : register(b1)
 
 	DrawRenderItems(mCommandList.Get(), mRitemLayer[(int)RenderLayer::Opaque]);
 
@@ -624,7 +624,7 @@ void BlurApp::BuildRootSignature()
 void BlurApp::BuildPostProcessRootSignature()
 {
 	CD3DX12_DESCRIPTOR_RANGE srvTable;
-	// para2: numDescriptors, para3: baseShaderRegister
+	// para1: numDescriptors, para2: baseShaderRegister
 	srvTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0); // Texture2D gInput : register(t0)
 
 	CD3DX12_DESCRIPTOR_RANGE uavTable;
@@ -632,7 +632,7 @@ void BlurApp::BuildPostProcessRootSignature()
 
 	CD3DX12_ROOT_PARAMETER slotRootParameter[3];
 
-	// para1: num32BitValues, para2: shaderRegister
+	// para0: num32BitValues, para1: shaderRegister
 	slotRootParameter[0].InitAsConstants(12, 0); // cbuffer cbSettings : register(b0)
 	slotRootParameter[1].InitAsDescriptorTable(1, &srvTable);
 	slotRootParameter[2].InitAsDescriptorTable(1, &uavTable);

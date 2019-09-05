@@ -23,7 +23,6 @@ void BlurFilter::BuildDescriptors(CD3DX12_CPU_DESCRIPTOR_HANDLE hCpuDescriptor,
 	CD3DX12_GPU_DESCRIPTOR_HANDLE hGpuDescriptor,
 	UINT descriptorSize)
 {
-
 	mBlur0CpuSrv = hCpuDescriptor;
 	mBlur0CpuUav = hCpuDescriptor.Offset(1, descriptorSize);
 	mBlur1CpuSrv = hCpuDescriptor.Offset(1, descriptorSize);
@@ -39,14 +38,13 @@ void BlurFilter::BuildDescriptors(CD3DX12_CPU_DESCRIPTOR_HANDLE hCpuDescriptor,
 
 void BlurFilter::OnResize(UINT newWidth, UINT newHeight)
 {
-	if ((mWidth != newWidth) || (mHeight != newHeight))
+	if (mWidth != newWidth || mHeight != newHeight)
 	{
 		mWidth = newWidth;
 		mHeight = newHeight;
 
 		BuildResources();
 
-		// New resource, so we need new descriptors to that resource.
 		BuildDescriptors();
 	}
 }
@@ -75,34 +73,29 @@ void BlurFilter::Execute(ID3D12GraphicsCommandList* cmdList,
 	cmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(mBlurMap0.Get(),
 		D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST));
 
-	// Copy the input (back-buffer in this example) to BlurMap0.
+	// 将input(这里是back-buffer)拷贝到BlurMap0
 	cmdList->CopyResource(mBlurMap0.Get(), input);
 
 	cmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(mBlurMap0.Get(),
 		D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_GENERIC_READ));
-
+	// 注意资源状态的转换
 	cmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(mBlurMap1.Get(),
 		D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_UNORDERED_ACCESS));
 
 	for (int i = 0; i < blurCount; ++i)
 	{
-		//
-		// Horizontal Blur pass.
-		//
-
+		// 水平模糊过程
 		cmdList->SetPipelineState(horzBlurPSO);
 
-		// 纹理输入: 给输入纹理创建SRV(着色器资源视图),再作为参数传入根参数,就能将纹理绑定为着色器的输入资源
+		// 纹理输入: 给输入的纹理创建SRV(着色器资源视图),再作为参数传入根参数,就能将纹理绑定为着色器的输入资源
 		// RootParameterIndex:1, Texture2D gInput : register(t0)
-		cmdList->SetComputeRootDescriptorTable(1, mBlur0GpuSrv);
+		cmdList->SetComputeRootDescriptorTable(1, mBlur0GpuSrv); // mBlur0GpuSrv是输入
 		// RootParameterIndex:2, RWTexture2D<float4> gOutput : register(u0)
-		cmdList->SetComputeRootDescriptorTable(2, mBlur1GpuUav);
+		cmdList->SetComputeRootDescriptorTable(2, mBlur1GpuUav); // mBlur1GpuUav是输出
 
-		// How many groups do we need to dispatch to cover a row of pixels, where each
-		// group covers 256 pixels (the 256 is defined in the ComputeShader).
-		// 若每个线程组能处理256个像素(256这个值是在计算着色器中定义的),那么处理一行像素需要分派多少个线程组
+		// 若每个线程能处理256个像素(256这个值是在计算着色器中定义的),那么处理一行像素需要分派多少个线程组
 		UINT numGroupsX = (UINT)ceilf(mWidth / 256.0f);
-		cmdList->Dispatch(numGroupsX, mHeight, 1);
+		cmdList->Dispatch(numGroupsX, mHeight, 1); // 可以理解在这里就在计算着色器中计算,并且直接计算完成了吗?
 
 		cmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(mBlurMap0.Get(),
 			D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_UNORDERED_ACCESS));
@@ -110,17 +103,12 @@ void BlurFilter::Execute(ID3D12GraphicsCommandList* cmdList,
 		cmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(mBlurMap1.Get(),
 			D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_GENERIC_READ));
 
-		//
-		// Vertical Blur pass.
-		//
-
+		// 垂直模糊过程
 		cmdList->SetPipelineState(vertBlurPSO);
 
-		cmdList->SetComputeRootDescriptorTable(1, mBlur1GpuSrv);
-		cmdList->SetComputeRootDescriptorTable(2, mBlur0GpuUav);
+		cmdList->SetComputeRootDescriptorTable(1, mBlur1GpuSrv); // mBlur1GpuSrv是输入
+		cmdList->SetComputeRootDescriptorTable(2, mBlur0GpuUav); // mBlur0GpuUav是输出
 
-		// How many groups do we need to dispatch to cover a column of pixels, where each
-		// group covers 256 pixels  (the 256 is defined in the ComputeShader).
 		UINT numGroupsY = (UINT)ceilf(mHeight / 256.0f);
 		cmdList->Dispatch(mWidth, numGroupsY, 1);
 
@@ -136,9 +124,7 @@ std::vector<float> BlurFilter::CalcGaussWeights(float sigma)
 {
 	float twoSigma2 = 2.0f*sigma*sigma;
 
-	// Estimate the blur radius based on sigma since sigma controls the "width" of the bell curve.
-	// For example, for sigma = 3, the width of the bell curve is 
-	int blurRadius = (int)ceil(2.0f * sigma);
+	int blurRadius = (int)ceil(2.0f*sigma);
 
 	assert(blurRadius <= MaxBlurRadius);
 
@@ -156,7 +142,7 @@ std::vector<float> BlurFilter::CalcGaussWeights(float sigma)
 		weightSum += weights[i + blurRadius];
 	}
 
-	// Divide by the sum so all the weights add up to 1.0.
+	// 除以总数,使权重之和为1
 	for (int i = 0; i < weights.size(); ++i)
 	{
 		weights[i] /= weightSum;
@@ -191,9 +177,6 @@ void BlurFilter::BuildResources()
 {
 	// compressed formats cannot be used for UAV
 	// Therefore this format does not support D3D11_BIND_UNORDERED_ACCESS
-
-
-
 
 	D3D12_RESOURCE_DESC texDesc;
 	ZeroMemory(&texDesc, sizeof(D3D12_RESOURCE_DESC));
