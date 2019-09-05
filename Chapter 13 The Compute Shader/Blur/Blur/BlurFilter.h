@@ -1,9 +1,3 @@
-//***************************************************************************************
-// BlurFilter.h by Frank Luna (C) 2011 All Rights Reserved.
-//
-// Performs a blur operation on the topmost mip level of an input texture.
-//***************************************************************************************
-
 #pragma once
 
 #include "../../../Common/d3dUtil.h"
@@ -11,10 +5,8 @@
 class BlurFilter
 {
 public:
-	///<summary>
-	/// The width and height should match the dimensions of the input texture to blur.
-	/// Recreate when the screen is resized. 
-	///</summary>
+	// 宽高应满足要模糊的贴图尺寸
+	// 当屏幕改变尺寸时重新创建
 	BlurFilter(ID3D12Device* device,
 		UINT width, UINT height,
 		DXGI_FORMAT format);
@@ -27,14 +19,12 @@ public:
 
 	void BuildDescriptors(
 		CD3DX12_CPU_DESCRIPTOR_HANDLE hCpuDescriptor,
-		CD3DX12_GPU_DESCRIPTOR_HANDLE hGpuDescriptor,
+		CD3DX12_GPU_DESCRIPTOR_HANDLE hGPUDescriptor,
 		UINT descriptorSize);
 
 	void OnResize(UINT newWidth, UINT newHeight);
 
-	///<summary>
-	/// Blurs the input texture blurCount times.
-	///</summary>
+	// 将输入的贴图模糊blurCount次
 	void Execute(
 		ID3D12GraphicsCommandList* cmdList,
 		ID3D12RootSignature* rootSig,
@@ -71,7 +61,6 @@ private:
 	CD3DX12_GPU_DESCRIPTOR_HANDLE mBlur1GpuSrv;
 	CD3DX12_GPU_DESCRIPTOR_HANDLE mBlur1GpuUav;
 
-	// Two for ping-ponging the textures.
 	Microsoft::WRL::ComPtr<ID3D12Resource> mBlurMap0 = nullptr;
 	Microsoft::WRL::ComPtr<ID3D12Resource> mBlurMap1 = nullptr;
 };

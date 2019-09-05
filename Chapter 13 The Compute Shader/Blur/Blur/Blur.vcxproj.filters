@@ -22,6 +22,9 @@
     <Filter Include="Shaders">
       <UniqueIdentifier>{1232ad93-7052-41a7-915e-dd1b0352cdf4}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Textures">
+      <UniqueIdentifier>{93d9668f-9e4e-461d-b7eb-6e6a1d8b084d}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\Common\d3dApp.cpp">
@@ -89,6 +92,9 @@
     <ClInclude Include="BlurFilter.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="BlurApp.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\Blur.hlsl">
@@ -100,5 +106,16 @@
     <None Include="Shaders\LightingUtil.hlsl">
       <Filter>Shaders</Filter>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="..\..\..\Textures\grass.dds">
+      <Filter>Header Files\Textures</Filter>
+    </Image>
+    <Image Include="..\..\..\Textures\water1.dds">
+      <Filter>Header Files\Textures</Filter>
+    </Image>
+    <Image Include="..\..\..\Textures\WireFence.dds">
+      <Filter>Header Files\Textures</Filter>
+    </Image>
   </ItemGroup>
 </Project>

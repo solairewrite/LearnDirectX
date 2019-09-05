@@ -23,7 +23,7 @@ void BlurFilter::BuildDescriptors(CD3DX12_CPU_DESCRIPTOR_HANDLE hCpuDescriptor,
 	CD3DX12_GPU_DESCRIPTOR_HANDLE hGpuDescriptor,
 	UINT descriptorSize)
 {
-	// Save references to the descriptors. 
+
 	mBlur0CpuSrv = hCpuDescriptor;
 	mBlur0CpuUav = hCpuDescriptor.Offset(1, descriptorSize);
 	mBlur1CpuSrv = hCpuDescriptor.Offset(1, descriptorSize);

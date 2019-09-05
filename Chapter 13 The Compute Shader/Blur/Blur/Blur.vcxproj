@@ -163,6 +163,7 @@
     <ClInclude Include="..\..\..\Common\GeometryGenerator.h" />
     <ClInclude Include="..\..\..\Common\MathHelper.h" />
     <ClInclude Include="..\..\..\Common\UploadBuffer.h" />
+    <ClInclude Include="BlurApp.h" />
     <ClInclude Include="BlurFilter.h" />
     <ClInclude Include="FrameResource.h" />
     <ClInclude Include="Waves.h" />
@@ -177,6 +178,11 @@
     <None Include="Shaders\LightingUtil.hlsl">
       <FileType>Document</FileType>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="..\..\..\Textures\grass.dds" />
+    <Image Include="..\..\..\Textures\water1.dds" />
+    <Image Include="..\..\..\Textures\WireFence.dds" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
