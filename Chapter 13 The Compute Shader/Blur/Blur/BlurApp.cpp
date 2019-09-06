@@ -1,154 +1,5 @@
 #include "BlurApp.h"
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance,
 	PSTR cmdLine, int showCmd)
 {
@@ -188,10 +39,7 @@ bool BlurApp::Initialize()
 	if (!D3DApp::Initialize())
 		return false;
 
-
 	ThrowIfFailed(mCommandList->Reset(mDirectCmdListAlloc.Get(), nullptr));
-
-
 
 	mCbvSrvUavDescriptorSize = md3dDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
@@ -212,7 +60,6 @@ bool BlurApp::Initialize()
 	BuildRenderItems();
 	BuildFrameResources();
 	BuildPSOs(); // 模糊PSO指定了CS和pRootSignature
-
 
 	ThrowIfFailed(mCommandList->Close());
 	ID3D12CommandList* cmdsLists[] = { mCommandList.Get() };
@@ -268,26 +115,19 @@ void BlurApp::Draw(const GameTimer& gt)
 {
 	auto cmdListAlloc = mCurrFrameResource->CmdListAlloc;
 
-	// Reuse the memory associated with command recording.
-	// We can only reset when the associated command lists have finished execution on the GPU.
 	ThrowIfFailed(cmdListAlloc->Reset());
 
-	// A command list can be reset after it has been added to the command queue via ExecuteCommandList.
-	// Reusing the command list reuses memory.
 	ThrowIfFailed(mCommandList->Reset(cmdListAlloc.Get(), mPSOs["opaque"].Get()));
 
 	mCommandList->RSSetViewports(1, &mScreenViewport);
 	mCommandList->RSSetScissorRects(1, &mScissorRect);
 
-	// Indicate a state transition on the resource usage.
 	mCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(CurrentBackBuffer(),
 		D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
 
-	// Clear the back buffer and depth buffer.
 	mCommandList->ClearRenderTargetView(CurrentBackBufferView(), (float*)&mMainPassCB.FogColor, 0, nullptr);
 	mCommandList->ClearDepthStencilView(DepthStencilView(), D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
 
-	// Specify the buffers we are going to render to.
 	mCommandList->OMSetRenderTargets(1, &CurrentBackBufferView(), true, &DepthStencilView());
 
 	ID3D12DescriptorHeap* descriptorHeaps[] = { mCbvSrvUavDescriptorHeap.Get() };
@@ -319,23 +159,16 @@ void BlurApp::Draw(const GameTimer& gt)
 	mCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(CurrentBackBuffer(),
 		D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PRESENT));
 
-	// Done recording commands.
 	ThrowIfFailed(mCommandList->Close());
 
-	// Add the command list to the queue for execution.
 	ID3D12CommandList* cmdsLists[] = { mCommandList.Get() };
 	mCommandQueue->ExecuteCommandLists(_countof(cmdsLists), cmdsLists);
 
-	// Swap the back and front buffers
 	ThrowIfFailed(mSwapChain->Present(0, 0));
 	mCurrBackBuffer = (mCurrBackBuffer + 1) % SwapChainBufferCount;
 
-	// Advance the fence value to mark commands up to this fence point.
 	mCurrFrameResource->Fence = ++mCurrentFence;
 
-	// Add an instruction to the command queue to set a new fence point. 
-	// Because we are on the GPU timeline, the new fence point won't be 
-	// set until the GPU finishes processing all the commands prior to this Signal().
 	mCommandQueue->Signal(mFence.Get(), mCurrentFence);
 }
 
@@ -406,7 +239,6 @@ void BlurApp::UpdateCamera(const GameTimer& gt)
 
 void BlurApp::AnimateMaterials(const GameTimer& gt)
 {
-	// Scroll the water material texture coordinates.
 	auto waterMat = mMaterials["water"].get();
 
 	float& tu = waterMat->MatTransform(3, 0);
@@ -424,7 +256,6 @@ void BlurApp::AnimateMaterials(const GameTimer& gt)
 	waterMat->MatTransform(3, 0) = tu;
 	waterMat->MatTransform(3, 1) = tv;
 
-	// Material has changed, so need to update cbuffer.
 	waterMat->NumFramesDirty = gNumFrameResources;
 }
 
@@ -433,8 +264,6 @@ void BlurApp::UpdateObjectCBs(const GameTimer& gt)
 	auto currObjectCB = mCurrFrameResource->ObjectCB.get();
 	for (auto& e : mAllRitems)
 	{
-		// Only update the cbuffer data if the constants have changed.  
-		// This needs to be tracked per frame resource.
 		if (e->NumFramesDirty > 0)
 		{
 			XMMATRIX world = XMLoadFloat4x4(&e->World);
@@ -446,7 +275,6 @@ void BlurApp::UpdateObjectCBs(const GameTimer& gt)
 
 			currObjectCB->CopyData(e->ObjCBIndex, objConstants);
 
-			// Next FrameResource need to be updated too.
 			e->NumFramesDirty--;
 		}
 	}
@@ -457,8 +285,6 @@ void BlurApp::UpdateMaterialCBs(const GameTimer& gt)
 	auto currMaterialCB = mCurrFrameResource->MaterialCB.get();
 	for (auto& e : mMaterials)
 	{
-		// Only update the cbuffer data if the constants have changed.  If the cbuffer
-		// data changes, it needs to be updated for each FrameResource.
 		Material* mat = e.second.get();
 		if (mat->NumFramesDirty > 0)
 		{
@@ -472,7 +298,6 @@ void BlurApp::UpdateMaterialCBs(const GameTimer& gt)
 
 			currMaterialCB->CopyData(mat->MatCBIndex, matConstants);
 
-			// Next FrameResource need to be updated too.
 			mat->NumFramesDirty--;
 		}
 	}
@@ -589,7 +414,6 @@ void BlurApp::BuildRootSignature()
 	// Root parameter can be a table, root descriptor or root constants.
 	CD3DX12_ROOT_PARAMETER slotRootParameter[4];
 
-
 	slotRootParameter[0].InitAsDescriptorTable(1, &texTable, D3D12_SHADER_VISIBILITY_PIXEL);
 	slotRootParameter[1].InitAsConstantBufferView(0);
 	slotRootParameter[2].InitAsConstantBufferView(1);
@@ -601,7 +425,6 @@ void BlurApp::BuildRootSignature()
 	CD3DX12_ROOT_SIGNATURE_DESC rootSigDesc(4, slotRootParameter,
 		(UINT)staticSamplers.size(), staticSamplers.data(),
 		D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
-
 
 	ComPtr<ID3DBlob> serializedRootSig = nullptr;
 	ComPtr<ID3DBlob> errorBlob = nullptr;
@@ -637,11 +460,9 @@ void BlurApp::BuildPostProcessRootSignature()
 	slotRootParameter[1].InitAsDescriptorTable(1, &srvTable);
 	slotRootParameter[2].InitAsDescriptorTable(1, &uavTable);
 
-
 	CD3DX12_ROOT_SIGNATURE_DESC rootSigDesc(3, slotRootParameter,
 		0, nullptr, // 静态采样器
 		D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
-
 
 	ComPtr<ID3DBlob> serializedRootSig = nullptr;
 	ComPtr<ID3DBlob> errorBlob = nullptr;
@@ -666,18 +487,12 @@ void BlurApp::BuildDescriptorHeaps()
 	const int textureDescriptorCount = 3;
 	const int blurDescriptorCount = 4;
 
-
-
-
 	D3D12_DESCRIPTOR_HEAP_DESC srvHeapDesc = {};
 	srvHeapDesc.NumDescriptors = textureDescriptorCount +
 		blurDescriptorCount;
 	srvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
 	srvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 	ThrowIfFailed(md3dDevice->CreateDescriptorHeap(&srvHeapDesc, IID_PPV_ARGS(&mCbvSrvUavDescriptorHeap)));
-
-
-
 
 	CD3DX12_CPU_DESCRIPTOR_HANDLE hDescriptor(mCbvSrvUavDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
 
@@ -693,21 +508,15 @@ void BlurApp::BuildDescriptorHeaps()
 	srvDesc.Texture2D.MipLevels = -1;
 	md3dDevice->CreateShaderResourceView(grassTex.Get(), &srvDesc, hDescriptor);
 
-
 	hDescriptor.Offset(1, mCbvSrvUavDescriptorSize);
 
 	srvDesc.Format = waterTex->GetDesc().Format;
 	md3dDevice->CreateShaderResourceView(waterTex.Get(), &srvDesc, hDescriptor);
 
-
 	hDescriptor.Offset(1, mCbvSrvUavDescriptorSize);
 
 	srvDesc.Format = fenceTex->GetDesc().Format;
 	md3dDevice->CreateShaderResourceView(fenceTex.Get(), &srvDesc, hDescriptor);
-
-
-
-
 
 	mBlurFilter->BuildDescriptors(
 		CD3DX12_CPU_DESCRIPTOR_HANDLE(mCbvSrvUavDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), 3, mCbvSrvUavDescriptorSize),
@@ -748,12 +557,6 @@ void BlurApp::BuildLandGeometry()
 {
 	GeometryGenerator geoGen;
 	GeometryGenerator::MeshData grid = geoGen.CreateGrid(160.0f, 160.0f, 50, 50);
-
-	//
-	// Extract the vertex elements we are interested and apply the height function to
-	// each vertex.  In addition, color the vertices based on their height so we have
-	// sandy looking beaches, grassy low hills, and snow mountain peaks.
-	//
 
 	std::vector<Vertex> vertices(grid.Vertices.size());
 	for (size_t i = 0; i < grid.Vertices.size(); ++i)
@@ -909,9 +712,6 @@ void BlurApp::BuildPSOs()
 {
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC opaquePsoDesc;
 
-
-
-
 	ZeroMemory(&opaquePsoDesc, sizeof(D3D12_GRAPHICS_PIPELINE_STATE_DESC));
 	opaquePsoDesc.InputLayout = { mInputLayout.data(),(UINT)mInputLayout.size() };
 	opaquePsoDesc.pRootSignature = mRootSignature.Get();
@@ -937,10 +737,6 @@ void BlurApp::BuildPSOs()
 	opaquePsoDesc.DSVFormat = mDepthStencilFormat;
 	ThrowIfFailed(md3dDevice->CreateGraphicsPipelineState(&opaquePsoDesc, IID_PPV_ARGS(&mPSOs["opaque"])));
 
-
-
-
-
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC transparentPsoDesc = opaquePsoDesc;
 
 	D3D12_RENDER_TARGET_BLEND_DESC transparencyBlendDesc;
@@ -958,10 +754,6 @@ void BlurApp::BuildPSOs()
 	transparentPsoDesc.BlendState.RenderTarget[0] = transparencyBlendDesc;
 	ThrowIfFailed(md3dDevice->CreateGraphicsPipelineState(&transparentPsoDesc, IID_PPV_ARGS(&mPSOs["transparent"])));
 
-
-
-
-
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC alphaTestedPsoDesc = opaquePsoDesc;
 	alphaTestedPsoDesc.PS =
 	{
@@ -970,9 +762,6 @@ void BlurApp::BuildPSOs()
 	};
 	alphaTestedPsoDesc.RasterizerState.CullMode = D3D12_CULL_MODE_NONE;
 	ThrowIfFailed(md3dDevice->CreateGraphicsPipelineState(&alphaTestedPsoDesc, IID_PPV_ARGS(&mPSOs["alphaTested"])));
-
-
-
 
 	D3D12_COMPUTE_PIPELINE_STATE_DESC horzBlurPSO = {};
 	horzBlurPSO.pRootSignature = mPostProcessRootSignature.Get();
@@ -983,9 +772,6 @@ void BlurApp::BuildPSOs()
 	};
 	horzBlurPSO.Flags = D3D12_PIPELINE_STATE_FLAG_NONE;
 	ThrowIfFailed(md3dDevice->CreateComputePipelineState(&horzBlurPSO, IID_PPV_ARGS(&mPSOs["horzBlur"])));
-
-
-
 
 	D3D12_COMPUTE_PIPELINE_STATE_DESC vertBlurPSO = {};
 	vertBlurPSO.pRootSignature = mPostProcessRootSignature.Get();
@@ -1017,8 +803,6 @@ void BlurApp::BuildMaterials()
 	grass->FresnelR0 = XMFLOAT3(0.01f, 0.01f, 0.01f);
 	grass->Roughness = .125f;
 
-	// This is not a good water material definition, but we do not have all the rendering
-	// tools we need (transparency, environment reflection), so we fake it for now.
 	auto water = std::make_unique<Material>();
 	water->Name = "water";
 	water->MatCBIndex = 1;
@@ -1095,7 +879,6 @@ void BlurApp::DrawRenderItems(ID3D12GraphicsCommandList* cmdList, const std::vec
 	auto objectCB = mCurrFrameResource->ObjectCB->Resource();
 	auto matCB = mCurrFrameResource->MaterialCB->Resource();
 
-	// For each render item...
 	for (size_t i = 0; i < ritems.size(); ++i)
 	{
 		auto ri = ritems[i];
