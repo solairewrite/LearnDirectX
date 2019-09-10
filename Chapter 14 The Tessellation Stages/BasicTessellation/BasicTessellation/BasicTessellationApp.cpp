@@ -100,7 +100,14 @@ void BasicTessellationApp::Draw(const GameTimer& gt)
 
 	ThrowIfFailed(cmdListAlloc->Reset());
 
-	ThrowIfFailed(mCommandList->Reset(cmdListAlloc.Get(), mPSOs["opaque"].Get()));
+	if (bWireframe)
+	{
+		ThrowIfFailed(mCommandList->Reset(cmdListAlloc.Get(), mPSOs["opaque"].Get()));
+	}
+	else
+	{
+		ThrowIfFailed(mCommandList->Reset(cmdListAlloc.Get(), mPSOs["solid"].Get()));
+	}
 
 	mCommandList->RSSetViewports(1, &mScreenViewport);
 	mCommandList->RSSetScissorRects(1, &mScissorRect);
@@ -189,6 +196,14 @@ void BasicTessellationApp::OnMouseMove(WPARAM btnState, int x, int y)
 
 void BasicTessellationApp::OnKeyboardInput(const GameTimer& gt)
 {
+	if (GetAsyncKeyState('F') & 0x8000)
+	{
+		bWireframe = false;
+	}
+	else
+	{
+		bWireframe = true;
+	}
 }
 
 void BasicTessellationApp::UpdateCamera(const GameTimer& gt)
@@ -468,6 +483,7 @@ void BasicTessellationApp::BuildPSOs()
 {
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC opaquePsoDesc;
 
+	// Ïß¿òPSO
 	ZeroMemory(&opaquePsoDesc, sizeof(D3D12_GRAPHICS_PIPELINE_STATE_DESC));
 	opaquePsoDesc.InputLayout = { mInputLayout.data(), (UINT)mInputLayout.size() };
 	opaquePsoDesc.pRootSignature = mRootSignature.Get();
@@ -503,6 +519,11 @@ void BasicTessellationApp::BuildPSOs()
 	opaquePsoDesc.SampleDesc.Quality = m4xMsaaState ? (m4xMsaaQuality - 1) : 0;
 	opaquePsoDesc.DSVFormat = mDepthStencilFormat;
 	ThrowIfFailed(md3dDevice->CreateGraphicsPipelineState(&opaquePsoDesc, IID_PPV_ARGS(&mPSOs["opaque"])));
+
+	// ²»Í¸Ã÷PSO
+	D3D12_GRAPHICS_PIPELINE_STATE_DESC solidPsoDesc = opaquePsoDesc;
+	solidPsoDesc.RasterizerState.FillMode = D3D12_FILL_MODE_SOLID;
+	ThrowIfFailed(md3dDevice->CreateGraphicsPipelineState(&solidPsoDesc, IID_PPV_ARGS(&mPSOs["solid"])));
 }
 
 void BasicTessellationApp::BuildFrameResources()

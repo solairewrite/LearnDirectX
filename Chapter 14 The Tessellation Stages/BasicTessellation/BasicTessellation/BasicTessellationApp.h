@@ -122,4 +122,6 @@ private:
 	float mRadius = 12.0f;
 
 	POINT mLastMousePos;
+
+	bool bWireframe = true;
 };
