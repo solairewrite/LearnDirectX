@@ -75,8 +75,9 @@ struct PatchTess
 };
 
 // 常量外壳着色器,针对每个面片进行处理,输出网格的曲面细分因子,在HS中指定函数名
-PatchTess ConstantHS(InputPatch<VertexOut, 4> patch,
-					 uint patchID : SV_PrimitiveID)
+// 常量外壳着色器以面片的所有控制点作为输入,控制点会首先传至顶点着色器,因此他们的类型由VS的输出类型来确定
+PatchTess ConstantHS(InputPatch<VertexOut, 4> patch, 
+					 uint patchID : SV_PrimitiveID) // 面片的ID
 {
     PatchTess pt;
 
