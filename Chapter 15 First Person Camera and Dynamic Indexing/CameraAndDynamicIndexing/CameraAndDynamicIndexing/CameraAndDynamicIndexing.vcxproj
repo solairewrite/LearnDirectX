@@ -171,6 +171,7 @@
     <ClInclude Include="..\..\..\Common\GeometryGenerator.h" />
     <ClInclude Include="..\..\..\Common\MathHelper.h" />
     <ClInclude Include="..\..\..\Common\UploadBuffer.h" />
+    <ClInclude Include="CameraAndDynamicIndexingApp.h" />
     <ClInclude Include="FrameResource.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
