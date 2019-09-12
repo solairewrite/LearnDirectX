@@ -5,6 +5,22 @@ VisualStudioVersion = 15.0.28307.645
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CameraAndDynamicIndexing", "CameraAndDynamicIndexing\CameraAndDynamicIndexing.vcxproj", "{3D5D5D25-17EA-43C2-86EC-97C9571C892B}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Notes", "Notes", "{0BD85FAD-B324-4DEB-9B65-380112F9A70D}"
+	ProjectSection(SolutionItems) = preProject
+		..\..\Notes\第10章 混合.md = ..\..\Notes\第10章 混合.md
+		..\..\Notes\第11章 模板.md = ..\..\Notes\第11章 模板.md
+		..\..\Notes\第12章 几何着色器.md = ..\..\Notes\第12章 几何着色器.md
+		..\..\Notes\第13章 计算着色器.md = ..\..\Notes\第13章 计算着色器.md
+		..\..\Notes\第14章 曲面细分阶段.md = ..\..\Notes\第14章 曲面细分阶段.md
+		..\..\Notes\第15章 构建第一人称视角的摄像机与动态索引.md = ..\..\Notes\第15章 构建第一人称视角的摄像机与动态索引.md
+		..\..\Notes\第4章 Direct3D的初始化.md = ..\..\Notes\第4章 Direct3D的初始化.md
+		..\..\Notes\第5章 渲染流水线.md = ..\..\Notes\第5章 渲染流水线.md
+		..\..\Notes\第6章 利用Direct3D绘制几何体.md = ..\..\Notes\第6章 利用Direct3D绘制几何体.md
+		..\..\Notes\第7章 利用Direct3D绘制几何体(续)-LandAndWaves.md = ..\..\Notes\第7章 利用Direct3D绘制几何体(续)-LandAndWaves.md
+		..\..\Notes\第7章 利用Direct3D绘制几何体(续)-Shapes.md = ..\..\Notes\第7章 利用Direct3D绘制几何体(续)-Shapes.md
+		..\..\Notes\第8章 光照.md = ..\..\Notes\第8章 光照.md
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64

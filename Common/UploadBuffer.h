@@ -27,6 +27,8 @@ public:
 		// para1: 子资源的索引,指定了欲映射的子资源.对于缓冲区来说,它自身就是唯一的子资源,设为0
 		// para2: 内存的映射范围, nullptr对整个资源进行映射
 		// para3: 待映射资源数据的目标内存块
+		// 获取指向资源中指定子资源的CPU指针,但不能向应用程序公开该指针值
+		// 必要时,map还会使cpu缓存失效,以便cpu对该地址的读取反映gpu所做的任何修改
 		ThrowIfFailed(mUploadBuffer->Map(0, nullptr, reinterpret_cast<void**>(&mMappedData)));
 	}
 

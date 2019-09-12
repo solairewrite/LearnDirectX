@@ -95,4 +95,18 @@
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
+  <ItemGroup>
+    <Image Include="..\..\..\Textures\stone.dds">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\..\..\Textures\tile.dds">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\..\..\Textures\WoodCrate01.dds">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\..\..\Textures\bricks.dds">
+      <Filter>Resource Files</Filter>
+    </Image>
+  </ItemGroup>
 </Project>
