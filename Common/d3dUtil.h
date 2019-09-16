@@ -151,8 +151,7 @@ struct SubmeshGeometry
 	UINT StartIndexLocation = 0;
 	INT BaseVertexLocation = 0;
 
-	// 几何体包围盒 
-	// 后续章节使用
+	// 几何体包围盒
 	DirectX::BoundingBox Bounds;
 };
 // 几何图形辅助结构体
