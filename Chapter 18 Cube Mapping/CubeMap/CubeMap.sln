@@ -1,0 +1,49 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.28307.645
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CubeMap", "CubeMap\CubeMap.vcxproj", "{E84DDB59-D879-4B2A-91C5-74A10E7DFA0C}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Notes", "Notes", "{C64AABC8-40DD-4045-B889-CC6769322AEA}"
+	ProjectSection(SolutionItems) = preProject
+		..\..\Notes\第10章 混合.md = ..\..\Notes\第10章 混合.md
+		..\..\Notes\第11章 模板.md = ..\..\Notes\第11章 模板.md
+		..\..\Notes\第12章 几何着色器.md = ..\..\Notes\第12章 几何着色器.md
+		..\..\Notes\第13章 计算着色器.md = ..\..\Notes\第13章 计算着色器.md
+		..\..\Notes\第14章 曲面细分阶段.md = ..\..\Notes\第14章 曲面细分阶段.md
+		..\..\Notes\第15章 构建第一人称视角的摄像机与动态索引.md = ..\..\Notes\第15章 构建第一人称视角的摄像机与动态索引.md
+		..\..\Notes\第16章 实例化与视锥体剔除.md = ..\..\Notes\第16章 实例化与视锥体剔除.md
+		..\..\Notes\第17章 拾取.md = ..\..\Notes\第17章 拾取.md
+		..\..\Notes\第4章 Direct3D的初始化.md = ..\..\Notes\第4章 Direct3D的初始化.md
+		..\..\Notes\第5章 渲染流水线.md = ..\..\Notes\第5章 渲染流水线.md
+		..\..\Notes\第6章 利用Direct3D绘制几何体.md = ..\..\Notes\第6章 利用Direct3D绘制几何体.md
+		..\..\Notes\第7章 利用Direct3D绘制几何体(续)-LandAndWaves.md = ..\..\Notes\第7章 利用Direct3D绘制几何体(续)-LandAndWaves.md
+		..\..\Notes\第7章 利用Direct3D绘制几何体(续)-Shapes.md = ..\..\Notes\第7章 利用Direct3D绘制几何体(续)-Shapes.md
+		..\..\Notes\第8章 光照.md = ..\..\Notes\第8章 光照.md
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Debug|x86 = Debug|x86
+		Release|x64 = Release|x64
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{E84DDB59-D879-4B2A-91C5-74A10E7DFA0C}.Debug|x64.ActiveCfg = Debug|x64
+		{E84DDB59-D879-4B2A-91C5-74A10E7DFA0C}.Debug|x64.Build.0 = Debug|x64
+		{E84DDB59-D879-4B2A-91C5-74A10E7DFA0C}.Debug|x86.ActiveCfg = Debug|Win32
+		{E84DDB59-D879-4B2A-91C5-74A10E7DFA0C}.Debug|x86.Build.0 = Debug|Win32
+		{E84DDB59-D879-4B2A-91C5-74A10E7DFA0C}.Release|x64.ActiveCfg = Release|x64
+		{E84DDB59-D879-4B2A-91C5-74A10E7DFA0C}.Release|x64.Build.0 = Release|x64
+		{E84DDB59-D879-4B2A-91C5-74A10E7DFA0C}.Release|x86.ActiveCfg = Release|Win32
+		{E84DDB59-D879-4B2A-91C5-74A10E7DFA0C}.Release|x86.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {BD2A6E51-1650-4FC8-986D-282C274D8AF3}
+	EndGlobalSection
+EndGlobal
