@@ -1,8 +1,3 @@
-//***************************************************************************************
-// Default.hlsl by Frank Luna (C) 2015 All Rights Reserved.
-//***************************************************************************************
-
-// Defaults for number of lights.
 #ifndef NUM_DIR_LIGHTS
     #define NUM_DIR_LIGHTS 3
 #endif
@@ -68,6 +63,7 @@ float4 PS(VertexOut pin) : SV_Target
 
 	// Dynamically look up the texture in the array.
     diffuseAlbedo *= gDiffuseMap[diffuseTexIndex].Sample(gsamAnisotropicWrap, pin.TexC);
+    //diffuseAlbedo *= gSkyCubeMapRatio;
 	
     // Interpolating normal can unnormalize it, so renormalize it.
     pin.NormalW = normalize(pin.NormalW);
@@ -87,16 +83,16 @@ float4 PS(VertexOut pin) : SV_Target
     float4 litColor = ambient + directLight;
 
 	// Add in specular reflections.
-	// 加入镜面反射数据
+	// 查找向量,根据像素点到相机方向,法线计算
     float3 r = reflect(-toEyeW, pin.NormalW);
     float4 reflectionColor = gCubeMap.Sample(gsamLinearWrap, r);
     float3 fresnelFactor = SchlickFresnel(fresnelR0, pin.NormalW, r);
+	// 在本来的颜色上加上天空盒的颜色
     litColor.rgb += shininess * fresnelFactor * reflectionColor.rgb;
+    litColor.rgb *= gSkyCubeMapRatio;
 
     // Common convention to take alpha from diffuse albedo.
     litColor.a = diffuseAlbedo.a;
 
     return litColor;
 }
-
-

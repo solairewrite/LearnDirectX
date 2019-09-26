@@ -15,6 +15,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Notes", "Notes", "{C64AABC8
 		..\..\Notes\第15章 构建第一人称视角的摄像机与动态索引.md = ..\..\Notes\第15章 构建第一人称视角的摄像机与动态索引.md
 		..\..\Notes\第16章 实例化与视锥体剔除.md = ..\..\Notes\第16章 实例化与视锥体剔除.md
 		..\..\Notes\第17章 拾取.md = ..\..\Notes\第17章 拾取.md
+		..\..\Notes\第18章 立方体贴图.md = ..\..\Notes\第18章 立方体贴图.md
 		..\..\Notes\第4章 Direct3D的初始化.md = ..\..\Notes\第4章 Direct3D的初始化.md
 		..\..\Notes\第5章 渲染流水线.md = ..\..\Notes\第5章 渲染流水线.md
 		..\..\Notes\第6章 利用Direct3D绘制几何体.md = ..\..\Notes\第6章 利用Direct3D绘制几何体.md

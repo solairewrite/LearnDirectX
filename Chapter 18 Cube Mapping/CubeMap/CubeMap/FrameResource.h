@@ -33,11 +33,10 @@ struct PassConstants
 
 	DirectX::XMFLOAT4 AmbientLight = { 0.0f, 0.0f, 0.0f, 1.0f };
 
-	// Indices [0, NUM_DIR_LIGHTS) are directional lights;
-	// indices [NUM_DIR_LIGHTS, NUM_DIR_LIGHTS+NUM_POINT_LIGHTS) are point lights;
-	// indices [NUM_DIR_LIGHTS+NUM_POINT_LIGHTS, NUM_DIR_LIGHTS+NUM_POINT_LIGHT+NUM_SPOT_LIGHTS)
-	// are spot lights for a maximum of MaxLights per object.
 	Light Lights[MaxLights];
+
+	float SkyCubeMapRatio;
+	float CubeMapIndex;
 };
 
 struct MaterialData
@@ -46,7 +45,6 @@ struct MaterialData
 	DirectX::XMFLOAT3 FresnelR0 = { 0.01f, 0.01f, 0.01f };
 	float Roughness = 0.5f;
 
-	// Used in texture mapping.
 	DirectX::XMFLOAT4X4 MatTransform = MathHelper::Identity4x4();
 
 	UINT DiffuseMapIndex = 0;
@@ -62,8 +60,6 @@ struct Vertex
 	DirectX::XMFLOAT2 TexC;
 };
 
-// Stores the resources needed for the CPU to build the command lists
-// for a frame.  
 struct FrameResource
 {
 public:
@@ -73,18 +69,12 @@ public:
 	FrameResource& operator=(const FrameResource& rhs) = delete;
 	~FrameResource();
 
-	// We cannot reset the allocator until the GPU is done processing the commands.
-	// So each frame needs their own allocator.
 	Microsoft::WRL::ComPtr<ID3D12CommandAllocator> CmdListAlloc;
 
-	// We cannot update a cbuffer until the GPU is done processing the commands
-	// that reference it.  So each frame needs their own cbuffers.
 	std::unique_ptr<UploadBuffer<PassConstants>> PassCB = nullptr;
 	std::unique_ptr<UploadBuffer<ObjectConstants>> ObjectCB = nullptr;
 
 	std::unique_ptr<UploadBuffer<MaterialData>> MaterialBuffer = nullptr;
 
-	// Fence value to mark commands up to this fence point.  This lets us
-	// check if these frame resources are still in use by the GPU.
 	UINT64 Fence = 0;
 };
