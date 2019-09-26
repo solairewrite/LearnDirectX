@@ -108,7 +108,7 @@ private:
 	std::vector<RenderItem*> mRitemLayer[(int)RenderLayer::Count];
 
 	UINT mSkyTexHeapIndex = 0;
-	UINT mSnowTexHeapIndex = 0;
+	UINT CubeMapCount = 0;
 	UINT CubeMapIndex = 0;
 
 	PassConstants mMainPassCB;
