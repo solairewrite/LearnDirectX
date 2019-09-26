@@ -126,7 +126,14 @@ void CubeMapApp::Draw(const GameTimer& gt)
 	// 天空盒
 
 	CD3DX12_GPU_DESCRIPTOR_HANDLE skyTexDescriptor(mSrvDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
-	skyTexDescriptor.Offset(mSkyTexHeapIndex, mCbvSrvDescriptorSize);
+	if (CubeMapIndex == 0)
+	{
+		skyTexDescriptor.Offset(mSkyTexHeapIndex, mCbvSrvDescriptorSize);
+	}
+	else
+	{
+		skyTexDescriptor.Offset(mSnowTexHeapIndex, mCbvSrvDescriptorSize);
+	}
 	// TextureCube gCubeMap : register(t0);
 	mCommandList->SetGraphicsRootDescriptorTable(3, skyTexDescriptor);
 
@@ -291,8 +298,10 @@ void CubeMapApp::UpdateMainPassCB(const GameTimer& gt)
 	mMainPassCB.Lights[2].Direction = { 0.0f, -0.707f, -0.707f };
 	mMainPassCB.Lights[2].Strength = { 0.15f, 0.15f, 0.15f };
 
-	float skyChangeSpeed = 0.3f;
-	mMainPassCB.SkyCubeMapRatio = std::abs(std::sin(mTimer.TotalTime() * skyChangeSpeed));
+	float skyChangeSpeed = 0.5f;
+	float sinpara = std::sin(mTimer.TotalTime() * skyChangeSpeed);
+	CubeMapIndex = sinpara > 0 ? 0 : 1; // 更换天空盒
+	mMainPassCB.SkyCubeMapRatio = std::abs(sinpara); // 模拟日出日落
 
 	auto currPassCB = mCurrFrameResource->PassCB.get();
 	currPassCB->CopyData(0, mMainPassCB);
@@ -306,7 +315,7 @@ void CubeMapApp::LoadTextures()
 		"tileDiffuseMap",
 		"defaultDiffuseMap",
 		"skyCubeMap",
-		//"snowCubeMap"
+		"snowCubeMap"
 	};
 
 	std::vector<std::wstring> texFilenames =
@@ -314,8 +323,8 @@ void CubeMapApp::LoadTextures()
 		L"../../../Textures/bricks2.dds",
 		L"../../../Textures/tile.dds",
 		L"../../../Textures/white1x1.dds",
-		L"../../../Textures/grasscube1024.dds"
-		//L"../../../Textures/snowcube1024.dds"
+		L"../../../Textures/grasscube1024.dds",
+		L"../../../Textures/snowcube1024.dds"
 	};
 
 	for (int i = 0; i < (int)texNames.size(); ++i)
@@ -389,6 +398,7 @@ void CubeMapApp::BuildDescriptorHeaps()
 	auto whiteTex = mTextures["defaultDiffuseMap"]->Resource;
 	// 仅仅是普通的加载天空盒,在hlsl中接收类型设置为TextureCube即可,采样时传入向量
 	auto skyTex = mTextures["skyCubeMap"]->Resource;
+	auto snowTex = mTextures["snowCubeMap"]->Resource;
 
 	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
 	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
@@ -421,6 +431,12 @@ void CubeMapApp::BuildDescriptorHeaps()
 	md3dDevice->CreateShaderResourceView(skyTex.Get(), &srvDesc, hDescriptor); // 3
 
 	mSkyTexHeapIndex = 3;
+
+	hDescriptor.Offset(1, mCbvSrvDescriptorSize);
+	srvDesc.TextureCube.MipLevels = snowTex->GetDesc().MipLevels;
+	srvDesc.Format = skyTex->GetDesc().Format;
+	md3dDevice->CreateShaderResourceView(snowTex.Get(), &srvDesc, hDescriptor); // 4
+	mSnowTexHeapIndex = 4;
 }
 
 void CubeMapApp::BuildShadersAndInputLayout()

@@ -36,7 +36,6 @@ struct PassConstants
 	Light Lights[MaxLights];
 
 	float SkyCubeMapRatio;
-	float CubeMapIndex;
 };
 
 struct MaterialData
