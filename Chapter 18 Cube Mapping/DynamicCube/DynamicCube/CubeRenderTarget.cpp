@@ -1,4 +1,4 @@
-#include "CubeRenderTarget.h"
+#include "CubeRendertarget.h"
 
 CubeRenderTarget::CubeRenderTarget(ID3D12Device* device,
 	UINT width, UINT height,
@@ -16,7 +16,7 @@ CubeRenderTarget::CubeRenderTarget(ID3D12Device* device,
 	BuildResource();
 }
 
-ID3D12Resource*  CubeRenderTarget::Resource()
+ID3D12Resource* CubeRenderTarget::Resource()
 {
 	return mCubeMap.Get();
 }
@@ -31,42 +31,40 @@ CD3DX12_CPU_DESCRIPTOR_HANDLE CubeRenderTarget::Rtv(int faceIndex)
 	return mhCpuRtv[faceIndex];
 }
 
-D3D12_VIEWPORT CubeRenderTarget::Viewport()const
+D3D12_VIEWPORT CubeRenderTarget::Viewport() const
 {
 	return mViewport;
 }
 
-D3D12_RECT CubeRenderTarget::ScissorRect()const
+D3D12_RECT CubeRenderTarget::ScissorRect() const
 {
 	return mScissorRect;
 }
 
-void CubeRenderTarget::BuildDescriptors(CD3DX12_CPU_DESCRIPTOR_HANDLE hCpuSrv,
+void CubeRenderTarget::BuildDescriptors(
+	CD3DX12_CPU_DESCRIPTOR_HANDLE hCpuSrv,
 	CD3DX12_GPU_DESCRIPTOR_HANDLE hGpuSrv,
 	CD3DX12_CPU_DESCRIPTOR_HANDLE hCpuRtv[6])
 {
-	// Save references to the descriptors. 
-	// 保存对描述符的引用
+
 	mhCpuSrv = hCpuSrv;
 	mhGpuSrv = hGpuSrv;
 
 	for (int i = 0; i < 6; ++i)
 		mhCpuRtv[i] = hCpuRtv[i];
 
-	//  Create the descriptors
 	BuildDescriptors();
 }
 
 void CubeRenderTarget::OnResize(UINT newWidth, UINT newHeight)
 {
-	if ((mWidth != newWidth) || (mHeight != newHeight))
+	if (mWidth != newWidth || mHeight != newHeight)
 	{
 		mWidth = newWidth;
 		mHeight = newHeight;
 
 		BuildResource();
 
-		// New resource, so we need new descriptors to that resource.
 		BuildDescriptors();
 	}
 }
@@ -76,35 +74,31 @@ void CubeRenderTarget::BuildDescriptors()
 	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
 	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 	srvDesc.Format = mFormat;
-	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBE;
+	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBE; // SRV中设置了视图维度是Cube
 	srvDesc.TextureCube.MostDetailedMip = 0;
 	srvDesc.TextureCube.MipLevels = 1;
 	srvDesc.TextureCube.ResourceMinLODClamp = 0.0f;
 
-	// Create SRV to the entire cubemap resource.
 	// 为整个立方体图资源创建SRV
-	md3dDevice->CreateShaderResourceView(mCubeMap.Get(), &srvDesc, mhCpuSrv);
+	md3dDevice->CreateShaderResourceView(mCubeMap.Get(), &srvDesc, mhCpuSrv); // SRV中映射了资源 ID3D12Resource*
 
-	// Create RTV to each cube face.
 	// 为每个立方体面创建RTV
 	for (int i = 0; i < 6; ++i)
 	{
 		D3D12_RENDER_TARGET_VIEW_DESC rtvDesc;
-		rtvDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2DARRAY;
+		rtvDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2DARRAY; // RTV中设置了视图维度是贴图数组
 		rtvDesc.Format = mFormat;
 		rtvDesc.Texture2DArray.MipSlice = 0;
 		rtvDesc.Texture2DArray.PlaneSlice = 0;
 
-		// Render target to ith element.
 		// 为第i个元素创建渲染目标视图
 		rtvDesc.Texture2DArray.FirstArraySlice = i;
 
-		// Only view one element of the array.
 		// 仅为数组中的每一个元素创建一个视图
 		rtvDesc.Texture2DArray.ArraySize = 1;
 
-		// Create RTV to ith cubemap face.
 		// 为立方体图的第i个面创建RTV
+		// 我理解:资源都是立方图贴图的整体,通过FirstArraySlice为不同的面创建RTV
 		md3dDevice->CreateRenderTargetView(mCubeMap.Get(), &rtvDesc, mhCpuRtv[i]);
 	}
 }
@@ -112,12 +106,6 @@ void CubeRenderTarget::BuildDescriptors()
 // 构建立方体图资源
 void CubeRenderTarget::BuildResource()
 {
-	// Note, compressed formats cannot be used for UAV.  We get error like:
-	// ERROR: ID3D11Device::CreateTexture2D: The format (0x4d, BC3_UNORM) 
-	// cannot be bound as an UnorderedAccessView, or cast to a format that
-	// could be bound as an UnorderedAccessView.  Therefore this format 
-	// does not support D3D11_BIND_UNORDERED_ACCESS.
-
 	D3D12_RESOURCE_DESC texDesc;
 	ZeroMemory(&texDesc, sizeof(D3D12_RESOURCE_DESC));
 	texDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;

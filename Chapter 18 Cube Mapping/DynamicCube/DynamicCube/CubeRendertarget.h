@@ -7,11 +7,11 @@
 enum class CubeMapFace : int
 {
 	PositiveX = 0,
-	NegativeX = 1,
-	PositiveY = 2,
-	NegativeY = 3,
-	PositiveZ = 4,
-	NegativeZ = 5
+	NegativeX,
+	PositiveY,
+	NegativeY,
+	PositiveZ,
+	NegativeZ
 };
 
 class CubeRenderTarget
@@ -29,8 +29,8 @@ public:
 	CD3DX12_GPU_DESCRIPTOR_HANDLE Srv();
 	CD3DX12_CPU_DESCRIPTOR_HANDLE Rtv(int faceIndex);
 
-	D3D12_VIEWPORT Viewport()const;
-	D3D12_RECT ScissorRect()const;
+	D3D12_VIEWPORT Viewport() const;
+	D3D12_RECT ScissorRect() const;
 
 	void BuildDescriptors(
 		CD3DX12_CPU_DESCRIPTOR_HANDLE hCpuSrv,

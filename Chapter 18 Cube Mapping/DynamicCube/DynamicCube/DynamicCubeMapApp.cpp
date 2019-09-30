@@ -1357,33 +1357,33 @@ std::array<const CD3DX12_STATIC_SAMPLER_DESC, 6> DynamicCubeMapApp::GetStaticSam
 
 void DynamicCubeMapApp::BuildCubeFaceCamera(float x, float y, float z)
 {
-	// Generate the cube map about the given position.
+
 	XMFLOAT3 center(x, y, z);
 	XMFLOAT3 worldUp(0.0f, 1.0f, 0.0f);
 
-	// Look along each coordinate axis.
+
 	XMFLOAT3 targets[6] =
 	{
 		XMFLOAT3(x + 1.0f, y, z), // +X
-		XMFLOAT3(x - 1.0f, y, z), // -X
+		XMFLOAT3(x - 1.0f, y, z), // +X
 		XMFLOAT3(x, y + 1.0f, z), // +Y
 		XMFLOAT3(x, y - 1.0f, z), // -Y
 		XMFLOAT3(x, y, z + 1.0f), // +Z
-		XMFLOAT3(x, y, z - 1.0f)  // -Z
+		XMFLOAT3(x, y, z - 1.0f), // -Z
 	};
 
-	// Use world up vector (0,1,0) for all directions except +Y/-Y.  In these cases, we
-	// are looking down +Y or -Y, so we need a different "up" vector.
-	// 除了+Y/-Y,其他方向上的上向量均用世界空间中的上向量(0,1,0)表示
-	// 在+Y/-Y方向上,分别要沿着+Y或-Y进行观察,因此需要一个与众不同的上向量
+
+
+	// 除了±Y,其他方向上的上向量均用世界空间中的上向量(0,1,0)表示
+	// 在±Y方向上,要沿着±Y进行观察,因此需要一个与众不同的上向量
 	XMFLOAT3 ups[6] =
 	{
-		XMFLOAT3(0.0f, 1.0f, 0.0f),  // +X
-		XMFLOAT3(0.0f, 1.0f, 0.0f),  // -X
-		XMFLOAT3(0.0f, 0.0f, -1.0f), // +Y
-		XMFLOAT3(0.0f, 0.0f, +1.0f), // -Y
-		XMFLOAT3(0.0f, 1.0f, 0.0f),	 // +Z
-		XMFLOAT3(0.0f, 1.0f, 0.0f)	 // -Z
+		XMFLOAT3(0,1,0), // +X
+		XMFLOAT3(0,1,0), // -X
+		XMFLOAT3(0,0,-1), // +Y
+		XMFLOAT3(0,0,1), // -Y
+		XMFLOAT3(0,1,0), // +Z
+		XMFLOAT3(0,1,0), // -Z
 	};
 
 	for (int i = 0; i < 6; ++i)
