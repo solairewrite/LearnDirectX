@@ -1,137 +1,5 @@
 #include "DynamicCubeMapApp.h"
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance,
 	PSTR cmdLine, int showCmd)
 {
@@ -207,7 +75,6 @@ bool DynamicCubeMapApp::Initialize()
 // 分配额外的描述符堆空间,重写函数
 void DynamicCubeMapApp::CreateRtvAndDsvDescriptorHeaps()
 {
-	// Add +6 RTV for cube render target.
 	// 为立方体渲染目标添加6个RTV(渲染目标视图)
 	D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc;
 	rtvHeapDesc.NumDescriptors = SwapChainBufferCount + 6;
@@ -217,7 +84,6 @@ void DynamicCubeMapApp::CreateRtvAndDsvDescriptorHeaps()
 	ThrowIfFailed(md3dDevice->CreateDescriptorHeap(
 		&rtvHeapDesc, IID_PPV_ARGS(mRtvHeap.GetAddressOf())));
 
-	// Add +1 DSV for cube render target.
 	// 为立方体渲染目标新增一个DSV
 	D3D12_DESCRIPTOR_HEAP_DESC dsvHeapDesc;
 	dsvHeapDesc.NumDescriptors = 2;
@@ -227,12 +93,14 @@ void DynamicCubeMapApp::CreateRtvAndDsvDescriptorHeaps()
 	ThrowIfFailed(md3dDevice->CreateDescriptorHeap(
 		&dsvHeapDesc, IID_PPV_ARGS(mDsvHeap.GetAddressOf())));
 
+	// BuildCubeDepthStencil() 中和资源映射
 	mCubeDSV = CD3DX12_CPU_DESCRIPTOR_HANDLE(
 		mDsvHeap->GetCPUDescriptorHandleForHeapStart(),
-		1, // 偏移
+		1,
 		mDsvDescriptorSize);
 
 	// 除此之外,还需新增一个SRV(着色器资源视图),以便在生成立方体图之后将它绑定为着色器的输入数据
+	// 在立方体类中
 }
 
 void DynamicCubeMapApp::OnResize()
@@ -246,16 +114,14 @@ void DynamicCubeMapApp::Update(const GameTimer& gt)
 {
 	OnKeyboardInput(gt);
 
-	//
-	// Animate the skull around the center sphere.
-	//
+	// 围绕镜面球体旋转骷髅
 
 	XMMATRIX skullScale = XMMatrixScaling(0.2f, 0.2f, 0.2f);
 	XMMATRIX skullOffset = XMMatrixTranslation(3.0f, 2.0f, 0.0f);
 	XMMATRIX skullLocalRotate = XMMatrixRotationY(2.0f*gt.TotalTime());
 	XMMATRIX skullGlobalRotate = XMMatrixRotationY(0.5f*gt.TotalTime());
 	// 矩阵顺序不能改变
-	XMStoreFloat4x4(&mSkullRitem->World, skullScale*skullLocalRotate*skullOffset*skullGlobalRotate);
+	XMStoreFloat4x4(&mSkullRitem->World, skullScale * skullLocalRotate * skullOffset * skullGlobalRotate);
 	mSkullRitem->NumFramesDirty = gNumFrameResources;
 
 	// Cycle through the circular frame resource array.
@@ -293,6 +159,7 @@ void DynamicCubeMapApp::Draw(const GameTimer& gt)
 
 	// Bind all the materials used in this scene.  For structured buffers, we can bypass the heap and 
 	// set as a root descriptor.
+	// ID3D12Resource 中包含了数据字节大小信息
 	auto matBuffer = mCurrFrameResource->MaterialBuffer->Resource();
 	// StructuredBuffer<MaterialData> gMaterialData : register(t0, space1);
 	mCommandList->SetGraphicsRootShaderResourceView(2, matBuffer->GetGPUVirtualAddress());
@@ -301,7 +168,7 @@ void DynamicCubeMapApp::Draw(const GameTimer& gt)
 	// from far away, so all objects will use the same cube map and we only need to set it once per-frame.  
 	// If we wanted to use "local" cube maps, we would have to change them per-object, or dynamically
 	// index into an array of cube maps.
-
+	// 绑定天空盒
 	CD3DX12_GPU_DESCRIPTOR_HANDLE skyTexDescriptor(mSrvDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
 	skyTexDescriptor.Offset(mSkyTexHeapIndex, mCbvSrvUavDescriptorSize);
 	// TextureCube gCubeMap : register(t0);
@@ -310,6 +177,7 @@ void DynamicCubeMapApp::Draw(const GameTimer& gt)
 	// Texture2D gDiffuseMap[4] : register(t1);
 	mCommandList->SetGraphicsRootDescriptorTable(4, mSrvDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
 
+	// 将场景渲染到天空盒,但是不显示到屏幕上
 	DrawSceneToCubeMap();
 
 	mCommandList->RSSetViewports(1, &mScreenViewport);
@@ -329,11 +197,12 @@ void DynamicCubeMapApp::Draw(const GameTimer& gt)
 	auto passCB = mCurrFrameResource->PassCB->Resource();
 	mCommandList->SetGraphicsRootConstantBufferView(1, passCB->GetGPUVirtualAddress());
 
-
 	// Use the dynamic cube map for the dynamic reflectors layer.
 	// 为动态反射层使用动态立方体图
+	// mDynamicCubeMap->BuildDescriptors() 将立方体贴图资源绑定到 mSrvDescriptorHeap
+	// 我的理解: SRV是对资源的映射, RTV保存了资源的数据
 	CD3DX12_GPU_DESCRIPTOR_HANDLE dynamicTexDescriptor(mSrvDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
-	dynamicTexDescriptor.Offset(mSkyTexHeapIndex + 1, mCbvSrvUavDescriptorSize);
+	dynamicTexDescriptor.Offset(mDynamicTexHeapIndex, mCbvSrvUavDescriptorSize);
 	// TextureCube gCubeMap : register(t0);
 	mCommandList->SetGraphicsRootDescriptorTable(3, dynamicTexDescriptor);
 
@@ -524,11 +393,11 @@ void DynamicCubeMapApp::UpdateCubeMapFacePassCBs()
 	{
 		PassConstants cubeFacePassCB = mMainPassCB;
 
-		// BuildCubeFaceCamera()中初始化了cube相机
+		// BuildCubeFaceCamera() 中初始化了cube相机
 		XMMATRIX view = mCubeMapCamera[i].GetView();
 		XMMATRIX proj = mCubeMapCamera[i].GetProj();
-
 		XMMATRIX viewProj = XMMatrixMultiply(view, proj);
+
 		XMMATRIX invView = XMMatrixInverse(&XMMatrixDeterminant(view), view);
 		XMMATRIX invProj = XMMatrixInverse(&XMMatrixDeterminant(proj), proj);
 		XMMATRIX invViewProj = XMMatrixInverse(&XMMatrixDeterminant(viewProj), viewProj);
@@ -545,7 +414,7 @@ void DynamicCubeMapApp::UpdateCubeMapFacePassCBs()
 
 		auto currPassCB = mCurrFrameResource->PassCB.get();
 
-		// Cube map pass cbuffers are stored in elements 1-6.
+		// 立方体贴图过程常量储存于 1-6
 		currPassCB->CopyData(1 + i, cubeFacePassCB);
 	}
 }
@@ -630,18 +499,16 @@ void DynamicCubeMapApp::BuildRootSignature()
 
 void DynamicCubeMapApp::BuildDescriptorHeaps()
 {
-	//
-	// Create the SRV heap.
-	//
+	// 3个普通贴图,1个天空盒,1个动态立方体贴图(它的描述符在自己的类里面)
+
+	// 创建空的 SRV 堆
 	D3D12_DESCRIPTOR_HEAP_DESC srvHeapDesc = {};
 	srvHeapDesc.NumDescriptors = 6;
 	srvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
 	srvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 	ThrowIfFailed(md3dDevice->CreateDescriptorHeap(&srvHeapDesc, IID_PPV_ARGS(&mSrvDescriptorHeap)));
 
-	//
-	// Fill out the heap with actual descriptors.
-	//
+	// 填充描述符堆
 	CD3DX12_CPU_DESCRIPTOR_HANDLE hDescriptor(mSrvDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
 
 	auto bricksTex = mTextures["bricksDiffuseMap"]->Resource;
@@ -658,25 +525,23 @@ void DynamicCubeMapApp::BuildDescriptorHeaps()
 	srvDesc.Texture2D.ResourceMinLODClamp = 0.0f;
 	md3dDevice->CreateShaderResourceView(bricksTex.Get(), &srvDesc, hDescriptor);
 
-	// next descriptor
 	hDescriptor.Offset(1, mCbvSrvUavDescriptorSize);
 
 	srvDesc.Format = tileTex->GetDesc().Format;
 	srvDesc.Texture2D.MipLevels = tileTex->GetDesc().MipLevels;
 	md3dDevice->CreateShaderResourceView(tileTex.Get(), &srvDesc, hDescriptor);
 
-	// next descriptor
 	hDescriptor.Offset(1, mCbvSrvUavDescriptorSize);
 
 	srvDesc.Format = whiteTex->GetDesc().Format;
 	srvDesc.Texture2D.MipLevels = whiteTex->GetDesc().MipLevels;
 	md3dDevice->CreateShaderResourceView(whiteTex.Get(), &srvDesc, hDescriptor);
 
-	// next descriptor
+	// 前面有3个贴图
 	hDescriptor.Offset(1, mCbvSrvUavDescriptorSize);
 
 	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBE; // 维度
-	srvDesc.TextureCube.MostDetailedMip = 0; // 使用TextureCube属性
+	srvDesc.TextureCube.MostDetailedMip = 0;
 	srvDesc.TextureCube.MipLevels = skyTex->GetDesc().MipLevels;
 	srvDesc.TextureCube.ResourceMinLODClamp = 0.0f;
 	srvDesc.Format = skyTex->GetDesc().Format;
@@ -689,15 +554,14 @@ void DynamicCubeMapApp::BuildDescriptorHeaps()
 	auto srvGpuStart = mSrvDescriptorHeap->GetGPUDescriptorHandleForHeapStart();
 	auto rtvCpuStart = mRtvHeap->GetCPUDescriptorHandleForHeapStart();
 
-	// Cubemap RTV goes after the swap chain descriptors.
-	// 位于交换链的描述符之后的立方体图RTV
+	// 立方体图 rtv 位于交换链之后
 	int rtvOffset = SwapChainBufferCount;
 
 	CD3DX12_CPU_DESCRIPTOR_HANDLE cubeRtvHandles[6];
 	for (int i = 0; i < 6; ++i)
 		cubeRtvHandles[i] = CD3DX12_CPU_DESCRIPTOR_HANDLE(rtvCpuStart, rtvOffset + i, mRtvDescriptorSize);
 
-	// Dynamic cubemap SRV is after the sky SRV.
+	// 动态立方体贴图的 SRV 在天空 SRV 后面
 	mDynamicCubeMap->BuildDescriptors(
 		CD3DX12_CPU_DESCRIPTOR_HANDLE(srvCpuStart, mDynamicTexHeapIndex, mCbvSrvUavDescriptorSize),
 		CD3DX12_GPU_DESCRIPTOR_HANDLE(srvGpuStart, mDynamicTexHeapIndex, mCbvSrvUavDescriptorSize),
@@ -706,9 +570,8 @@ void DynamicCubeMapApp::BuildDescriptorHeaps()
 
 void DynamicCubeMapApp::BuildCubeDepthStencil()
 {
-	// Create the depth/stencil buffer and view.
 	D3D12_RESOURCE_DESC depthStencilDesc;
-	depthStencilDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+	depthStencilDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D; // 维度
 	depthStencilDesc.Alignment = 0;
 	depthStencilDesc.Width = CubeMapSize;
 	depthStencilDesc.Height = CubeMapSize;
@@ -718,7 +581,7 @@ void DynamicCubeMapApp::BuildCubeDepthStencil()
 	depthStencilDesc.SampleDesc.Count = 1;
 	depthStencilDesc.SampleDesc.Quality = 0;
 	depthStencilDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
-	depthStencilDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
+	depthStencilDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL; // 指明深度/模板
 
 	D3D12_CLEAR_VALUE optClear;
 	optClear.Format = mDepthStencilFormat;
@@ -730,13 +593,12 @@ void DynamicCubeMapApp::BuildCubeDepthStencil()
 		&depthStencilDesc,
 		D3D12_RESOURCE_STATE_COMMON,
 		&optClear,
-		IID_PPV_ARGS(mCubeDepthStencilBuffer.GetAddressOf())));
+		IID_PPV_ARGS(mCubeDepthStencilBuffer.GetAddressOf()))); // 创建缓存
 
-	// Create descriptor to mip level 0 of entire resource using the format of the resource.
-	// 以资源自身的格式为整个资源的mip 0层级创建描述符
+	// 以资源自身的格式,为整个资源的mip 0层级,创建描述符
+	// CreateRtvAndDsvDescriptorHeaps() 中,和描述符堆绑定
 	md3dDevice->CreateDepthStencilView(mCubeDepthStencilBuffer.Get(), nullptr, mCubeDSV);
 
-	// Transition the resource from its initial state to be used as a depth buffer.
 	mCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(mCubeDepthStencilBuffer.Get(),
 		D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_DEPTH_WRITE));
 }
@@ -811,10 +673,6 @@ void DynamicCubeMapApp::BuildSkullGeometry()
 
 	fin.close();
 
-	//
-	// Pack the indices of all the meshes into one index buffer.
-	//
-
 	const UINT vbByteSize = (UINT)vertices.size() * sizeof(Vertex);
 
 	const UINT ibByteSize = (UINT)indices.size() * sizeof(std::int32_t);
@@ -858,11 +716,6 @@ void DynamicCubeMapApp::BuildShapeGeometry()
 	GeometryGenerator::MeshData sphere = geoGen.CreateSphere(0.5f, 20, 20);
 	GeometryGenerator::MeshData cylinder = geoGen.CreateCylinder(0.5f, 0.3f, 3.0f, 20, 20);
 
-	//
-	// We are concatenating all the geometry into one big vertex/index buffer.  So
-	// define the regions in the buffer each submesh covers.
-	//
-
 	// Cache the vertex offsets to each object in the concatenated vertex buffer.
 	UINT boxVertexOffset = 0;
 	UINT gridVertexOffset = (UINT)box.Vertices.size();
@@ -894,11 +747,6 @@ void DynamicCubeMapApp::BuildShapeGeometry()
 	cylinderSubmesh.IndexCount = (UINT)cylinder.Indices32.size();
 	cylinderSubmesh.StartIndexLocation = cylinderIndexOffset;
 	cylinderSubmesh.BaseVertexLocation = cylinderVertexOffset;
-
-	//
-	// Extract the vertex elements we are interested in and pack the
-	// vertices of all the meshes into one vertex buffer.
-	//
 
 	auto totalVertexCount =
 		box.Vertices.size() +
@@ -976,11 +824,9 @@ void DynamicCubeMapApp::BuildShapeGeometry()
 
 void DynamicCubeMapApp::BuildPSOs()
 {
+	// opaque pso
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC opaquePsoDesc;
 
-	//
-	// PSO for opaque objects.
-	//
 	ZeroMemory(&opaquePsoDesc, sizeof(D3D12_GRAPHICS_PIPELINE_STATE_DESC));
 	opaquePsoDesc.InputLayout = { mInputLayout.data(), (UINT)mInputLayout.size() };
 	opaquePsoDesc.pRootSignature = mRootSignature.Get();
@@ -1006,17 +852,13 @@ void DynamicCubeMapApp::BuildPSOs()
 	opaquePsoDesc.DSVFormat = mDepthStencilFormat;
 	ThrowIfFailed(md3dDevice->CreateGraphicsPipelineState(&opaquePsoDesc, IID_PPV_ARGS(&mPSOs["opaque"])));
 
-	//
-	// PSO for sky.
-	//
+	// sky pso
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC skyPsoDesc = opaquePsoDesc;
 
-	// The camera is inside the sky sphere, so just turn off culling.
+	// 摄像机位于天空盒内,所以关闭剔除
 	skyPsoDesc.RasterizerState.CullMode = D3D12_CULL_MODE_NONE;
 
-	// Make sure the depth function is LESS_EQUAL and not just LESS.  
-	// Otherwise, the normalized depth values at z = 1 (NDC) will 
-	// fail the depth test if the depth buffer was cleared to 1.
+	// 深度比较函数设为 <=
 	skyPsoDesc.DepthStencilState.DepthFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL;
 	skyPsoDesc.pRootSignature = mRootSignature.Get();
 	skyPsoDesc.VS =
@@ -1087,14 +929,15 @@ void DynamicCubeMapApp::BuildMaterials()
 
 	mMaterials["bricks0"] = std::move(bricks0);
 	mMaterials["tile0"] = std::move(tile0);
-	mMaterials["mirror0"] = std::move(mirror0);
+	mMaterials["mirror0"] = std::move(mirror0); // 柱子上的球
 	mMaterials["sky"] = std::move(sky);
 	mMaterials["skullMat"] = std::move(skullMat);
 }
 
 void DynamicCubeMapApp::BuildRenderItems()
 {
-	auto skyRitem = std::make_unique<RenderItem>();
+	// 天空盒
+	auto skyRitem = std::make_unique<RenderItem>(); // 只是大一点球而已
 	XMStoreFloat4x4(&skyRitem->World, XMMatrixScaling(5000.0f, 5000.0f, 5000.0f));
 	skyRitem->TexTransform = MathHelper::Identity4x4();
 	skyRitem->ObjCBIndex = 0;
@@ -1108,6 +951,7 @@ void DynamicCubeMapApp::BuildRenderItems()
 	mRitemLayer[(int)RenderLayer::Sky].push_back(skyRitem.get());
 	mAllRitems.push_back(std::move(skyRitem));
 
+	// 骷髅
 	auto skullRitem = std::make_unique<RenderItem>();
 	skullRitem->World = MathHelper::Identity4x4();
 	skullRitem->TexTransform = MathHelper::Identity4x4();
@@ -1124,6 +968,7 @@ void DynamicCubeMapApp::BuildRenderItems()
 	mRitemLayer[(int)RenderLayer::Opaque].push_back(skullRitem.get());
 	mAllRitems.push_back(std::move(skullRitem));
 
+	// 镜面球体基座
 	auto boxRitem = std::make_unique<RenderItem>();
 	XMStoreFloat4x4(&boxRitem->World, XMMatrixScaling(2.0f, 1.0f, 2.0f)*XMMatrixTranslation(0.0f, 0.5f, 0.0f));
 	XMStoreFloat4x4(&boxRitem->TexTransform, XMMatrixScaling(1.0f, 1.0f, 1.0f));
@@ -1138,6 +983,7 @@ void DynamicCubeMapApp::BuildRenderItems()
 	mRitemLayer[(int)RenderLayer::Opaque].push_back(boxRitem.get());
 	mAllRitems.push_back(std::move(boxRitem));
 
+	// 镜面球体
 	auto globeRitem = std::make_unique<RenderItem>(); // globe:球体,地球仪
 	XMStoreFloat4x4(&globeRitem->World, XMMatrixScaling(2.0f, 2.0f, 2.0f)*XMMatrixTranslation(0.0f, 2.0f, 0.0f));
 	XMStoreFloat4x4(&globeRitem->TexTransform, XMMatrixScaling(1.0f, 1.0f, 1.0f));
@@ -1152,6 +998,7 @@ void DynamicCubeMapApp::BuildRenderItems()
 	mRitemLayer[(int)RenderLayer::OpaqueDynamicReflectors].push_back(globeRitem.get());
 	mAllRitems.push_back(std::move(globeRitem));
 
+	// 地板
 	auto gridRitem = std::make_unique<RenderItem>();
 	gridRitem->World = MathHelper::Identity4x4();
 	XMStoreFloat4x4(&gridRitem->TexTransform, XMMatrixScaling(8.0f, 8.0f, 1.0f));
@@ -1256,33 +1103,28 @@ void DynamicCubeMapApp::DrawRenderItems(ID3D12GraphicsCommandList* cmdList, cons
 	}
 }
 
+// 将不透明物体绘制到立方体贴图中
 void DynamicCubeMapApp::DrawSceneToCubeMap()
 {
 	mCommandList->RSSetViewports(1, &mDynamicCubeMap->Viewport());
 	mCommandList->RSSetScissorRects(1, &mDynamicCubeMap->ScissorRect());
 
-	// Change to RENDER_TARGET.
 	mCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(mDynamicCubeMap->Resource(),
 		D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_RENDER_TARGET));
 
 	UINT passCBByteSize = d3dUtil::CalcConstantBufferByteSize(sizeof(PassConstants));
 
-	// For each cube map face.
 	for (int i = 0; i < 6; ++i)
 	{
-		// Clear the back buffer and depth buffer.
 		mCommandList->ClearRenderTargetView(mDynamicCubeMap->Rtv(i), Colors::LightSteelBlue, 0, nullptr);
 		mCommandList->ClearDepthStencilView(mCubeDSV, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
 
-		// Specify the buffers we are going to render to.
-		// 理解:渲染到缓存后并没有显示到屏幕上,需要调用present()才能显示
+		// 理解:渲染到缓存中,但是并没有显示到屏幕上,需要交换链 present() 才能显示
 		mCommandList->OMSetRenderTargets(1, &mDynamicCubeMap->Rtv(i), true, &mCubeDSV);
 
-		// Bind the pass constant buffer for this cube map face so we use 
-		// the right view/proj matrix for this cube face.
-		// 为当前的立方体图绑定对应的渲染过程常量缓冲区,这样就可以使用正确的视图矩阵以及投影矩阵来绘制此立方体图
+		// 为当前的立方体图绑定对应的渲染过程常量缓冲区
 		auto passCB = mCurrFrameResource->PassCB->Resource();
-		D3D12_GPU_VIRTUAL_ADDRESS passCBAddress = passCB->GetGPUVirtualAddress() + (1 + i)*passCBByteSize;
+		D3D12_GPU_VIRTUAL_ADDRESS passCBAddress = passCB->GetGPUVirtualAddress() + (i + 1)*passCBByteSize;
 		mCommandList->SetGraphicsRootConstantBufferView(1, passCBAddress);
 
 		DrawRenderItems(mCommandList.Get(), mRitemLayer[(int)RenderLayer::Opaque]);
@@ -1293,7 +1135,7 @@ void DynamicCubeMapApp::DrawSceneToCubeMap()
 		mCommandList->SetPipelineState(mPSOs["opaque"].Get());
 	}
 
-	// Change back to GENERIC_READ so we can read the texture in a shader.
+	// 改变状态,以便在着色器中读取
 	mCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(mDynamicCubeMap->Resource(),
 		D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_GENERIC_READ));
 }
@@ -1357,10 +1199,8 @@ std::array<const CD3DX12_STATIC_SAMPLER_DESC, 6> DynamicCubeMapApp::GetStaticSam
 
 void DynamicCubeMapApp::BuildCubeFaceCamera(float x, float y, float z)
 {
-
 	XMFLOAT3 center(x, y, z);
 	XMFLOAT3 worldUp(0.0f, 1.0f, 0.0f);
-
 
 	XMFLOAT3 targets[6] =
 	{
@@ -1371,8 +1211,6 @@ void DynamicCubeMapApp::BuildCubeFaceCamera(float x, float y, float z)
 		XMFLOAT3(x, y, z + 1.0f), // +Z
 		XMFLOAT3(x, y, z - 1.0f), // -Z
 	};
-
-
 
 	// 除了±Y,其他方向上的上向量均用世界空间中的上向量(0,1,0)表示
 	// 在±Y方向上,要沿着±Y进行观察,因此需要一个与众不同的上向量
