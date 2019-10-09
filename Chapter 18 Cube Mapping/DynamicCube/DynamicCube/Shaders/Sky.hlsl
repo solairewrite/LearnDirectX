@@ -17,22 +17,21 @@ VertexOut VS(VertexIn vin)
 {
     VertexOut vout;
 
-	// Use local vertex position as cubemap lookup vector.
     vout.PosL = vin.PosL;
-	
-	// Transform to world space.
+
     float4 posW = mul(float4(vin.PosL, 1.0f), gWorld);
 
-	// Always center sky about camera.
+	// 以摄像机为中心
     posW.xyz += gEyePosW;
 
-	// Set z = w so that z/w = 1 (i.e., skydome always on far plane).
+	// 令 z = 1, 使天空盒总在远平面
     vout.PosH = mul(posW, gViewProj).xyww;
-	
+
     return vout;
 }
 
 float4 PS(VertexOut pin) : SV_Target
 {
+	// cpp 中天盒只是一个放大的球体,中心在原点,可能查找向量不需要规范化
     return gCubeMap.Sample(gsamLinearWrap, pin.PosL);
 }
