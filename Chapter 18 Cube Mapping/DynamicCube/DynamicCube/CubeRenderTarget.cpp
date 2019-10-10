@@ -1,4 +1,4 @@
-#include "CubeRendertarget.h"
+ï»¿#include "CubeRendertarget.h"
 
 CubeRenderTarget::CubeRenderTarget(ID3D12Device* device,
 	UINT width, UINT height,
@@ -68,43 +68,44 @@ void CubeRenderTarget::OnResize(UINT newWidth, UINT newHeight)
 	}
 }
 
-// ÎªÁ¢·½ÌåÌùÍ¼ÕûÌå´´½¨ SRV, ÎªÃ¿Ò»¸öÃæ´´½¨ RTV
+// ä¸ºç«‹æ–¹ä½“è´´å›¾æ•´ä½“åˆ›å»º SRV, ä¸ºæ¯ä¸€ä¸ªé¢åˆ›å»º RTV
 void CubeRenderTarget::BuildDescriptors()
 {
 	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
 	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 	srvDesc.Format = mFormat;
-	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBE; // srvÖ¸¶¨ÁË×ÊÔ´Î¬¶ÈÊÇÁ¢·½ÌåÌùÍ¼
+	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBE; // srvæŒ‡å®šäº†èµ„æºç»´åº¦æ˜¯ç«‹æ–¹ä½“è´´å›¾
 	srvDesc.TextureCube.MostDetailedMip = 0;
 	srvDesc.TextureCube.MipLevels = 1;
 	srvDesc.TextureCube.ResourceMinLODClamp = 0.0f;
 
-	// ÎªÕû¸öÁ¢·½ÌåÍ¼×ÊÔ´´´½¨srv
+	// ä¸ºæ•´ä¸ªç«‹æ–¹ä½“å›¾èµ„æºåˆ›å»ºsrv
 	md3dDevice->CreateShaderResourceView(mCubeMap.Get(), &srvDesc, mhCpuSrv);
 
-	// ÎªÃ¿¸öÁ¢·½ÌåÃæ´´½¨RTV
+	// ä¸ºæ¯ä¸ªç«‹æ–¹ä½“é¢åˆ›å»ºRTV
 	for (int i = 0; i < 6; ++i)
 	{
 		D3D12_RENDER_TARGET_VIEW_DESC rtvDesc;
-		rtvDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2DARRAY; // rtvÖ¸¶¨ÁËÊÓÍ¼Î¬¶ÈÊÇ2DÌùÍ¼Êı×é
+		rtvDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2DARRAY; // rtvæŒ‡å®šäº†è§†å›¾ç»´åº¦æ˜¯2Dè´´å›¾æ•°ç»„
 		rtvDesc.Format = mFormat;
 		rtvDesc.Texture2DArray.MipSlice = 0;
 		rtvDesc.Texture2DArray.PlaneSlice = 0;
 
-		// ÎªµÚi¸öÔªËØ´´½¨äÖÈ¾Ä¿±êÊÓÍ¼
-		rtvDesc.Texture2DArray.FirstArraySlice = i; // ²Â²âÕâÖ¸Ã÷ÔÚmhCpuRtv[]ÖĞµÄË÷Òı
+		// ä¸ºç¬¬iä¸ªå…ƒç´ åˆ›å»ºæ¸²æŸ“ç›®æ ‡è§†å›¾
+		rtvDesc.Texture2DArray.FirstArraySlice = i; // çŒœæµ‹è¿™æŒ‡æ˜åœ¨mCubeMap(ç«‹æ–¹ä½“è´´å›¾)ä¸­çš„ç´¢å¼•
 
-		// ½öÎªÊı×éÖĞµÄÃ¿Ò»¸öÔªËØ´´½¨Ò»¸öÊÓÍ¼
+		// ä»…ä¸ºæ•°ç»„ä¸­çš„æ¯ä¸€ä¸ªå…ƒç´ åˆ›å»ºä¸€ä¸ªè§†å›¾
 		rtvDesc.Texture2DArray.ArraySize = 1;
 
-		// ÎªÁ¢·½ÌåÌùÍ¼µÄµÚi¸öÃæ´´½¨rtv
-		// ½«×ÊÔ´Ó³Éäµ½ rtv
+		// ä¸ºç«‹æ–¹ä½“è´´å›¾çš„ç¬¬iä¸ªé¢åˆ›å»ºrtv
+		// å°†èµ„æºæ˜ å°„åˆ° rtv
 		md3dDevice->CreateRenderTargetView(mCubeMap.Get(), &rtvDesc, mhCpuRtv[i]);
 	}
 }
 
-// ¹¹½¨Á¢·½ÌåÍ¼×ÊÔ´,ÕâÀïÖ»ÊÇ½«×ÊÔ´Ö¸Õë¹ØÁªµ½ÊÓÍ¼ÖĞ,×ÊÔ´»¹Ã»ÓĞÊı¾İ
-// DynamicCubeMapApp::DrawSceneToCubeMap() ½«²»Í¸Ã÷ÎïÌåäÖÈ¾µ½ mhCpuRtv[] ÖĞ
+// æ„å»ºç«‹æ–¹ä½“å›¾èµ„æº,è¿™é‡Œåªæ˜¯å°†èµ„æºæŒ‡é’ˆå…³è”åˆ°è§†å›¾ä¸­,èµ„æºè¿˜æ²¡æœ‰æ•°æ®
+// DynamicCubeMapApp::DrawSceneToCubeMap() å°†ä¸é€æ˜ç‰©ä½“æ¸²æŸ“åˆ° mhCpuRtv[] ä¸­
+// å…ˆæ„å»ºèµ„æº,åœ¨æ„å»ºæè¿°ç¬¦ BuildResource() -> BuildDescriptors()
 void CubeRenderTarget::BuildResource()
 {
 	D3D12_RESOURCE_DESC texDesc;

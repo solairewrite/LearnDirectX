@@ -82,7 +82,7 @@ float4 PS(VertexOut pin) : SV_Target
 
 	// 查找向量
     float3 r = reflect(-toEyeW, pin.NormalW);
-	// 天空盒的颜色影响,通过立方体贴图 查找向量 采样获得
+	// 天空盒的颜色影响(模拟反射),通过立方体贴图 查找向量 采样获得
     float4 reflectionColor = gCubeMap.Sample(gsamLinearWrap, r);
     float3 fresnelFactor = SchlickFresnel(fresnelR0, pin.NormalW, r);
 	// 天空盒采样颜色需要 * 反射系数(石里克) * 反射系数

@@ -1,4 +1,4 @@
-#include "DynamicCubeMapApp.h"
+ï»¿#include "DynamicCubeMapApp.h"
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance,
 	PSTR cmdLine, int showCmd)
@@ -72,10 +72,10 @@ bool DynamicCubeMapApp::Initialize()
 	return true;
 }
 
-// ·ÖÅä¶îÍâµÄÃèÊö·û¶Ñ¿Õ¼ä,ÖØĞ´º¯Êı
+// åˆ†é…é¢å¤–çš„æè¿°ç¬¦å †ç©ºé—´,é‡å†™å‡½æ•°
 void DynamicCubeMapApp::CreateRtvAndDsvDescriptorHeaps()
 {
-	// ÎªÁ¢·½ÌåäÖÈ¾Ä¿±êÌí¼Ó6¸öRTV(äÖÈ¾Ä¿±êÊÓÍ¼)
+	// ä¸ºç«‹æ–¹ä½“æ¸²æŸ“ç›®æ ‡æ·»åŠ 6ä¸ªRTV(æ¸²æŸ“ç›®æ ‡è§†å›¾)
 	D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc;
 	rtvHeapDesc.NumDescriptors = SwapChainBufferCount + 6;
 	rtvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
@@ -84,7 +84,7 @@ void DynamicCubeMapApp::CreateRtvAndDsvDescriptorHeaps()
 	ThrowIfFailed(md3dDevice->CreateDescriptorHeap(
 		&rtvHeapDesc, IID_PPV_ARGS(mRtvHeap.GetAddressOf())));
 
-	// ÎªÁ¢·½ÌåäÖÈ¾Ä¿±êĞÂÔöÒ»¸öDSV
+	// ä¸ºç«‹æ–¹ä½“æ¸²æŸ“ç›®æ ‡æ–°å¢ä¸€ä¸ªDSV
 	D3D12_DESCRIPTOR_HEAP_DESC dsvHeapDesc;
 	dsvHeapDesc.NumDescriptors = 2;
 	dsvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
@@ -93,14 +93,14 @@ void DynamicCubeMapApp::CreateRtvAndDsvDescriptorHeaps()
 	ThrowIfFailed(md3dDevice->CreateDescriptorHeap(
 		&dsvHeapDesc, IID_PPV_ARGS(mDsvHeap.GetAddressOf())));
 
-	// BuildCubeDepthStencil() ÖĞºÍ×ÊÔ´Ó³Éä
+	// BuildCubeDepthStencil() ä¸­å’Œèµ„æºæ˜ å°„
 	mCubeDSV = CD3DX12_CPU_DESCRIPTOR_HANDLE(
 		mDsvHeap->GetCPUDescriptorHandleForHeapStart(),
 		1,
 		mDsvDescriptorSize);
 
-	// ³ı´ËÖ®Íâ,»¹ĞèĞÂÔöÒ»¸öSRV(×ÅÉ«Æ÷×ÊÔ´ÊÓÍ¼),ÒÔ±ãÔÚÉú³ÉÁ¢·½ÌåÍ¼Ö®ºó½«Ëü°ó¶¨Îª×ÅÉ«Æ÷µÄÊäÈëÊı¾İ
-	// ÔÚÁ¢·½ÌåÀàÖĞ
+	// é™¤æ­¤ä¹‹å¤–,è¿˜éœ€æ–°å¢ä¸€ä¸ªSRV(ç€è‰²å™¨èµ„æºè§†å›¾),ä»¥ä¾¿åœ¨ç”Ÿæˆç«‹æ–¹ä½“å›¾ä¹‹åå°†å®ƒç»‘å®šä¸ºç€è‰²å™¨çš„è¾“å…¥æ•°æ®
+	// åœ¨ç«‹æ–¹ä½“ç±»ä¸­å®ç°
 }
 
 void DynamicCubeMapApp::OnResize()
@@ -114,13 +114,13 @@ void DynamicCubeMapApp::Update(const GameTimer& gt)
 {
 	OnKeyboardInput(gt);
 
-	// Î§ÈÆ¾µÃæÇòÌåĞı×ª÷¼÷Ã
+	// å›´ç»•é•œé¢çƒä½“æ—‹è½¬éª·é«…
 
 	XMMATRIX skullScale = XMMatrixScaling(0.2f, 0.2f, 0.2f);
 	XMMATRIX skullOffset = XMMatrixTranslation(3.0f, 2.0f, 0.0f);
 	XMMATRIX skullLocalRotate = XMMatrixRotationY(2.0f*gt.TotalTime());
 	XMMATRIX skullGlobalRotate = XMMatrixRotationY(0.5f*gt.TotalTime());
-	// ¾ØÕóË³Ğò²»ÄÜ¸Ä±ä
+	// çŸ©é˜µé¡ºåºä¸èƒ½æ”¹å˜
 	XMStoreFloat4x4(&mSkullRitem->World, skullScale * skullLocalRotate * skullOffset * skullGlobalRotate);
 	mSkullRitem->NumFramesDirty = gNumFrameResources;
 
@@ -159,7 +159,7 @@ void DynamicCubeMapApp::Draw(const GameTimer& gt)
 
 	// Bind all the materials used in this scene.  For structured buffers, we can bypass the heap and 
 	// set as a root descriptor.
-	// ID3D12Resource ÖĞ°üº¬ÁËÊı¾İ×Ö½Ú´óĞ¡ĞÅÏ¢
+	// ID3D12Resource ä¸­åŒ…å«äº†æ•°æ®å­—èŠ‚å¤§å°ä¿¡æ¯
 	auto matBuffer = mCurrFrameResource->MaterialBuffer->Resource();
 	// StructuredBuffer<MaterialData> gMaterialData : register(t0, space1);
 	mCommandList->SetGraphicsRootShaderResourceView(2, matBuffer->GetGPUVirtualAddress());
@@ -168,7 +168,7 @@ void DynamicCubeMapApp::Draw(const GameTimer& gt)
 	// from far away, so all objects will use the same cube map and we only need to set it once per-frame.  
 	// If we wanted to use "local" cube maps, we would have to change them per-object, or dynamically
 	// index into an array of cube maps.
-	// °ó¶¨Ìì¿ÕºĞ
+	// ç»‘å®šå¤©ç©ºç›’
 	CD3DX12_GPU_DESCRIPTOR_HANDLE skyTexDescriptor(mSrvDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
 	skyTexDescriptor.Offset(mSkyTexHeapIndex, mCbvSrvUavDescriptorSize);
 	// TextureCube gCubeMap : register(t0);
@@ -177,7 +177,7 @@ void DynamicCubeMapApp::Draw(const GameTimer& gt)
 	// Texture2D gDiffuseMap[4] : register(t1);
 	mCommandList->SetGraphicsRootDescriptorTable(4, mSrvDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
 
-	// ½«³¡¾°äÖÈ¾µ½Ìì¿ÕºĞ,µ«ÊÇ²»ÏÔÊ¾µ½ÆÁÄ»ÉÏ
+	// å°†åœºæ™¯æ¸²æŸ“åˆ°å¤©ç©ºç›’,ä½†æ˜¯ä¸æ˜¾ç¤ºåˆ°å±å¹•ä¸Š
 	DrawSceneToCubeMap();
 
 	mCommandList->RSSetViewports(1, &mScreenViewport);
@@ -198,9 +198,9 @@ void DynamicCubeMapApp::Draw(const GameTimer& gt)
 	mCommandList->SetGraphicsRootConstantBufferView(1, passCB->GetGPUVirtualAddress());
 
 	// Use the dynamic cube map for the dynamic reflectors layer.
-	// Îª¶¯Ì¬·´Éä²ãÊ¹ÓÃ¶¯Ì¬Á¢·½ÌåÍ¼
-	// mDynamicCubeMap->BuildDescriptors() ½«Á¢·½ÌåÌùÍ¼×ÊÔ´°ó¶¨µ½ mSrvDescriptorHeap
-	// ÎÒµÄÀí½â: SRVÊÇ¶Ô×ÊÔ´µÄÓ³Éä, RTV±£´æÁË×ÊÔ´µÄÊı¾İ
+	// ä¸ºåŠ¨æ€åå°„å±‚ä½¿ç”¨åŠ¨æ€ç«‹æ–¹ä½“å›¾
+	// mDynamicCubeMap->BuildDescriptors() å°†ç«‹æ–¹ä½“è´´å›¾èµ„æºç»‘å®šåˆ° mSrvDescriptorHeap
+	// æˆ‘çš„ç†è§£: SRVæ˜¯å¯¹èµ„æºçš„æ˜ å°„, RTVä¿å­˜äº†èµ„æºçš„æ•°æ®
 	CD3DX12_GPU_DESCRIPTOR_HANDLE dynamicTexDescriptor(mSrvDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
 	dynamicTexDescriptor.Offset(mDynamicTexHeapIndex, mCbvSrvUavDescriptorSize);
 	// TextureCube gCubeMap : register(t0);
@@ -209,7 +209,7 @@ void DynamicCubeMapApp::Draw(const GameTimer& gt)
 	DrawRenderItems(mCommandList.Get(), mRitemLayer[(int)RenderLayer::OpaqueDynamicReflectors]);
 
 	// Use the static "background" cube map for the other objects (including the sky)
-	// ÎªÆäËûÎïÌå(°üÀ¨Ìì¿Õ)Ê¹ÓÃ¾²Ì¬±³¾°Á¢·½ÌåÍ¼
+	// ä¸ºå…¶ä»–ç‰©ä½“(åŒ…æ‹¬å¤©ç©º)ä½¿ç”¨é™æ€èƒŒæ™¯ç«‹æ–¹ä½“å›¾
 	mCommandList->SetGraphicsRootDescriptorTable(3, skyTexDescriptor);
 
 	DrawRenderItems(mCommandList.Get(), mRitemLayer[(int)RenderLayer::Opaque]);
@@ -393,7 +393,7 @@ void DynamicCubeMapApp::UpdateCubeMapFacePassCBs()
 	{
 		PassConstants cubeFacePassCB = mMainPassCB;
 
-		// BuildCubeFaceCamera() ÖĞ³õÊ¼»¯ÁËcubeÏà»ú
+		// BuildCubeFaceCamera() ä¸­åˆå§‹åŒ–äº†cubeç›¸æœº
 		XMMATRIX view = mCubeMapCamera[i].GetView();
 		XMMATRIX proj = mCubeMapCamera[i].GetProj();
 		XMMATRIX viewProj = XMMatrixMultiply(view, proj);
@@ -414,7 +414,7 @@ void DynamicCubeMapApp::UpdateCubeMapFacePassCBs()
 
 		auto currPassCB = mCurrFrameResource->PassCB.get();
 
-		// Á¢·½ÌåÌùÍ¼¹ı³Ì³£Á¿´¢´æÓÚ 1-6
+		// ç«‹æ–¹ä½“è´´å›¾è¿‡ç¨‹å¸¸é‡å‚¨å­˜äº 1-6
 		currPassCB->CopyData(1 + i, cubeFacePassCB);
 	}
 }
@@ -499,16 +499,16 @@ void DynamicCubeMapApp::BuildRootSignature()
 
 void DynamicCubeMapApp::BuildDescriptorHeaps()
 {
-	// 3¸öÆÕÍ¨ÌùÍ¼,1¸öÌì¿ÕºĞ,1¸ö¶¯Ì¬Á¢·½ÌåÌùÍ¼(ËüµÄÃèÊö·ûÔÚ×Ô¼ºµÄÀàÀïÃæ)
+	// 3ä¸ªæ™®é€šè´´å›¾,1ä¸ªå¤©ç©ºç›’,1ä¸ªåŠ¨æ€ç«‹æ–¹ä½“è´´å›¾(å®ƒçš„æè¿°ç¬¦åœ¨è‡ªå·±çš„ç±»é‡Œé¢)
 
-	// ´´½¨¿ÕµÄ SRV ¶Ñ
+	// åˆ›å»ºç©ºçš„ SRV å †
 	D3D12_DESCRIPTOR_HEAP_DESC srvHeapDesc = {};
 	srvHeapDesc.NumDescriptors = 6;
 	srvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
 	srvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 	ThrowIfFailed(md3dDevice->CreateDescriptorHeap(&srvHeapDesc, IID_PPV_ARGS(&mSrvDescriptorHeap)));
 
-	// Ìî³äÃèÊö·û¶Ñ
+	// å¡«å……æè¿°ç¬¦å †
 	CD3DX12_CPU_DESCRIPTOR_HANDLE hDescriptor(mSrvDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
 
 	auto bricksTex = mTextures["bricksDiffuseMap"]->Resource;
@@ -537,10 +537,10 @@ void DynamicCubeMapApp::BuildDescriptorHeaps()
 	srvDesc.Texture2D.MipLevels = whiteTex->GetDesc().MipLevels;
 	md3dDevice->CreateShaderResourceView(whiteTex.Get(), &srvDesc, hDescriptor);
 
-	// Ç°ÃæÓĞ3¸öÌùÍ¼
+	// å‰é¢æœ‰3ä¸ªè´´å›¾
 	hDescriptor.Offset(1, mCbvSrvUavDescriptorSize);
 
-	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBE; // Î¬¶È
+	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBE; // ç»´åº¦
 	srvDesc.TextureCube.MostDetailedMip = 0;
 	srvDesc.TextureCube.MipLevels = skyTex->GetDesc().MipLevels;
 	srvDesc.TextureCube.ResourceMinLODClamp = 0.0f;
@@ -554,14 +554,14 @@ void DynamicCubeMapApp::BuildDescriptorHeaps()
 	auto srvGpuStart = mSrvDescriptorHeap->GetGPUDescriptorHandleForHeapStart();
 	auto rtvCpuStart = mRtvHeap->GetCPUDescriptorHandleForHeapStart();
 
-	// Á¢·½ÌåÍ¼ rtv Î»ÓÚ½»»»Á´Ö®ºó
+	// ç«‹æ–¹ä½“å›¾ rtv ä½äºäº¤æ¢é“¾ä¹‹å
 	int rtvOffset = SwapChainBufferCount;
 
 	CD3DX12_CPU_DESCRIPTOR_HANDLE cubeRtvHandles[6];
 	for (int i = 0; i < 6; ++i)
 		cubeRtvHandles[i] = CD3DX12_CPU_DESCRIPTOR_HANDLE(rtvCpuStart, rtvOffset + i, mRtvDescriptorSize);
 
-	// ¶¯Ì¬Á¢·½ÌåÌùÍ¼µÄ SRV ÔÚÌì¿Õ SRV ºóÃæ
+	// åŠ¨æ€ç«‹æ–¹ä½“è´´å›¾çš„ SRV åœ¨å¤©ç©º SRV åé¢
 	mDynamicCubeMap->BuildDescriptors(
 		CD3DX12_CPU_DESCRIPTOR_HANDLE(srvCpuStart, mDynamicTexHeapIndex, mCbvSrvUavDescriptorSize),
 		CD3DX12_GPU_DESCRIPTOR_HANDLE(srvGpuStart, mDynamicTexHeapIndex, mCbvSrvUavDescriptorSize),
@@ -571,7 +571,7 @@ void DynamicCubeMapApp::BuildDescriptorHeaps()
 void DynamicCubeMapApp::BuildCubeDepthStencil()
 {
 	D3D12_RESOURCE_DESC depthStencilDesc;
-	depthStencilDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D; // Î¬¶È
+	depthStencilDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D; // ç»´åº¦
 	depthStencilDesc.Alignment = 0;
 	depthStencilDesc.Width = CubeMapSize;
 	depthStencilDesc.Height = CubeMapSize;
@@ -581,7 +581,7 @@ void DynamicCubeMapApp::BuildCubeDepthStencil()
 	depthStencilDesc.SampleDesc.Count = 1;
 	depthStencilDesc.SampleDesc.Quality = 0;
 	depthStencilDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
-	depthStencilDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL; // Ö¸Ã÷Éî¶È/Ä£°å
+	depthStencilDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL; // æŒ‡æ˜æ·±åº¦/æ¨¡æ¿
 
 	D3D12_CLEAR_VALUE optClear;
 	optClear.Format = mDepthStencilFormat;
@@ -593,10 +593,10 @@ void DynamicCubeMapApp::BuildCubeDepthStencil()
 		&depthStencilDesc,
 		D3D12_RESOURCE_STATE_COMMON,
 		&optClear,
-		IID_PPV_ARGS(mCubeDepthStencilBuffer.GetAddressOf()))); // ´´½¨»º´æ
+		IID_PPV_ARGS(mCubeDepthStencilBuffer.GetAddressOf()))); // åˆ›å»ºç¼“å­˜
 
-	// ÒÔ×ÊÔ´×ÔÉíµÄ¸ñÊ½,ÎªÕû¸ö×ÊÔ´µÄmip 0²ã¼¶,´´½¨ÃèÊö·û
-	// CreateRtvAndDsvDescriptorHeaps() ÖĞ,ºÍÃèÊö·û¶Ñ°ó¶¨
+	// ä»¥èµ„æºè‡ªèº«çš„æ ¼å¼,ä¸ºæ•´ä¸ªèµ„æºçš„mip 0å±‚çº§,åˆ›å»ºæè¿°ç¬¦
+	// CreateRtvAndDsvDescriptorHeaps() ä¸­,å’Œæè¿°ç¬¦å †ç»‘å®š
 	md3dDevice->CreateDepthStencilView(mCubeDepthStencilBuffer.Get(), nullptr, mCubeDSV);
 
 	mCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(mCubeDepthStencilBuffer.Get(),
@@ -855,10 +855,10 @@ void DynamicCubeMapApp::BuildPSOs()
 	// sky pso
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC skyPsoDesc = opaquePsoDesc;
 
-	// ÉãÏñ»úÎ»ÓÚÌì¿ÕºĞÄÚ,ËùÒÔ¹Ø±ÕÌŞ³ı
+	// æ‘„åƒæœºä½äºå¤©ç©ºç›’å†…,æ‰€ä»¥å…³é—­å‰”é™¤
 	skyPsoDesc.RasterizerState.CullMode = D3D12_CULL_MODE_NONE;
 
-	// Éî¶È±È½Ïº¯ÊıÉèÎª <=
+	// æ·±åº¦æ¯”è¾ƒå‡½æ•°è®¾ä¸º <=
 	skyPsoDesc.DepthStencilState.DepthFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL;
 	skyPsoDesc.pRootSignature = mRootSignature.Get();
 	skyPsoDesc.VS =
@@ -879,7 +879,7 @@ void DynamicCubeMapApp::BuildFrameResources()
 {
 	for (int i = 0; i < gNumFrameResources; ++i)
 	{
-		// Ã¿¸öÁ¢·½ÌåÃæ¶¼ÓĞÒ»×é×Ô¼ºµÄ¹ı³Ì³£Á¿
+		// æ¯ä¸ªç«‹æ–¹ä½“é¢éƒ½æœ‰ä¸€ç»„è‡ªå·±çš„è¿‡ç¨‹å¸¸é‡
 		mFrameResources.push_back(std::make_unique<FrameResource>(md3dDevice.Get(),
 			7, (UINT)mAllRitems.size(), (UINT)mMaterials.size()));
 	}
@@ -929,15 +929,15 @@ void DynamicCubeMapApp::BuildMaterials()
 
 	mMaterials["bricks0"] = std::move(bricks0);
 	mMaterials["tile0"] = std::move(tile0);
-	mMaterials["mirror0"] = std::move(mirror0); // Öù×ÓÉÏµÄÇò
+	mMaterials["mirror0"] = std::move(mirror0); // æŸ±å­ä¸Šçš„çƒ
 	mMaterials["sky"] = std::move(sky);
 	mMaterials["skullMat"] = std::move(skullMat);
 }
 
 void DynamicCubeMapApp::BuildRenderItems()
 {
-	// Ìì¿ÕºĞ
-	auto skyRitem = std::make_unique<RenderItem>(); // Ö»ÊÇ´óÒ»µãÇò¶øÒÑ
+	// å¤©ç©ºç›’
+	auto skyRitem = std::make_unique<RenderItem>(); // åªæ˜¯å¤§ä¸€ç‚¹çƒè€Œå·²
 	XMStoreFloat4x4(&skyRitem->World, XMMatrixScaling(5000.0f, 5000.0f, 5000.0f));
 	skyRitem->TexTransform = MathHelper::Identity4x4();
 	skyRitem->ObjCBIndex = 0;
@@ -951,7 +951,7 @@ void DynamicCubeMapApp::BuildRenderItems()
 	mRitemLayer[(int)RenderLayer::Sky].push_back(skyRitem.get());
 	mAllRitems.push_back(std::move(skyRitem));
 
-	// ÷¼÷Ã
+	// éª·é«…
 	auto skullRitem = std::make_unique<RenderItem>();
 	skullRitem->World = MathHelper::Identity4x4();
 	skullRitem->TexTransform = MathHelper::Identity4x4();
@@ -968,7 +968,7 @@ void DynamicCubeMapApp::BuildRenderItems()
 	mRitemLayer[(int)RenderLayer::Opaque].push_back(skullRitem.get());
 	mAllRitems.push_back(std::move(skullRitem));
 
-	// ¾µÃæÇòÌå»ù×ù
+	// é•œé¢çƒä½“åŸºåº§
 	auto boxRitem = std::make_unique<RenderItem>();
 	XMStoreFloat4x4(&boxRitem->World, XMMatrixScaling(2.0f, 1.0f, 2.0f)*XMMatrixTranslation(0.0f, 0.5f, 0.0f));
 	XMStoreFloat4x4(&boxRitem->TexTransform, XMMatrixScaling(1.0f, 1.0f, 1.0f));
@@ -983,8 +983,8 @@ void DynamicCubeMapApp::BuildRenderItems()
 	mRitemLayer[(int)RenderLayer::Opaque].push_back(boxRitem.get());
 	mAllRitems.push_back(std::move(boxRitem));
 
-	// ¾µÃæÇòÌå
-	auto globeRitem = std::make_unique<RenderItem>(); // globe:ÇòÌå,µØÇòÒÇ
+	// é•œé¢çƒä½“
+	auto globeRitem = std::make_unique<RenderItem>(); // globe:çƒä½“,åœ°çƒä»ª
 	XMStoreFloat4x4(&globeRitem->World, XMMatrixScaling(2.0f, 2.0f, 2.0f)*XMMatrixTranslation(0.0f, 2.0f, 0.0f));
 	XMStoreFloat4x4(&globeRitem->TexTransform, XMMatrixScaling(1.0f, 1.0f, 1.0f));
 	globeRitem->ObjCBIndex = 3;
@@ -998,7 +998,7 @@ void DynamicCubeMapApp::BuildRenderItems()
 	mRitemLayer[(int)RenderLayer::OpaqueDynamicReflectors].push_back(globeRitem.get());
 	mAllRitems.push_back(std::move(globeRitem));
 
-	// µØ°å
+	// åœ°æ¿
 	auto gridRitem = std::make_unique<RenderItem>();
 	gridRitem->World = MathHelper::Identity4x4();
 	XMStoreFloat4x4(&gridRitem->TexTransform, XMMatrixScaling(8.0f, 8.0f, 1.0f));
@@ -1103,7 +1103,7 @@ void DynamicCubeMapApp::DrawRenderItems(ID3D12GraphicsCommandList* cmdList, cons
 	}
 }
 
-// ½«²»Í¸Ã÷ÎïÌå»æÖÆµ½Á¢·½ÌåÌùÍ¼ÖĞ
+// å°†ä¸é€æ˜ç‰©ä½“ç»˜åˆ¶åˆ°ç«‹æ–¹ä½“è´´å›¾ä¸­
 void DynamicCubeMapApp::DrawSceneToCubeMap()
 {
 	mCommandList->RSSetViewports(1, &mDynamicCubeMap->Viewport());
@@ -1119,10 +1119,10 @@ void DynamicCubeMapApp::DrawSceneToCubeMap()
 		mCommandList->ClearRenderTargetView(mDynamicCubeMap->Rtv(i), Colors::LightSteelBlue, 0, nullptr);
 		mCommandList->ClearDepthStencilView(mCubeDSV, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
 
-		// Àí½â:äÖÈ¾µ½»º´æÖĞ,µ«ÊÇ²¢Ã»ÓĞÏÔÊ¾µ½ÆÁÄ»ÉÏ,ĞèÒª½»»»Á´ present() ²ÅÄÜÏÔÊ¾
+		// ç†è§£:æ¸²æŸ“åˆ°ç¼“å­˜ä¸­,ä½†æ˜¯å¹¶æ²¡æœ‰æ˜¾ç¤ºåˆ°å±å¹•ä¸Š,éœ€è¦äº¤æ¢é“¾ present() æ‰èƒ½æ˜¾ç¤º
 		mCommandList->OMSetRenderTargets(1, &mDynamicCubeMap->Rtv(i), true, &mCubeDSV);
 
-		// Îªµ±Ç°µÄÁ¢·½ÌåÍ¼°ó¶¨¶ÔÓ¦µÄäÖÈ¾¹ı³Ì³£Á¿»º³åÇø
+		// ä¸ºå½“å‰çš„ç«‹æ–¹ä½“å›¾ç»‘å®šå¯¹åº”çš„æ¸²æŸ“è¿‡ç¨‹å¸¸é‡ç¼“å†²åŒº
 		auto passCB = mCurrFrameResource->PassCB->Resource();
 		D3D12_GPU_VIRTUAL_ADDRESS passCBAddress = passCB->GetGPUVirtualAddress() + (i + 1)*passCBByteSize;
 		mCommandList->SetGraphicsRootConstantBufferView(1, passCBAddress);
@@ -1135,7 +1135,7 @@ void DynamicCubeMapApp::DrawSceneToCubeMap()
 		mCommandList->SetPipelineState(mPSOs["opaque"].Get());
 	}
 
-	// ¸Ä±ä×´Ì¬,ÒÔ±ãÔÚ×ÅÉ«Æ÷ÖĞ¶ÁÈ¡
+	// æ”¹å˜çŠ¶æ€,ä»¥ä¾¿åœ¨ç€è‰²å™¨ä¸­è¯»å–
 	mCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(mDynamicCubeMap->Resource(),
 		D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_GENERIC_READ));
 }
@@ -1212,8 +1212,8 @@ void DynamicCubeMapApp::BuildCubeFaceCamera(float x, float y, float z)
 		XMFLOAT3(x, y, z - 1.0f), // -Z
 	};
 
-	// ³ıÁË¡ÀY,ÆäËû·½ÏòÉÏµÄÉÏÏòÁ¿¾ùÓÃÊÀ½ç¿Õ¼äÖĞµÄÉÏÏòÁ¿(0,1,0)±íÊ¾
-	// ÔÚ¡ÀY·½ÏòÉÏ,ÒªÑØ×Å¡ÀY½øĞĞ¹Û²ì,Òò´ËĞèÒªÒ»¸öÓëÖÚ²»Í¬µÄÉÏÏòÁ¿
+	// é™¤äº†Â±Y,å…¶ä»–æ–¹å‘ä¸Šçš„ä¸Šå‘é‡å‡ç”¨ä¸–ç•Œç©ºé—´ä¸­çš„ä¸Šå‘é‡(0,1,0)è¡¨ç¤º
+	// åœ¨Â±Yæ–¹å‘ä¸Š,è¦æ²¿ç€Â±Yè¿›è¡Œè§‚å¯Ÿ,å› æ­¤éœ€è¦ä¸€ä¸ªä¸ä¼—ä¸åŒçš„ä¸Šå‘é‡
 	XMFLOAT3 ups[6] =
 	{
 		XMFLOAT3(0,1,0), // +X
