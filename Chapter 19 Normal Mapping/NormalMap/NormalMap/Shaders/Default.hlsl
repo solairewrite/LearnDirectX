@@ -1,8 +1,3 @@
-//***************************************************************************************
-// Default.hlsl by Frank Luna (C) 2015 All Rights Reserved.
-//***************************************************************************************
-
-// Defaults for number of lights.
 #ifndef NUM_DIR_LIGHTS
     #define NUM_DIR_LIGHTS 3
 #endif
@@ -15,7 +10,6 @@
     #define NUM_SPOT_LIGHTS 0
 #endif
 
-// Include common HLSL code.
 #include "Common.hlsl"
 
 struct VertexIn
@@ -23,7 +17,7 @@ struct VertexIn
     float3 PosL : POSITION;
     float3 NormalL : NORMAL;
     float2 TexC : TEXCOORD;
-    float3 TangentU : TANGENT; // 法线贴图切向量
+    float3 TangentU : TANGENT; // 法线贴图切向量(对象空间)
 };
 
 struct VertexOut
@@ -39,79 +33,68 @@ VertexOut VS(VertexIn vin)
 {
     VertexOut vout = (VertexOut) 0.0f;
 
-	// Fetch the material data.
     MaterialData matData = gMaterialData[gMaterialIndex];
-	
-    // Transform to world space.
+
     float4 posW = mul(float4(vin.PosL, 1.0f), gWorld);
     vout.PosW = posW.xyz;
 
-    // Assumes nonuniform scaling; otherwise, need to use inverse-transpose of world matrix.
+	// 这里的法线和切线在对象空间中
     vout.NormalW = mul(vin.NormalL, (float3x3) gWorld);
-	
+
 	// 切线转到世界空间
     vout.TangentW = mul(vin.TangentU, (float3x3) gWorld);
 
-    // Transform to homogeneous clip space.
     vout.PosH = mul(posW, gViewProj);
-	
-	// Output vertex attributes for interpolation across triangle.
+
     float4 texC = mul(float4(vin.TexC, 0.0f, 1.0f), gTexTransform);
     vout.TexC = mul(texC, matData.MatTransform).xy;
-	
+
     return vout;
 }
 
 float4 PS(VertexOut pin) : SV_Target
 {
-	// Fetch the material data.
     MaterialData matData = gMaterialData[gMaterialIndex];
     float4 diffuseAlbedo = matData.DiffuseAlbedo;
     float3 fresnelR0 = matData.FresnelR0;
     float roughness = matData.Roughness;
     uint diffuseMapIndex = matData.DiffuseMapIndex;
     uint normalMapIndex = matData.NormalMapIndex;
-	
-	// Interpolating normal can unnormalize it, so renormalize it.
+
     pin.NormalW = normalize(pin.NormalW);
-	
-	// 法线和贴图用相同的 uv
-    float4 normalMapSample = gTextureMaps[normalMapIndex].Sample(gsamAnisotropicWrap, pin.TexC);
+
+	// 法线和贴图同的相同的uv
+    float4 normalMapSample = gTextureMaps[normalMapIndex].Sample(gsamLinearWrap, pin.TexC);
+	// 将一个法线图样本从切线空间变换至世界空间,传入的已经是世界空间中的法线与切向量(VS中处理的)
     float3 bumpedNormalW = NormalSampleToWorldSpace(normalMapSample.rgb, pin.NormalW, pin.TangentW);
 
-	// Uncomment to turn off normal mapping.
-	//bumpedNormalW = pin.NormalW;
+	// 取消注释以关闭法线贴图
+    //bumpedNormalW = pin.NormalW;
 
-	// Dynamically look up the texture in the array.
-    diffuseAlbedo *= gTextureMaps[diffuseMapIndex].Sample(gsamAnisotropicWrap, pin.TexC);
+    diffuseAlbedo *= gTextureMaps[diffuseMapIndex].Sample(gsamLinearWrap, pin.TexC);
 
-    // Vector from point being lit to eye. 
     float3 toEyeW = normalize(gEyePosW - pin.PosW);
 
-    // Light terms.
+	// 环境光影响,利用漫反射贴图采样计算
     float4 ambient = gAmbientLight * diffuseAlbedo;
 
-	// alpha通道储存的是逐像素级别上的光泽度
+	// 法线贴图的alpha通道存储光泽度
     const float shininess = (1.0f - roughness) * normalMapSample.a;
     Material mat = { diffuseAlbedo, fresnelR0, shininess };
     float3 shadowFactor = 1.0f;
-	// 使用bumped(凹凸)法线
+	// 直射光, 点光源, 聚光灯影响, 使用凹凸法线计算
     float4 directLight = ComputeLighting(gLights, mat, pin.PosW,
-        bumpedNormalW, toEyeW, shadowFactor);
+		bumpedNormalW, toEyeW, shadowFactor);
 
     float4 litColor = ambient + directLight;
 
-	// Add in specular reflections.
-	// 利用法线图中的法线计算镜面反射
+	// 天空盒影响
     float3 r = reflect(-toEyeW, bumpedNormalW);
     float4 reflectionColor = gCubeMap.Sample(gsamLinearWrap, r);
     float3 fresnelFactor = SchlickFresnel(fresnelR0, bumpedNormalW, r);
     litColor.rgb += shininess * fresnelFactor * reflectionColor.rgb;
-	
-    // Common convention to take alpha from diffuse albedo.
+
     litColor.a = diffuseAlbedo.a;
 
     return litColor;
 }
-
-

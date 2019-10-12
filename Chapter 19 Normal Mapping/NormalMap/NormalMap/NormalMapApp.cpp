@@ -1,120 +1,5 @@
 #include "NormalMapApp.h"
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance,
 	PSTR cmdLine, int showCmd)
 {
@@ -321,18 +206,25 @@ void NormalMapApp::OnMouseMove(WPARAM btnState, int x, int y)
 void NormalMapApp::OnKeyboardInput(const GameTimer& gt)
 {
 	const float dt = gt.DeltaTime();
+	const float cameraSpeed = 10.0f;
 
 	if (GetAsyncKeyState('W') & 0x8000)
-		mCamera.Walk(10.0f*dt);
+		mCamera.Walk(cameraSpeed * dt);
 
 	if (GetAsyncKeyState('S') & 0x8000)
-		mCamera.Walk(-10.0f*dt);
+		mCamera.Walk(-cameraSpeed * dt);
 
 	if (GetAsyncKeyState('A') & 0x8000)
-		mCamera.Strafe(-10.0f*dt);
+		mCamera.Strafe(-cameraSpeed * dt);
 
 	if (GetAsyncKeyState('D') & 0x8000)
-		mCamera.Strafe(10.0f*dt);
+		mCamera.Strafe(cameraSpeed * dt);
+
+	if (GetAsyncKeyState('Q') & 0x8000)
+		mCamera.UpDown(-cameraSpeed * dt);
+
+	if (GetAsyncKeyState('E') & 0x8000)
+		mCamera.UpDown(cameraSpeed * dt);
 
 	mCamera.UpdateViewMatrix();
 }
@@ -357,7 +249,7 @@ void NormalMapApp::UpdateObjectCBs(const GameTimer& gt)
 			ObjectConstants objConstants;
 			XMStoreFloat4x4(&objConstants.World, XMMatrixTranspose(world));
 			XMStoreFloat4x4(&objConstants.TexTransform, XMMatrixTranspose(texTransform));
-			objConstants.MaterialIndex = e->Mat->MatCBIndex;
+			objConstants.MaterialIndex = e->Mat->MatCBIndex; // 更新材质索引
 
 			currObjectCB->CopyData(e->ObjCBIndex, objConstants);
 
@@ -489,7 +381,6 @@ void NormalMapApp::BuildRootSignature()
 	// Texture2D gTextureMaps[10] : register(t1);
 	slotRootParameter[4].InitAsDescriptorTable(1, &texTable1, D3D12_SHADER_VISIBILITY_PIXEL);
 
-
 	auto staticSamplers = GetStaticSamplers();
 
 	// A root signature is an array of root parameters.
@@ -497,7 +388,6 @@ void NormalMapApp::BuildRootSignature()
 		(UINT)staticSamplers.size(), staticSamplers.data(),
 		D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 
-	// create a root signature with a single slot which points to a descriptor range consisting of a single constant buffer
 	ComPtr<ID3DBlob> serializedRootSig = nullptr;
 	ComPtr<ID3DBlob> errorBlob = nullptr;
 	HRESULT hr = D3D12SerializeRootSignature(&rootSigDesc, D3D_ROOT_SIGNATURE_VERSION_1,
@@ -574,6 +464,7 @@ void NormalMapApp::BuildShadersAndInputLayout()
 	mShaders["skyVS"] = d3dUtil::CompileShader(L"Shaders\\Sky.hlsl", nullptr, "VS", "vs_5_1");
 	mShaders["skyPS"] = d3dUtil::CompileShader(L"Shaders\\Sky.hlsl", nullptr, "PS", "ps_5_1");
 
+	// 输入布局加入了切线空间(TBN, T-切线, B-副切线, N-法线)的T轴
 	mInputLayout =
 	{
 		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
@@ -781,15 +672,15 @@ void NormalMapApp::BuildMaterials()
 	bricks0->Name = "bricks0";
 	bricks0->MatCBIndex = 0;
 	bricks0->DiffuseSrvHeapIndex = 0;
-	bricks0->NormalSrvHeapIndex = 1;
+	bricks0->NormalSrvHeapIndex = 1; // 注意法线贴图的索引
 	bricks0->DiffuseAlbedo = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
 	bricks0->FresnelR0 = XMFLOAT3(0.1f, 0.1f, 0.1f);
 	bricks0->Roughness = 0.3f;
 
 	auto tile0 = std::make_unique<Material>();
 	tile0->Name = "tile0";
-	tile0->MatCBIndex = 2;
-	tile0->DiffuseSrvHeapIndex = 2;
+	tile0->MatCBIndex = 1;
+	tile0->DiffuseSrvHeapIndex = 2; // 注意漫反射贴图的索引
 	tile0->NormalSrvHeapIndex = 3;
 	tile0->DiffuseAlbedo = XMFLOAT4(0.9f, 0.9f, 0.9f, 1.0f);
 	tile0->FresnelR0 = XMFLOAT3(0.2f, 0.2f, 0.2f);
@@ -797,7 +688,7 @@ void NormalMapApp::BuildMaterials()
 
 	auto mirror0 = std::make_unique<Material>();
 	mirror0->Name = "mirror0";
-	mirror0->MatCBIndex = 3;
+	mirror0->MatCBIndex = 2;
 	mirror0->DiffuseSrvHeapIndex = 4;
 	mirror0->NormalSrvHeapIndex = 5;
 	mirror0->DiffuseAlbedo = XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f);
@@ -806,7 +697,7 @@ void NormalMapApp::BuildMaterials()
 
 	auto sky = std::make_unique<Material>();
 	sky->Name = "sky";
-	sky->MatCBIndex = 4;
+	sky->MatCBIndex = 3;
 	sky->DiffuseSrvHeapIndex = 6;
 	sky->NormalSrvHeapIndex = 7;
 	sky->DiffuseAlbedo = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
@@ -1024,4 +915,3 @@ std::array<const CD3DX12_STATIC_SAMPLER_DESC, 6> NormalMapApp::GetStaticSamplers
 		linearWrap, linearClamp,
 		anisotropicWrap, anisotropicClamp };
 }
-
