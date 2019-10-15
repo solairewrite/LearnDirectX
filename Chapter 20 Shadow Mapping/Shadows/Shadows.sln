@@ -1,0 +1,51 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29009.5
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Shadows", "Shadows\Shadows.vcxproj", "{75654C36-7CA3-421A-A596-2D7FF4C1B6CC}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Notes", "Notes", "{A9013894-6B6B-4EC9-ABC2-AB8157A0972F}"
+	ProjectSection(SolutionItems) = preProject
+		..\..\Notes\第04章 Direct3D的初始化.md = ..\..\Notes\第04章 Direct3D的初始化.md
+		..\..\Notes\第05章 渲染流水线.md = ..\..\Notes\第05章 渲染流水线.md
+		..\..\Notes\第06章 利用Direct3D绘制几何体.md = ..\..\Notes\第06章 利用Direct3D绘制几何体.md
+		..\..\Notes\第07章 利用Direct3D绘制几何体(续)-LandAndWaves.md = ..\..\Notes\第07章 利用Direct3D绘制几何体(续)-LandAndWaves.md
+		..\..\Notes\第07章 利用Direct3D绘制几何体(续)-Shapes.md = ..\..\Notes\第07章 利用Direct3D绘制几何体(续)-Shapes.md
+		..\..\Notes\第08章 光照.md = ..\..\Notes\第08章 光照.md
+		..\..\Notes\第10章 混合.md = ..\..\Notes\第10章 混合.md
+		..\..\Notes\第11章 模板.md = ..\..\Notes\第11章 模板.md
+		..\..\Notes\第12章 几何着色器.md = ..\..\Notes\第12章 几何着色器.md
+		..\..\Notes\第13章 计算着色器.md = ..\..\Notes\第13章 计算着色器.md
+		..\..\Notes\第14章 曲面细分阶段.md = ..\..\Notes\第14章 曲面细分阶段.md
+		..\..\Notes\第15章 构建第一人称视角的摄像机与动态索引.md = ..\..\Notes\第15章 构建第一人称视角的摄像机与动态索引.md
+		..\..\Notes\第16章 实例化与视锥体剔除.md = ..\..\Notes\第16章 实例化与视锥体剔除.md
+		..\..\Notes\第17章 拾取.md = ..\..\Notes\第17章 拾取.md
+		..\..\Notes\第18章 立方体贴图.md = ..\..\Notes\第18章 立方体贴图.md
+		..\..\Notes\第19章 法线贴图.md = ..\..\Notes\第19章 法线贴图.md
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Debug|x86 = Debug|x86
+		Release|x64 = Release|x64
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{75654C36-7CA3-421A-A596-2D7FF4C1B6CC}.Debug|x64.ActiveCfg = Debug|x64
+		{75654C36-7CA3-421A-A596-2D7FF4C1B6CC}.Debug|x64.Build.0 = Debug|x64
+		{75654C36-7CA3-421A-A596-2D7FF4C1B6CC}.Debug|x86.ActiveCfg = Debug|Win32
+		{75654C36-7CA3-421A-A596-2D7FF4C1B6CC}.Debug|x86.Build.0 = Debug|Win32
+		{75654C36-7CA3-421A-A596-2D7FF4C1B6CC}.Release|x64.ActiveCfg = Release|x64
+		{75654C36-7CA3-421A-A596-2D7FF4C1B6CC}.Release|x64.Build.0 = Release|x64
+		{75654C36-7CA3-421A-A596-2D7FF4C1B6CC}.Release|x86.ActiveCfg = Release|Win32
+		{75654C36-7CA3-421A-A596-2D7FF4C1B6CC}.Release|x86.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {066CBD49-DF35-4C67-A30D-3AD68EE05E6E}
+	EndGlobalSection
+EndGlobal
