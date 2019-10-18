@@ -30,6 +30,8 @@ ID3D12Resource* ShadowMap::Resource()
 
 CD3DX12_GPU_DESCRIPTOR_HANDLE ShadowMap::Srv()const
 {
+	// 这个类的内部并没有将 GpuSrv与资源进行关联
+	// 猜测,外部调用 BuildDescriptors() 之前就已经关联好了 GpsSrv 与资源
 	return mhGpuSrv;
 }
 
@@ -54,7 +56,7 @@ void ShadowMap::BuildDescriptors(
 	CD3DX12_CPU_DESCRIPTOR_HANDLE hCpuDsv)
 {
 	mhCpuSrv = hCpuSrv;
-	mhGpuSrv = hGpuSrv; // 没用到
+	mhGpuSrv = hGpuSrv;
 	mhCpuDsv = hCpuDsv;
 
 	BuildDescriptors();
@@ -68,8 +70,7 @@ void ShadowMap::OnResize(UINT newWidth, UINT newHeight)
 		mHeight = newHeight;
 
 		BuildResource();
-
-		// New resource, so we need new descriptors to that resource.
+		// 新资源需要构建新的描述符
 		BuildDescriptors();
 	}
 }
@@ -80,27 +81,27 @@ void ShadowMap::BuildDescriptors()
 	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
 	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 	srvDesc.Format = DXGI_FORMAT_R24_UNORM_X8_TYPELESS;
-	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D; // Texture2D
 	srvDesc.Texture2D.MostDetailedMip = 0;
 	srvDesc.Texture2D.MipLevels = 1;
 	srvDesc.Texture2D.ResourceMinLODClamp = 0.0f;
 	srvDesc.Texture2D.PlaneSlice = 0;
-	md3dDevice->CreateShaderResourceView(mShadowMap.Get(), &srvDesc, mhCpuSrv);
+	md3dDevice->CreateShaderResourceView(mShadowMap.Get(), &srvDesc, mhCpuSrv); // 创建SRV,mhCpuSrv
 
 	// 创建 DSV, 以便渲染到这个阴影贴图
 	D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc;
 	dsvDesc.Flags = D3D12_DSV_FLAG_NONE;
-	dsvDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
+	dsvDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D; // Texture2D
 	dsvDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
 	dsvDesc.Texture2D.MipSlice = 0;
-	md3dDevice->CreateDepthStencilView(mShadowMap.Get(), &dsvDesc, mhCpuDsv);
+	md3dDevice->CreateDepthStencilView(mShadowMap.Get(), &dsvDesc, mhCpuDsv); // 创建DSV,mhCpuDSV
 }
 
 void ShadowMap::BuildResource()
 {
 	D3D12_RESOURCE_DESC texDesc;
 	ZeroMemory(&texDesc, sizeof(D3D12_RESOURCE_DESC));
-	texDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+	texDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D; // Texture2D
 	texDesc.Alignment = 0;
 	texDesc.Width = mWidth;
 	texDesc.Height = mHeight;

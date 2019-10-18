@@ -1,9 +1,3 @@
-//***************************************************************************************
-// LightingUtil.hlsl by Frank Luna (C) 2015 All Rights Reserved.
-//
-// Contains API for shader lighting.
-//***************************************************************************************
-
 #define MaxLights 16
 
 struct Light
@@ -166,5 +160,3 @@ float4 ComputeLighting(Light gLights[MaxLights], Material mat,
 
     return float4(result, 0.0f);
 }
-
-

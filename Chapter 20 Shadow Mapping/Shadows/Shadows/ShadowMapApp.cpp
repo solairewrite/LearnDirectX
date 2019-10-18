@@ -77,7 +77,6 @@ bool ShadowMapApp::Initialize()
 // 重写创建 RTV 和 DSV
 void ShadowMapApp::CreateRtvAndDsvDescriptorHeaps()
 {
-	// Add +6 RTV for cube render target.
 	D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc;
 	rtvHeapDesc.NumDescriptors = SwapChainBufferCount;
 	rtvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
@@ -122,7 +121,7 @@ void ShadowMapApp::Update(const GameTimer& gt)
 	}
 
 	// 根据时间,动态调整光源及阴影
-	mLightRotationAngle += 0.1f * gt.DeltaTime();
+	mLightRotationAngle += 0.1f*gt.DeltaTime();
 
 	XMMATRIX R = XMMatrixRotationY(mLightRotationAngle);
 	for (int i = 0; i < 3; ++i)
@@ -135,7 +134,7 @@ void ShadowMapApp::Update(const GameTimer& gt)
 	AnimateMaterials(gt);
 	UpdateObjectCBs(gt);
 	UpdateMaterialBuffer(gt);
-	UpdateShadowTransform(gt);
+	UpdateShadowTransform(gt); // 更新矩阵,将物体从世界空间变换到纹理空间
 	UpdateMainPassCB(gt);
 	UpdateShadowPassCB(gt);
 }
@@ -159,7 +158,8 @@ void ShadowMapApp::Draw(const GameTimer& gt)
 
 	// Bind null SRV for shadow map pass.
 	// TextureCube gCubeMap : register(t0)
-	// 空资源? 阴影贴图是立方体贴图?
+	// 理解:绘制阴影图用不上CubeMap,只要传入的格式是TextureCube,无所谓传入什么
+	// mNullSrv对应空的立方体贴图,直接注释掉下面一行代码也无影响
 	mCommandList->SetGraphicsRootDescriptorTable(3, mNullSrv);
 
 	// Texture2D gTextureMaps[10] : register(t2)
@@ -189,14 +189,14 @@ void ShadowMapApp::Draw(const GameTimer& gt)
 	mCommandList->SetGraphicsRootDescriptorTable(3, skyTexDescriptor);
 
 	mCommandList->SetPipelineState(mPSOs["opaque"].Get());
-	DrawRenderItems(mCommandList.Get(), mRitemLayer[(int)RenderLayer::Opaque]);
+	DrawRenderItems(mCommandList.Get(), mRitemLayer[(int)RenderLayer::Opaque]); // Default.hlsl
 
 	// 在屏幕右下角,绘制阴影图的小图,猜测逻辑在 shader 中实现
 	mCommandList->SetPipelineState(mPSOs["debug"].Get());
-	DrawRenderItems(mCommandList.Get(), mRitemLayer[(int)RenderLayer::Debug]);
+	DrawRenderItems(mCommandList.Get(), mRitemLayer[(int)RenderLayer::Debug]); // ShadowDebug.hlsl
 
 	mCommandList->SetPipelineState(mPSOs["sky"].Get());
-	DrawRenderItems(mCommandList.Get(), mRitemLayer[(int)RenderLayer::Sky]);
+	DrawRenderItems(mCommandList.Get(), mRitemLayer[(int)RenderLayer::Sky]); // Sky.hlsl
 
 	mCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(CurrentBackBuffer(),
 		D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
@@ -331,18 +331,17 @@ void ShadowMapApp::UpdateMaterialBuffer(const GameTimer& gt)
 
 void ShadowMapApp::UpdateShadowTransform(const GameTimer& gt)
 {
-	// 只有第一个主光源才投射出物体的阴影
+	// 只有主光源生成阴影
 	XMVECTOR lightDir = XMLoadFloat3(&mRotatedLightDirections[0]);
-	XMVECTOR lightPos = -2.0f * mSceneBounds.Radius * lightDir;
+	XMVECTOR lightPos = -2.0f*mSceneBounds.Radius*lightDir;
 	XMVECTOR targetPos = XMLoadFloat3(&mSceneBounds.Center);
 	XMVECTOR lightUp = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
-	XMMATRIX lightView = XMMatrixLookAtLH(lightPos, targetPos, lightUp); // 为什么上向量可以和视线方向不垂直?
+	XMMATRIX lightView = XMMatrixLookAtLH(lightPos, targetPos, lightUp); // 为什么上向量可以和实现方向不垂直
 
 	XMStoreFloat3(&mLightPosW, lightPos);
 
-	// 将包围球变换到光源空间
+	// 将包围球变换到光源空间 light space
 	XMFLOAT3 sphereCenterLS;
-	// XMVector3TransformCoord(), 返回向量*变换矩阵
 	XMStoreFloat3(&sphereCenterLS, XMVector3TransformCoord(targetPos, lightView));
 
 	// 位于光源空间中包围场景的正交投影视景体
@@ -358,14 +357,14 @@ void ShadowMapApp::UpdateShadowTransform(const GameTimer& gt)
 	// 构建正交投影矩阵
 	XMMATRIX lightProj = XMMatrixOrthographicOffCenterLH(l, r, b, t, n, f);
 
-	// 将坐标范围[-1,1]的DNC空间变换到范围[0,1]的纹理空间,P597
+	// 将坐标范围[-1,1]的NDC空间变换到范围[0,1]的纹理空间,P597
 	XMMATRIX T(
 		0.5f, 0.0f, 0.0f, 0.0f,
 		0.0f, -0.5f, 0.0f, 0.0f,
 		0.0f, 0.0f, 1.0f, 0.0f,
 		0.5f, 0.5f, 0.0f, 1.0f);
 
-	XMMATRIX S = lightView * lightProj * T;
+	XMMATRIX S = lightView * lightProj*T;
 	XMStoreFloat4x4(&mLightView, lightView);
 	XMStoreFloat4x4(&mLightProj, lightProj);
 	XMStoreFloat4x4(&mShadowTransform, S);
@@ -497,7 +496,6 @@ void ShadowMapApp::BuildRootSignature()
 	// Texture2D gTextureMaps[10] : register(t2)
 	slotRootParameter[4].InitAsDescriptorTable(1, &texTable1, D3D12_SHADER_VISIBILITY_PIXEL);
 
-
 	auto staticSamplers = GetStaticSamplers();
 
 	// A root signature is an array of root parameters.
@@ -527,7 +525,7 @@ void ShadowMapApp::BuildDescriptorHeaps()
 {
 	// 创建 SRV 堆
 	D3D12_DESCRIPTOR_HEAP_DESC srvHeapDesc = {};
-	srvHeapDesc.NumDescriptors = 14;
+	srvHeapDesc.NumDescriptors = 14; // 是为了放余量才这么大吗
 	srvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
 	srvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 	ThrowIfFailed(md3dDevice->CreateDescriptorHeap(&srvHeapDesc, IID_PPV_ARGS(&mSrvDescriptorHeap)));
@@ -549,7 +547,7 @@ void ShadowMapApp::BuildDescriptorHeaps()
 
 	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
 	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D; // Texture2D
 	srvDesc.Texture2D.MostDetailedMip = 0;
 	srvDesc.Texture2D.ResourceMinLODClamp = 0.0f;
 
@@ -558,47 +556,49 @@ void ShadowMapApp::BuildDescriptorHeaps()
 	{
 		srvDesc.Format = tex2DList[i]->GetDesc().Format;
 		srvDesc.Texture2D.MipLevels = tex2DList[i]->GetDesc().MipLevels;
+		// 理解: 创建 SRV 即将资源,资源描述和句柄绑定,向GPU传递资源时,指定句柄即指定了资源
 		md3dDevice->CreateShaderResourceView(tex2DList[i].Get(), &srvDesc, hDescriptor);
 
-		// next descriptor
 		hDescriptor.Offset(1, mCbvSrvUavDescriptorSize);
 	}
 
-	// 天空盒 mSkyTexHeapIndex = 6
-	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBE;
+	// 天空盒 
+	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBE; // TextureCube
 	srvDesc.TextureCube.MostDetailedMip = 0;
 	srvDesc.TextureCube.MipLevels = skyCubeMap->GetDesc().MipLevels;
 	srvDesc.TextureCube.ResourceMinLODClamp = 0.0f;
 	srvDesc.Format = skyCubeMap->GetDesc().Format;
 	md3dDevice->CreateShaderResourceView(skyCubeMap.Get(), &srvDesc, hDescriptor);
 
+	// mSkyTexHeapIndex = 6
 	mSkyTexHeapIndex = (UINT)tex2DList.size();
 	// 阴影 mShadowMapHeapIndex = 7
 	mShadowMapHeapIndex = mSkyTexHeapIndex + 1;
 	// mNullCubeSrvIndex = 8
 	mNullCubeSrvIndex = mShadowMapHeapIndex + 1;
-	// mNullTexSrvIndex
+	// mNullTexSrvIndex = 9
 	mNullTexSrvIndex = mNullCubeSrvIndex + 1;
 
 	auto srvCpuStart = mSrvDescriptorHeap->GetCPUDescriptorHandleForHeapStart();
-	auto srvGpuStart = mSrvDescriptorHeap->GetGPUDescriptorHandleForHeapStart();
-	auto dsvCpuStart = mDsvHeap->GetCPUDescriptorHandleForHeapStart();
+	auto srvGpuStart = mSrvDescriptorHeap->GetGPUDescriptorHandleForHeapStart(); // mSrvDescriptorHeap 此项目中定义
+	auto dsvCpuStart = mDsvHeap->GetCPUDescriptorHandleForHeapStart(); // mDsvHeap 基类中定义
 
 	auto nullSrv = CD3DX12_CPU_DESCRIPTOR_HANDLE(srvCpuStart, mNullCubeSrvIndex, mCbvSrvUavDescriptorSize);
 	mNullSrv = CD3DX12_GPU_DESCRIPTOR_HANDLE(srvGpuStart, mNullCubeSrvIndex, mCbvSrvUavDescriptorSize);
 
-	// mNullCubeSrvIndex 处创建了一个空资源 TextureCube
+	// mNullCubeSrvIndex = 8 处创建了一个空资源 TextureCube
 	md3dDevice->CreateShaderResourceView(nullptr, &srvDesc, nullSrv);
 	nullSrv.Offset(1, mCbvSrvUavDescriptorSize);
 
-	// mNullCubeSrvIndex 下一处创建了一个空资源 Texture2D
-	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+	// mNullTexSrvIndex = 9 处创建了一个空资源 Texture2D
+	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D; // Texture2D
 	srvDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 	srvDesc.Texture2D.MostDetailedMip = 0;
 	srvDesc.Texture2D.MipLevels = 1;
 	srvDesc.Texture2D.ResourceMinLODClamp = 0.0f;
 	md3dDevice->CreateShaderResourceView(nullptr, &srvDesc, nullSrv);
 
+	// mShadowMapHeapIndex = 7,分配给阴影图
 	mShadowMap->BuildDescriptors(
 		CD3DX12_CPU_DESCRIPTOR_HANDLE(srvCpuStart, mShadowMapHeapIndex, mCbvSrvUavDescriptorSize),
 		CD3DX12_GPU_DESCRIPTOR_HANDLE(srvGpuStart, mShadowMapHeapIndex, mCbvSrvUavDescriptorSize),
@@ -903,7 +903,7 @@ void ShadowMapApp::BuildPSOs()
 	ZeroMemory(&opaquePsoDesc, sizeof(D3D12_GRAPHICS_PIPELINE_STATE_DESC));
 	opaquePsoDesc.InputLayout = { mInputLayout.data(), (UINT)mInputLayout.size() };
 	opaquePsoDesc.pRootSignature = mRootSignature.Get();
-	opaquePsoDesc.VS =
+	opaquePsoDesc.VS = // Default.hlsl
 	{
 		reinterpret_cast<BYTE*>(mShaders["standardVS"]->GetBufferPointer()),
 		mShaders["standardVS"]->GetBufferSize()
@@ -931,7 +931,7 @@ void ShadowMapApp::BuildPSOs()
 	smapPsoDesc.RasterizerState.DepthBiasClamp = 0.0f;
 	smapPsoDesc.RasterizerState.SlopeScaledDepthBias = 1.0f;
 	smapPsoDesc.pRootSignature = mRootSignature.Get();
-	smapPsoDesc.VS =
+	smapPsoDesc.VS = // Shadows.hlsl
 	{
 		reinterpret_cast<BYTE*>(mShaders["shadowVS"]->GetBufferPointer()),
 		mShaders["shadowVS"]->GetBufferSize()
@@ -942,7 +942,6 @@ void ShadowMapApp::BuildPSOs()
 		mShaders["shadowOpaquePS"]->GetBufferSize()
 	};
 
-	// Shadow map pass does not have a render target.
 	// 阴影图的渲染过程无需涉及渲染目标
 	smapPsoDesc.RTVFormats[0] = DXGI_FORMAT_UNKNOWN;
 	smapPsoDesc.NumRenderTargets = 0;
@@ -951,7 +950,7 @@ void ShadowMapApp::BuildPSOs()
 	// 调试层 PSO
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC debugPsoDesc = opaquePsoDesc;
 	debugPsoDesc.pRootSignature = mRootSignature.Get();
-	debugPsoDesc.VS =
+	debugPsoDesc.VS = // ShadowDebug.hlsl
 	{
 		reinterpret_cast<BYTE*>(mShaders["debugVS"]->GetBufferPointer()),
 		mShaders["debugVS"]->GetBufferSize()
@@ -968,7 +967,7 @@ void ShadowMapApp::BuildPSOs()
 	skyPsoDesc.RasterizerState.CullMode = D3D12_CULL_MODE_NONE;
 	skyPsoDesc.DepthStencilState.DepthFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL;
 	skyPsoDesc.pRootSignature = mRootSignature.Get();
-	skyPsoDesc.VS =
+	skyPsoDesc.VS = // Sky.hlsl
 	{
 		reinterpret_cast<BYTE*>(mShaders["skyVS"]->GetBufferPointer()),
 		mShaders["skyVS"]->GetBufferSize()
@@ -1034,7 +1033,7 @@ void ShadowMapApp::BuildMaterials()
 	sky->Name = "sky";
 	sky->MatCBIndex = 4;
 	sky->DiffuseSrvHeapIndex = 6;
-	sky->NormalSrvHeapIndex = 7; // 对应 mShadowMapHeapIndex ?
+	sky->NormalSrvHeapIndex = 7; // 对应 mShadowMapHeapIndex ?,这是Texture2D,亲测法线无影响
 	sky->DiffuseAlbedo = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
 	sky->FresnelR0 = XMFLOAT3(0.1f, 0.1f, 0.1f);
 	sky->Roughness = 1.0f;
@@ -1062,6 +1061,7 @@ void ShadowMapApp::BuildRenderItems()
 	mRitemLayer[(int)RenderLayer::Sky].push_back(skyRitem.get());
 	mAllRitems.push_back(std::move(skyRitem));
 
+	// 阴影贴图灰度层
 	auto quadRitem = std::make_unique<RenderItem>();
 	quadRitem->World = MathHelper::Identity4x4();
 	quadRitem->TexTransform = MathHelper::Identity4x4();
@@ -1231,8 +1231,8 @@ void ShadowMapApp::DrawSceneToShadowMap()
 	mCommandList->SetGraphicsRootConstantBufferView(1, passCBAddress);
 
 	mCommandList->SetPipelineState(mPSOs["shadow_opaque"].Get());
-
-	DrawRenderItems(mCommandList.Get(), mRitemLayer[(int)RenderLayer::Opaque]);
+	// 将场景绘制到阴影贴图中
+	DrawRenderItems(mCommandList.Get(), mRitemLayer[(int)RenderLayer::Opaque]); // Shadows.hlsl
 
 	mCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(mShadowMap->Resource(),
 		D3D12_RESOURCE_STATE_DEPTH_WRITE, D3D12_RESOURCE_STATE_GENERIC_READ));

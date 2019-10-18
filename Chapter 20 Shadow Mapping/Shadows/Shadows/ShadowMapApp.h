@@ -38,7 +38,7 @@ struct RenderItem
 enum class RenderLayer : int
 {
 	Opaque = 0,
-	Debug,
+	Debug, // 右下角的阴影贴图灰度图
 	Sky,
 	Count
 };
@@ -104,10 +104,7 @@ private:
 
 	std::vector<D3D12_INPUT_ELEMENT_DESC> mInputLayout;
 
-	// List of all the render items.
 	std::vector<std::unique_ptr<RenderItem>> mAllRitems;
-
-	// Render items divided by PSO.
 	std::vector<RenderItem*> mRitemLayer[(int)RenderLayer::Count];
 
 	UINT mSkyTexHeapIndex = 0;
@@ -116,7 +113,8 @@ private:
 	UINT mNullCubeSrvIndex = 0;
 	UINT mNullTexSrvIndex = 0;
 
-	CD3DX12_GPU_DESCRIPTOR_HANDLE mNullSrv;
+	// mSrvDescriptorHeap 中,第 mNullCubeSrvIndex 个句柄,下一个是 mNullTexSrvIndex
+	CD3DX12_GPU_DESCRIPTOR_HANDLE mNullSrv; 
 
 	PassConstants mMainPassCB;  // index 0 of pass cbuffer.
 	PassConstants mShadowPassCB;// index 1 of pass cbuffer.
