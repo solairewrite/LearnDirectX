@@ -57,61 +57,56 @@ VertexOut VS(VertexIn vin)
 
 float4 PS(VertexOut pin) : SV_Target
 {
-	// Fetch the material data.
     MaterialData matData = gMaterialData[gMaterialIndex];
     float4 diffuseAlbedo = matData.DiffuseAlbedo;
     float3 fresnelR0 = matData.FresnelR0;
     float roughness = matData.Roughness;
     uint diffuseMapIndex = matData.DiffuseMapIndex;
     uint normalMapIndex = matData.NormalMapIndex;
-	
-    // Dynamically look up the texture in the array.
-    diffuseAlbedo *= gTextureMaps[diffuseMapIndex].Sample(gsamAnisotropicWrap, pin.TexC);
+
+    diffuseAlbedo *= gTextureMaps[diffuseMapIndex].Sample(gsamLinearWrap, pin.TexC);
 
 #ifdef ALPHA_TEST
-    // Discard pixel if texture alpha < 0.1.  We do this test as soon 
-    // as possible in the shader so that we can potentially exit the
-    // shader early, thereby skipping the rest of the shader code.
-    clip(diffuseAlbedo.a - 0.1f);
+	clip(diffuseAlbedo.abort-0.1f);
 #endif
 
-	// Interpolating normal can unnormalize it, so renormalize it.
     pin.NormalW = normalize(pin.NormalW);
-	
-    float4 normalMapSample = gTextureMaps[normalMapIndex].Sample(gsamAnisotropicWrap, pin.TexC);
+
+    float4 normalMapSample = gTextureMaps[normalMapIndex].Sample(gsamLinearWrap, pin.TexC);
+    // 将法线贴图采样转换到世界空间
     float3 bumpedNormalW = NormalSampleToWorldSpace(normalMapSample.rgb, pin.NormalW, pin.TangentW);
 
-	// Uncomment to turn off normal mapping.
+	// 取消注释以关闭法线贴图
     //bumpedNormalW = pin.NormalW;
 
-    // Vector from point being lit to eye. 
+	// 像素点到眼睛的向量
     float3 toEyeW = normalize(gEyePosW - pin.PosW);
 
-    // Light terms.
+	// 环境光影响
     float4 ambient = gAmbientLight * diffuseAlbedo;
 
-    // Only the first light casts a shadow.
-	// 只有第一个光源才投射物体阴影
+	// 只有主光源才投射物体阴影
     float3 shadowFactor = float3(1.0f, 1.0f, 1.0f);
+	// 阴影因子[0,1],对于一个点,0表示位于阴影之中,1表示阴影之外,0~1表示部分处于阴影之中
+	// 将此点的深度值,分别与以此点为中心的9个点的阴影图采样值比较,计算平均值
     shadowFactor[0] = CalcShadowFactor(pin.ShadowPosH);
 
-    const float shininess = (1.0f - roughness) * normalMapSample.a;
+    const float shininess = (1.0f - roughness) * normalMapSample.a; // TODO 使用bumpedNormalW
     Material mat = { diffuseAlbedo, fresnelR0, shininess };
-    float4 directLight = ComputeLighting(gLights, mat, pin.PosW,
-        bumpedNormalW, toEyeW, shadowFactor);
+
+	// 光源影响
+	// 这里使用法线贴图采样
+    float4 directLight = ComputeLighting(gLights, mat, pin.PosW, bumpedNormalW, toEyeW, shadowFactor);
 
     float4 litColor = ambient + directLight;
 
-	// Add in specular reflections.
+	// 天空盒高光反射
     float3 r = reflect(-toEyeW, bumpedNormalW);
     float4 reflectionColor = gCubeMap.Sample(gsamLinearWrap, r);
     float3 fresnelFactor = SchlickFresnel(fresnelR0, bumpedNormalW, r);
     litColor.rgb += shininess * fresnelFactor * reflectionColor.rgb;
-	
-    // Common convention to take alpha from diffuse albedo.
+
     litColor.a = diffuseAlbedo.a;
 
     return litColor;
 }
-
-

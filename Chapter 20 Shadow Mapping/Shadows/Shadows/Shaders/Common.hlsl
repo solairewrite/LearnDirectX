@@ -93,6 +93,7 @@ float3 NormalSampleToWorldSpace(float3 normalMapSample, float3 uintNormalW, floa
 
 // PCF: Percentage Closer Filtering, 百分比渐近过滤
 // 阴影因子[0,1],对于一个点,0表示位于阴影之中,1表示阴影之外,0~1表示部分处于阴影之中
+// 将此点的深度值,分别与以此点为中心的9个点的阴影图采样值比较,计算平均值
 float CalcShadowFactor(float4 shadowPosH)
 {
 	// 通过除以w来完成投影操作
@@ -120,6 +121,8 @@ float CalcShadowFactor(float4 shadowPosH)
     for (int i = 0; i < 9; ++i)
     {
 		// 使用比较采样器,LevelZero意味着只能在最高的mipmap层级中才能执行此函数
+		// 比较阴影图中的深度与像素点的深度
+		// 猜测:CPU中设置比较函数 <=, 如果 depth <= sample,则返回1,否则返回0
         percentLit += gShadowMap.SampleCmpLevelZero(gsamShadow,
 			shadowPosH.xy + offsets[i], depth).r;
     }
