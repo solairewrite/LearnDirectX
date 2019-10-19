@@ -613,6 +613,7 @@ GeometryGenerator::MeshData GeometryGenerator::CreateGrid(float width, float dep
 	return meshData;
 }
 
+// 直接在DDC空间构建矩形顶点
 GeometryGenerator::MeshData GeometryGenerator::CreateQuad(float x, float y, float w, float h, float depth)
 {
 	MeshData meshData;
@@ -621,6 +622,7 @@ GeometryGenerator::MeshData GeometryGenerator::CreateQuad(float x, float y, floa
 	meshData.Indices32.resize(6);
 
 	// Position coordinates specified in NDC space.
+	// NDC空间坐标[-1,1][-1,1][0,1],但是这里只设置了[0,1][0,-1],所以只有屏幕右下角的1/4大小
 	meshData.Vertices[0] = Vertex(
 		x, y - h, depth,
 		0.0f, 0.0f, -1.0f,

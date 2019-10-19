@@ -1,8 +1,3 @@
-//***************************************************************************************
-// ShadowDebug.hlsl by Frank Luna (C) 2015 All Rights Reserved.
-//***************************************************************************************
-
-// Include common HLSL code.
 #include "Common.hlsl"
 
 struct VertexIn
@@ -21,7 +16,7 @@ VertexOut VS(VertexIn vin)
 {
     VertexOut vout = (VertexOut) 0.0f;
 
-    // Already in homogeneous clip space.
+    // 已经是NDC空间的坐标
     vout.PosH = float4(vin.PosL, 1.0f);
 	
     vout.TexC = vin.TexC;
@@ -31,7 +26,6 @@ VertexOut VS(VertexIn vin)
 
 float4 PS(VertexOut pin) : SV_Target
 {
-    return float4(gShadowMap.Sample(gsamLinearWrap, pin.TexC).rrr, 1.0f);
+	// 显示灰度图 
+    return float4(gShadowMap.Sample(gsamLinearClamp, pin.TexC).rrr, 1.0f);
 }
-
-
