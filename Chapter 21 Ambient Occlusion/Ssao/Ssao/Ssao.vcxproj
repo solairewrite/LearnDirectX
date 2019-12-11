@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
       <Configuration>Debug</Configuration>
@@ -19,23 +19,23 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <VCProjectVersion>16.0</VCProjectVersion>
-    <ProjectGuid>{75654C36-7CA3-421A-A596-2D7FF4C1B6CC}</ProjectGuid>
+    <VCProjectVersion>15.0</VCProjectVersion>
+    <ProjectGuid>{2F5D4DA9-0FD4-415A-80A3-7A74DF959FD4}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>Shadows</RootNamespace>
+    <RootNamespace>Ssao</RootNamespace>
     <WindowsTargetPlatformVersion>10.0.17763.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v141</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v141</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
@@ -48,7 +48,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v141</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
@@ -91,8 +91,8 @@
       <ConformanceMode>true</ConformanceMode>
     </ClCompile>
     <Link>
-      <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <SubSystem>Windows</SubSystem>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -104,8 +104,8 @@
       <ConformanceMode>true</ConformanceMode>
     </ClCompile>
     <Link>
-      <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <SubSystem>Windows</SubSystem>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -119,10 +119,10 @@
       <ConformanceMode>true</ConformanceMode>
     </ClCompile>
     <Link>
-      <SubSystem>Windows</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <SubSystem>Windows</SubSystem>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -136,17 +136,47 @@
       <ConformanceMode>true</ConformanceMode>
     </ClCompile>
     <Link>
-      <SubSystem>Windows</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <SubSystem>Windows</SubSystem>
     </Link>
   </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\..\Common\Camera.cpp" />
+    <ClCompile Include="..\..\..\Common\d3dApp.cpp" />
+    <ClCompile Include="..\..\..\Common\d3dUtil.cpp" />
+    <ClCompile Include="..\..\..\Common\DDSTextureLoader.cpp" />
+    <ClCompile Include="..\..\..\Common\GameTimer.cpp" />
+    <ClCompile Include="..\..\..\Common\GeometryGenerator.cpp" />
+    <ClCompile Include="..\..\..\Common\MathHelper.cpp" />
+    <ClCompile Include="FrameResource.cpp" />
+    <ClCompile Include="ShadowMap.cpp" />
+    <ClCompile Include="Ssao.cpp" />
+    <ClCompile Include="SsaoApp.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\..\Common\Camera.h" />
+    <ClInclude Include="..\..\..\Common\d3dApp.h" />
+    <ClInclude Include="..\..\..\Common\d3dUtil.h" />
+    <ClInclude Include="..\..\..\Common\d3dx12.h" />
+    <ClInclude Include="..\..\..\Common\DDSTextureLoader.h" />
+    <ClInclude Include="..\..\..\Common\GameTimer.h" />
+    <ClInclude Include="..\..\..\Common\GeometryGenerator.h" />
+    <ClInclude Include="..\..\..\Common\MathHelper.h" />
+    <ClInclude Include="..\..\..\Common\UploadBuffer.h" />
+    <ClInclude Include="FrameResource.h" />
+    <ClInclude Include="ShadowMap.h" />
+    <ClInclude Include="Ssao.h" />
+  </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\Common.hlsl">
       <FileType>Document</FileType>
     </None>
     <None Include="Shaders\Default.hlsl">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="Shaders\DrawNormals.hlsl">
       <FileType>Document</FileType>
     </None>
     <None Include="Shaders\LightingUtil.hlsl">
@@ -161,32 +191,21 @@
     <None Include="Shaders\Sky.hlsl">
       <FileType>Document</FileType>
     </None>
+    <None Include="Shaders\Ssao.hlsl">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="Shaders\SsaoBlur.hlsl">
+      <FileType>Document</FileType>
+    </None>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\..\Common\Camera.cpp" />
-    <ClCompile Include="..\..\..\Common\d3dApp.cpp" />
-    <ClCompile Include="..\..\..\Common\d3dUtil.cpp" />
-    <ClCompile Include="..\..\..\Common\DDSTextureLoader.cpp" />
-    <ClCompile Include="..\..\..\Common\GameTimer.cpp" />
-    <ClCompile Include="..\..\..\Common\GeometryGenerator.cpp" />
-    <ClCompile Include="..\..\..\Common\MathHelper.cpp" />
-    <ClCompile Include="FrameResource.cpp" />
-    <ClCompile Include="ShadowMap.cpp" />
-    <ClCompile Include="ShadowMapApp.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="..\..\..\Common\Camera.h" />
-    <ClInclude Include="..\..\..\Common\d3dApp.h" />
-    <ClInclude Include="..\..\..\Common\d3dUtil.h" />
-    <ClInclude Include="..\..\..\Common\d3dx12.h" />
-    <ClInclude Include="..\..\..\Common\DDSTextureLoader.h" />
-    <ClInclude Include="..\..\..\Common\GameTimer.h" />
-    <ClInclude Include="..\..\..\Common\GeometryGenerator.h" />
-    <ClInclude Include="..\..\..\Common\MathHelper.h" />
-    <ClInclude Include="..\..\..\Common\UploadBuffer.h" />
-    <ClInclude Include="FrameResource.h" />
-    <ClInclude Include="ShadowMap.h" />
-    <ClInclude Include="ShadowMapApp.h" />
+    <Image Include="..\..\..\Textures\bricks2.dds" />
+    <Image Include="..\..\..\Textures\bricks2_nmap.dds" />
+    <Image Include="..\..\..\Textures\default_nmap.dds" />
+    <Image Include="..\..\..\Textures\sunsetcube1024.dds" />
+    <Image Include="..\..\..\Textures\tile.dds" />
+    <Image Include="..\..\..\Textures\tile_nmap.dds" />
+    <Image Include="..\..\..\Textures\white1x1.dds" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
