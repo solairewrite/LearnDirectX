@@ -5,6 +5,28 @@ VisualStudioVersion = 15.0.28307.645
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Ssao", "Ssao\Ssao.vcxproj", "{2F5D4DA9-0FD4-415A-80A3-7A74DF959FD4}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Notes", "Notes", "{34B5C689-E4B4-42A7-BE5F-E60E90ECE12A}"
+	ProjectSection(SolutionItems) = preProject
+		..\..\Notes\第04章 Direct3D的初始化.md = ..\..\Notes\第04章 Direct3D的初始化.md
+		..\..\Notes\第05章 渲染流水线.md = ..\..\Notes\第05章 渲染流水线.md
+		..\..\Notes\第06章 利用Direct3D绘制几何体.md = ..\..\Notes\第06章 利用Direct3D绘制几何体.md
+		..\..\Notes\第07章 利用Direct3D绘制几何体(续)-LandAndWaves.md = ..\..\Notes\第07章 利用Direct3D绘制几何体(续)-LandAndWaves.md
+		..\..\Notes\第07章 利用Direct3D绘制几何体(续)-Shapes.md = ..\..\Notes\第07章 利用Direct3D绘制几何体(续)-Shapes.md
+		..\..\Notes\第08章 光照.md = ..\..\Notes\第08章 光照.md
+		..\..\Notes\第10章 混合.md = ..\..\Notes\第10章 混合.md
+		..\..\Notes\第11章 模板.md = ..\..\Notes\第11章 模板.md
+		..\..\Notes\第12章 几何着色器.md = ..\..\Notes\第12章 几何着色器.md
+		..\..\Notes\第13章 计算着色器.md = ..\..\Notes\第13章 计算着色器.md
+		..\..\Notes\第14章 曲面细分阶段.md = ..\..\Notes\第14章 曲面细分阶段.md
+		..\..\Notes\第15章 构建第一人称视角的摄像机与动态索引.md = ..\..\Notes\第15章 构建第一人称视角的摄像机与动态索引.md
+		..\..\Notes\第16章 实例化与视锥体剔除.md = ..\..\Notes\第16章 实例化与视锥体剔除.md
+		..\..\Notes\第17章 拾取.md = ..\..\Notes\第17章 拾取.md
+		..\..\Notes\第18章 立方体贴图.md = ..\..\Notes\第18章 立方体贴图.md
+		..\..\Notes\第19章 法线贴图.md = ..\..\Notes\第19章 法线贴图.md
+		..\..\Notes\第20章 阴影贴图.md = ..\..\Notes\第20章 阴影贴图.md
+		..\..\Notes\第21章 环境光遮蔽.md = ..\..\Notes\第21章 环境光遮蔽.md
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64

@@ -168,6 +168,7 @@
     <ClInclude Include="FrameResource.h" />
     <ClInclude Include="ShadowMap.h" />
     <ClInclude Include="Ssao.h" />
+    <ClInclude Include="SsaoApp.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\Common.hlsl">
