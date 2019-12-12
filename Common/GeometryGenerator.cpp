@@ -613,7 +613,7 @@ GeometryGenerator::MeshData GeometryGenerator::CreateGrid(float width, float dep
 	return meshData;
 }
 
-// 直接在DDC空间构建矩形顶点
+// 直接在NDC空间构建矩形顶点
 GeometryGenerator::MeshData GeometryGenerator::CreateQuad(float x, float y, float w, float h, float depth)
 {
 	MeshData meshData;

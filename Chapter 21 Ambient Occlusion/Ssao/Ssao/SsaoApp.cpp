@@ -321,18 +321,25 @@ void SsaoApp::OnMouseMove(WPARAM btnState, int x, int y)
 void SsaoApp::OnKeyboardInput(const GameTimer& gt)
 {
 	const float dt = gt.DeltaTime();
+	const float CameraSpeed = 10.0f;
 
 	if (GetAsyncKeyState('W') & 0x8000)
-		mCamera.Walk(10.0f*dt);
+		mCamera.Walk(CameraSpeed*dt);
 
 	if (GetAsyncKeyState('S') & 0x8000)
-		mCamera.Walk(-10.0f*dt);
+		mCamera.Walk(-CameraSpeed *dt);
 
 	if (GetAsyncKeyState('A') & 0x8000)
-		mCamera.Strafe(-10.0f*dt);
+		mCamera.Strafe(-CameraSpeed *dt);
 
 	if (GetAsyncKeyState('D') & 0x8000)
-		mCamera.Strafe(10.0f*dt);
+		mCamera.Strafe(CameraSpeed*dt);
+
+	if (GetAsyncKeyState('Q') & 0x8000)
+		mCamera.UpDown(-CameraSpeed * dt);
+
+	if (GetAsyncKeyState('E') & 0x8000)
+		mCamera.UpDown(CameraSpeed * dt);
 
 	mCamera.UpdateViewMatrix();
 }
@@ -842,7 +849,7 @@ void SsaoApp::BuildShapeGeometry()
 	GeometryGenerator::MeshData grid = geoGen.CreateGrid(20.0f, 30.0f, 60, 40);
 	GeometryGenerator::MeshData sphere = geoGen.CreateSphere(0.5f, 20, 20);
 	GeometryGenerator::MeshData cylinder = geoGen.CreateCylinder(0.5f, 0.3f, 3.0f, 20, 20);
-	GeometryGenerator::MeshData quad = geoGen.CreateQuad(0.0f, 0.0f, 1.0f, 1.0f, 0.0f);
+	GeometryGenerator::MeshData quad = geoGen.CreateQuad(0.5f, 1.0f, 0.5f, 0.5f, 0.0f);
 
 	//
 	// We are concatenating all the geometry into one big vertex/index buffer.  So

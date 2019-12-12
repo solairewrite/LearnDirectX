@@ -645,7 +645,8 @@ void ShadowMapApp::BuildShapeGeometry()
 	GeometryGenerator::MeshData sphere = geoGen.CreateSphere(0.5f, 20, 20);
 	GeometryGenerator::MeshData cylinder = geoGen.CreateCylinder(0.5f, 0.3f, 3.0f, 20, 20);
 	// 直接在NDC空间构建矩形顶点,所以C++中无需进行坐标转换,传给着色器的顶点可以直接使用
-	GeometryGenerator::MeshData quad = geoGen.CreateQuad(0.5f, 1.0f, 0.5f, 0.5f, 0.0f); // quad: 1/4
+	// 设置阴影图位置
+	GeometryGenerator::MeshData quad = geoGen.CreateQuad(0.5f, 1.0f, 0.5f, 0.5f, 0.0f); 
 
 	//
 	// We are concatenating all the geometry into one big vertex/index buffer.  So
