@@ -26,10 +26,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance,
 SsaoApp::SsaoApp(HINSTANCE hInstance)
 	: D3DApp(hInstance)
 {
-	// Estimate the scene bounding sphere manually since we know how the scene was constructed.
-	// The grid is the "widest object" with a width of 20 and depth of 30.0f, and centered at
-	// the world space origin.  In general, you need to loop over every world space vertex
-	// position and compute the bounding sphere.
+	// 手动估算场景包围球,因为知道场景是如何构建的
+	// 最大的对象是,宽20,深30的矩形,中心在世界原点
+	// 正常情况下,需要遍历所有的顶点,计算包围球
 	mSceneBounds.Center = XMFLOAT3(0.0f, 0.0f, 0.0f);
 	mSceneBounds.Radius = sqrtf(10.0f*10.0f + 15.0f*15.0f);
 }
@@ -50,8 +49,7 @@ bool SsaoApp::Initialize()
 
 	mCamera.SetPosition(0.0f, 2.0f, -15.0f);
 
-	mShadowMap = std::make_unique<ShadowMap>(md3dDevice.Get(),
-		2048, 2048);
+	mShadowMap = std::make_unique<ShadowMap>(md3dDevice.Get(), 2048, 2048);
 
 	mSsao = std::make_unique<Ssao>(
 		md3dDevice.Get(),
@@ -327,10 +325,10 @@ void SsaoApp::OnKeyboardInput(const GameTimer& gt)
 		mCamera.Walk(CameraSpeed*dt);
 
 	if (GetAsyncKeyState('S') & 0x8000)
-		mCamera.Walk(-CameraSpeed *dt);
+		mCamera.Walk(-CameraSpeed * dt);
 
 	if (GetAsyncKeyState('A') & 0x8000)
-		mCamera.Strafe(-CameraSpeed *dt);
+		mCamera.Strafe(-CameraSpeed * dt);
 
 	if (GetAsyncKeyState('D') & 0x8000)
 		mCamera.Strafe(CameraSpeed*dt);

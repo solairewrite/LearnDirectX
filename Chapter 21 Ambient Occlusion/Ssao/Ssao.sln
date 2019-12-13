@@ -7,6 +7,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Ssao", "Ssao\Ssao.vcxproj",
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Notes", "Notes", "{34B5C689-E4B4-42A7-BE5F-E60E90ECE12A}"
 	ProjectSection(SolutionItems) = preProject
+		..\..\Notes\VS 快捷键.md = ..\..\Notes\VS 快捷键.md
 		..\..\Notes\第04章 Direct3D的初始化.md = ..\..\Notes\第04章 Direct3D的初始化.md
 		..\..\Notes\第05章 渲染流水线.md = ..\..\Notes\第05章 渲染流水线.md
 		..\..\Notes\第06章 利用Direct3D绘制几何体.md = ..\..\Notes\第06章 利用Direct3D绘制几何体.md

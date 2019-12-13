@@ -6,14 +6,10 @@
 #include "../../../Common/d3dUtil.h"
 #include "FrameResource.h"
 
-
 class Ssao
 {
 public:
-
-	Ssao(ID3D12Device* device,
-		ID3D12GraphicsCommandList* cmdList,
-		UINT width, UINT height);
+	Ssao(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList, UINT width, UINT height);
 	Ssao(const Ssao& rhs) = delete;
 	Ssao& operator=(const Ssao& rhs) = delete;
 	~Ssao() = default;
@@ -23,19 +19,18 @@ public:
 
 	static const int MaxBlurRadius = 5;
 
-	UINT SsaoMapWidth()const;
-	UINT SsaoMapHeight()const;
+	UINT SsaoMapWidth() const;
+	UINT SsaoMapHeight() const;
 
 	void GetOffsetVectors(DirectX::XMFLOAT4 offsets[14]);
 	std::vector<float> CalcGaussWeights(float sigma);
 
-
 	ID3D12Resource* NormalMap();
 	ID3D12Resource* AmbientMap();
 
-	CD3DX12_CPU_DESCRIPTOR_HANDLE NormalMapRtv()const;
-	CD3DX12_GPU_DESCRIPTOR_HANDLE NormalMapSrv()const;
-	CD3DX12_GPU_DESCRIPTOR_HANDLE AmbientMapSrv()const;
+	CD3DX12_CPU_DESCRIPTOR_HANDLE NormalMapRtv() const;
+	CD3DX12_GPU_DESCRIPTOR_HANDLE NormalMapSrv() const;
+	CD3DX12_GPU_DESCRIPTOR_HANDLE AmbientMapSrv() const;
 
 	void BuildDescriptors(
 		ID3D12Resource* depthStencilBuffer,
@@ -44,35 +39,22 @@ public:
 		CD3DX12_CPU_DESCRIPTOR_HANDLE hCpuRtv,
 		UINT cbvSrvUavDescriptorSize,
 		UINT rtvDescriptorSize);
-
+	
 	void RebuildDescriptors(ID3D12Resource* depthStencilBuffer);
 
 	void SetPSOs(ID3D12PipelineState* ssaoPso, ID3D12PipelineState* ssaoBlurPso);
 
-	///<summary>
-	/// Call when the backbuffer is resized.  
-	///</summary>
 	void OnResize(UINT newWidth, UINT newHeight);
 
-	///<summary>
-	/// Changes the render target to the Ambient render target and draws a fullscreen
-	/// quad to kick off the pixel shader to compute the AmbientMap.  We still keep the
-	/// main depth buffer binded to the pipeline, but depth buffer read/writes
-	/// are disabled, as we do not need the depth buffer computing the Ambient map.
-	///</summary>
-	void ComputeSsao(
-		ID3D12GraphicsCommandList* cmdList,
-		FrameResource* currFrame,
-		int blurCount);
-
+	// 将渲染目标改为环境渲染目标
+	// 绘制全屏矩形,以启动PS计算环境贴图
+	// 保持主深度缓冲区绑定到流水线,但是深度缓冲区读写被禁用
+	// 因为不需要深度缓冲区计算环境映射
+	void ComputeSsao(ID3D12GraphicsCommandList* cmdList, FrameResource* currFrame, int blurCount);
 
 private:
-
-	///<summary>
-	/// Blurs the ambient map to smooth out the noise caused by only taking a
-	/// few random samples per pixel.  We use an edge preserving blur so that 
-	/// we do not blur across discontinuities--we want edges to remain edges.
-	///</summary>
+	// 模糊环境贴图,以使每个像素仅采集少量的随机样本造成的噪点变得平滑
+	// 使用双边模糊,不会在不连续处模糊,我们希望保持边缘
 	void BlurAmbientMap(ID3D12GraphicsCommandList* cmdList, FrameResource* currFrame, int blurCount);
 	void BlurAmbientMap(ID3D12GraphicsCommandList* cmdList, bool horzBlur);
 
@@ -80,7 +62,6 @@ private:
 	void BuildRandomVectorTexture(ID3D12GraphicsCommandList* cmdList);
 
 	void BuildOffsetVectors();
-
 
 private:
 	ID3D12Device* md3dDevice;
@@ -106,7 +87,7 @@ private:
 	CD3DX12_CPU_DESCRIPTOR_HANDLE mhRandomVectorMapCpuSrv;
 	CD3DX12_GPU_DESCRIPTOR_HANDLE mhRandomVectorMapGpuSrv;
 
-	// Need two for ping-ponging during blur.
+	// 模糊时需要两个轮换
 	CD3DX12_CPU_DESCRIPTOR_HANDLE mhAmbientMap0CpuSrv;
 	CD3DX12_GPU_DESCRIPTOR_HANDLE mhAmbientMap0GpuSrv;
 	CD3DX12_CPU_DESCRIPTOR_HANDLE mhAmbientMap0CpuRtv;
@@ -124,4 +105,4 @@ private:
 	D3D12_RECT mScissorRect;
 };
 
-#endif // SSAO_H
+#endif

@@ -7,88 +7,87 @@ ShadowMap::ShadowMap(ID3D12Device* device, UINT width, UINT height)
 	mWidth = width;
 	mHeight = height;
 
-	mViewport = { 0.0f, 0.0f, (float)width, (float)height, 0.0f, 1.0f };
+	mViewport = { 0.0f, 0.0f, (float)width, (float)height, 0.0f, 1.0f }; // 最后两个参数:深度范围
 	mScissorRect = { 0, 0, (int)width, (int)height };
 
 	BuildResource();
 }
 
-UINT ShadowMap::Width()const
+UINT ShadowMap::Width() const
 {
 	return mWidth;
 }
 
-UINT ShadowMap::Height()const
+UINT ShadowMap::Height() const
 {
 	return mHeight;
 }
 
-ID3D12Resource*  ShadowMap::Resource()
+ID3D12Resource* ShadowMap::Resource()
 {
 	return mShadowMap.Get();
 }
 
-CD3DX12_GPU_DESCRIPTOR_HANDLE ShadowMap::Srv()const
+CD3DX12_GPU_DESCRIPTOR_HANDLE ShadowMap::Srv() const
 {
 	return mhGpuSrv;
 }
 
-CD3DX12_CPU_DESCRIPTOR_HANDLE ShadowMap::Dsv()const
+CD3DX12_CPU_DESCRIPTOR_HANDLE ShadowMap::Dsv() const
 {
 	return mhCpuDsv;
 }
 
-D3D12_VIEWPORT ShadowMap::Viewport()const
+D3D12_VIEWPORT ShadowMap::Viewport() const
 {
 	return mViewport;
 }
 
-D3D12_RECT ShadowMap::ScissorRect()const
+D3D12_RECT ShadowMap::ScissorRect() const
 {
 	return mScissorRect;
 }
 
-void ShadowMap::BuildDescriptors(CD3DX12_CPU_DESCRIPTOR_HANDLE hCpuSrv,
+void ShadowMap::BuildDescriptors(
+	CD3DX12_CPU_DESCRIPTOR_HANDLE hCpuSrv,
 	CD3DX12_GPU_DESCRIPTOR_HANDLE hGpuSrv,
 	CD3DX12_CPU_DESCRIPTOR_HANDLE hCpuDsv)
 {
-	// Save references to the descriptors. 
 	mhCpuSrv = hCpuSrv;
 	mhGpuSrv = hGpuSrv;
 	mhCpuDsv = hCpuDsv;
 
-	//  Create the descriptors
 	BuildDescriptors();
 }
 
 void ShadowMap::OnResize(UINT newWidth, UINT newHeight)
 {
-	if ((mWidth != newWidth) || (mHeight != newHeight))
+	if (mWidth != newWidth || mHeight != newHeight)
 	{
 		mWidth = newWidth;
 		mHeight = newHeight;
 
 		BuildResource();
 
-		// New resource, so we need new descriptors to that resource.
 		BuildDescriptors();
 	}
 }
 
 void ShadowMap::BuildDescriptors()
 {
-	// Create SRV to resource so we can sample the shadow map in a shader program.
+	// 创建SRV,这样就能在着色器中对阴影图进行采样
 	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
 	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 	srvDesc.Format = DXGI_FORMAT_R24_UNORM_X8_TYPELESS;
 	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+	srvDesc.Texture2D.MostDetailedMip = 0;
 	srvDesc.Texture2D.MostDetailedMip = 0;
 	srvDesc.Texture2D.MipLevels = 1;
 	srvDesc.Texture2D.ResourceMinLODClamp = 0.0f;
 	srvDesc.Texture2D.PlaneSlice = 0;
 	md3dDevice->CreateShaderResourceView(mShadowMap.Get(), &srvDesc, mhCpuSrv);
 
-	// Create DSV to resource so we can render to the shadow map.
+	// 创建DSV,这样就能渲染到阴影图中
 	D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc;
 	dsvDesc.Flags = D3D12_DSV_FLAG_NONE;
 	dsvDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
@@ -99,12 +98,6 @@ void ShadowMap::BuildDescriptors()
 
 void ShadowMap::BuildResource()
 {
-	// Note, compressed formats cannot be used for UAV.  We get error like:
-	// ERROR: ID3D11Device::CreateTexture2D: The format (0x4d, BC3_UNORM) 
-	// cannot be bound as an UnorderedAccessView, or cast to a format that
-	// could be bound as an UnorderedAccessView.  Therefore this format 
-	// does not support D3D11_BIND_UNORDERED_ACCESS.
-
 	D3D12_RESOURCE_DESC texDesc;
 	ZeroMemory(&texDesc, sizeof(D3D12_RESOURCE_DESC));
 	texDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
