@@ -1,118 +1,118 @@
-## µÚ6ÕÂ ÀûÓÃDirect3D»æÖÆ¼¸ºÎÌå
-### 6.1 ¶¥µãÓëÊäÈë²¼¾Ö
-ÎªÁË×Ô¶¨Òå¶¥µã¸ñÊ½,Ê×ÏÈ´´½¨½á¹¹ÌåÀ´ÈÝÄÉÑ¡¶¨µÄ¶¥µãÊý¾Ý struct Vertex  
-ÊäÈë²¼¾ÖÃèÊö: ¶¨Òå¶¥µã½á¹¹Ìåºó,ÏòDXÌá¹©¶¥µã½á¹¹ÌåµÄÃèÊö,Ê¹ËüÁË½âÔõÑù´¦Àí½á¹¹ÌåÖÐµÄÃ¿¸ö³ÉÔ±  
+## ç¬¬6ç«  åˆ©ç”¨Direct3Dç»˜åˆ¶å‡ ä½•ä½“
+### 6.1 é¡¶ç‚¹ä¸Žè¾“å…¥å¸ƒå±€
+ä¸ºäº†è‡ªå®šä¹‰é¡¶ç‚¹æ ¼å¼,é¦–å…ˆåˆ›å»ºç»“æž„ä½“æ¥å®¹çº³é€‰å®šçš„é¡¶ç‚¹æ•°æ® struct Vertex  
+è¾“å…¥å¸ƒå±€æè¿°: å®šä¹‰é¡¶ç‚¹ç»“æž„ä½“åŽ,å‘DXæä¾›é¡¶ç‚¹ç»“æž„ä½“çš„æè¿°,ä½¿å®ƒäº†è§£æ€Žæ ·å¤„ç†ç»“æž„ä½“ä¸­çš„æ¯ä¸ªæˆå‘˜  
 **D3D12_INPUT_LAYOUT_DESC**  
-ÊäÈë²¼¾ÖÃèÊöÓÉÁ½²¿·Ö×é³É:**D3D12_INPUT_ELEMENT_DESC**¹¹³ÉµÄÊý×é,¼°Êý×é³¤¶È  
-**D3D12_INPUT_ELEMENT_DESC**Êý×éÖÐµÄÔªËØÒÀ´ÎÃèÊöÁË¶¥µã½á¹¹ÌåÖÐËù¶ÔÓ¦µÄ³ÉÔ±  
-½á¹¹ÌåµÄ**SemanticName**(ÓïÒå) == **¶¥µã×ÅÉ«Æ÷ÊäÈëÇ©Ãû(vertex shader input signature)**  
-### 6.2 ¶¥µã»º³åÇø
-ÎªÁËÊ¹GPU¿ÉÒÔ·ÃÎÊ¶¥µãÊý×é,ÐèÒª½«ËüÃÇ·ÅÖÃÔÚ³ÉÎª»º³åÇø(buffer)µÄ**GPU×ÊÔ´**(**ID3D12Resource**)Àï,°Ñ´¢´æ¶¥µãµÄ»º³åÇø³ÆÎª¶¥µã»º³åÇø(vertex buffer)  
-´´½¨ID3D12Resource¶ÔÏó: ÌîÐ´D3D12_RESOURCE_DESC(**CD3DX12_RESOURCE_DESC**, C++°ü×°Àà)½á¹¹Ìå,µ÷ÓÃID3D12Device::CreateCommittedResource  
-¶ÔÓÚ¾²Ì¬¼¸ºÎÌå(Ã¿Ò»Ö¡¶¼²»±ä»¯),½«Æä¶¥µã»º³åÇøÖÃÓÚÄ¬ÈÏ¶Ñ(**D3D12_HEAP_TYPE_DEFAULT**)À´ÓÅ»¯ÐÔÄÜ  
-ÓÃ**D3D12_HEAP_TYPE_UPLOAD**¶ÑÀàÐÍÀ´´´½¨ÉÏ´«»º³åÇø(upload buffer)×ÊÔ´.  
-½«¶¥µãÊý¾Ý´ÓÏµÍ³ÄÚ´æ¸´ÖÆµ½ÉÏ´«»º³åÇø,ÔÙ´ÓÉÏ´«»º³åÇø¸´ÖÆµ½ÕæÕýµÄ¶¥µã»º³åÇø  
-ÐèÒªÀûÓÃÉÏ´«»º³åÇøÀ´³õÊ¼»¯Ä¬ÈÏ»º³åÇø²Î¿¼d3dUtil :: CreateDefaultBuffer()  
-ÎªÁË½«¶¥µã»º³åÇø°ó¶¨µ½äÖÈ¾Á÷Ë®ÏßÉÏ,Ðè´´½¨¶¥µã»º³åÇøÊÓÍ¼(vertex buffer view,²»ÐèÒªÃèÊö·û¶Ñ)  
-**D3D12_VERTEX_BUFFER_VIEW**,ÊôÐÔBufferLocation: ´ý´´½¨µÄ¶¥µã»º³åÇø×ÊÔ´ÐéÄâµØÖ·,Í¨¹ý**ID3D12Resource :: GetGPUVirtualAddress**»ñÈ¡  
-ÔÚ¶¥µã»º³åÇø¼°Æä¶ÔÓ¦ÊÓÍ¼´´½¨Íê³Éºó,½«ËüÓëäÖÈ¾Á÷Ë®ÏßÉÏµÄÒ»¸öÊäÈë²Û(input slot)Ïà°ó¶¨.  
-ÕâÑùÒ»À´,¾ÍÄÜÏòÁ÷Ë®ÏßµÄÊäÈë×°Åä½×¶Î´«µÝ¶¥µãÊý¾ÝÁË  
+è¾“å…¥å¸ƒå±€æè¿°ç”±ä¸¤éƒ¨åˆ†ç»„æˆ:**D3D12_INPUT_ELEMENT_DESC**æž„æˆçš„æ•°ç»„,åŠæ•°ç»„é•¿åº¦  
+**D3D12_INPUT_ELEMENT_DESC**æ•°ç»„ä¸­çš„å…ƒç´ ä¾æ¬¡æè¿°äº†é¡¶ç‚¹ç»“æž„ä½“ä¸­æ‰€å¯¹åº”çš„æˆå‘˜  
+ç»“æž„ä½“çš„**SemanticName**(è¯­ä¹‰) == **é¡¶ç‚¹ç€è‰²å™¨è¾“å…¥ç­¾å(vertex shader input signature)**  
+### 6.2 é¡¶ç‚¹ç¼“å†²åŒº
+ä¸ºäº†ä½¿GPUå¯ä»¥è®¿é—®é¡¶ç‚¹æ•°ç»„,éœ€è¦å°†å®ƒä»¬æ”¾ç½®åœ¨æˆä¸ºç¼“å†²åŒº(buffer)çš„**GPUèµ„æº**(**ID3D12Resource**)é‡Œ,æŠŠå‚¨å­˜é¡¶ç‚¹çš„ç¼“å†²åŒºç§°ä¸ºé¡¶ç‚¹ç¼“å†²åŒº(vertex buffer)  
+åˆ›å»ºID3D12Resourceå¯¹è±¡: å¡«å†™D3D12_RESOURCE_DESC(**CD3DX12_RESOURCE_DESC**, C++åŒ…è£…ç±»)ç»“æž„ä½“,è°ƒç”¨ID3D12Device::CreateCommittedResource  
+å¯¹äºŽé™æ€å‡ ä½•ä½“(æ¯ä¸€å¸§éƒ½ä¸å˜åŒ–),å°†å…¶é¡¶ç‚¹ç¼“å†²åŒºç½®äºŽé»˜è®¤å †(**D3D12_HEAP_TYPE_DEFAULT**)æ¥ä¼˜åŒ–æ€§èƒ½  
+ç”¨**D3D12_HEAP_TYPE_UPLOAD**å †ç±»åž‹æ¥åˆ›å»ºä¸Šä¼ ç¼“å†²åŒº(upload buffer)èµ„æº.  
+å°†é¡¶ç‚¹æ•°æ®ä»Žç³»ç»Ÿå†…å­˜å¤åˆ¶åˆ°ä¸Šä¼ ç¼“å†²åŒº,å†ä»Žä¸Šä¼ ç¼“å†²åŒºå¤åˆ¶åˆ°çœŸæ­£çš„é¡¶ç‚¹ç¼“å†²åŒº  
+éœ€è¦åˆ©ç”¨ä¸Šä¼ ç¼“å†²åŒºæ¥åˆå§‹åŒ–é»˜è®¤ç¼“å†²åŒºå‚è€ƒd3dUtil :: CreateDefaultBuffer()  
+ä¸ºäº†å°†é¡¶ç‚¹ç¼“å†²åŒºç»‘å®šåˆ°æ¸²æŸ“æµæ°´çº¿ä¸Š,éœ€åˆ›å»ºé¡¶ç‚¹ç¼“å†²åŒºè§†å›¾(vertex buffer view,ä¸éœ€è¦æè¿°ç¬¦å †)  
+**D3D12_VERTEX_BUFFER_VIEW**,å±žæ€§BufferLocation: å¾…åˆ›å»ºçš„é¡¶ç‚¹ç¼“å†²åŒºèµ„æºè™šæ‹Ÿåœ°å€,é€šè¿‡**ID3D12Resource :: GetGPUVirtualAddress**èŽ·å–  
+åœ¨é¡¶ç‚¹ç¼“å†²åŒºåŠå…¶å¯¹åº”è§†å›¾åˆ›å»ºå®ŒæˆåŽ,å°†å®ƒä¸Žæ¸²æŸ“æµæ°´çº¿ä¸Šçš„ä¸€ä¸ªè¾“å…¥æ§½(input slot)ç›¸ç»‘å®š.  
+è¿™æ ·ä¸€æ¥,å°±èƒ½å‘æµæ°´çº¿çš„è¾“å…¥è£…é…é˜¶æ®µä¼ é€’é¡¶ç‚¹æ•°æ®äº†  
 **ID3D12GraphicsCommandList :: IASetVertexBuffers**  
-»æÖÆ¶¥µã: **ID3D12GraphicsCommandList :: DrawInstanced**  
-ÔÚÊ¹ÓÃË÷ÒýµÄÊ±ºò,ÓÃ ID3D12GraphicsCommandList\::DrawIndexedInstanced »æÖÆ  
-### 6.3 Ë÷ÒýºÍË÷Òý»º³åÇø
-ÎªÁËÊ¹GPU¿ÉÒÔ·ÃÎÊË÷ÒýÊý×é,ÐèÒª½«ËüÃÇ·ÅÖÃÓÚGPUµÄ»º³åÇø×ÊÔ´(ID3D12Resource)ÄÚ,³ÆÎªË÷Òý»º³åÇø(index buffer)  
-ÎªÁËÊ¹Ë÷Òý»º³åÇøÓëäÖÈ¾Á÷Ë®Ïß°ó¶¨,ÐèÒª¸øË÷Òý»º³åÇø×ÊÔ´´´½¨Ë÷Òý»º³åÇøÊÓÍ¼(index buffer view,²»ÐèÒªÃèÊö·û¶Ñ)  
-**D3D12_INDEX_BUFFER_VIEW**,ÊôÐÔBufferLocation:´ý´´½¨ÊÓÍ¼µÄË÷Òý»º³åÇø×ÊÔ´ÐéÄâµØÖ·,Í¨¹ýID3D12Resource::GetGPUVirtualAddress»ñÈ¡  
-½«Ë÷Òý»º³åÇø°ó¶¨µ½ÊäÈë×°ÅäÆ÷½×¶Î: **ID3D12GraphicsCommandList :: IASetIndexBuffer**  
-»æÖÆ: **ID3D12GraphicsCommandList :: DrawIndexedInstand**  
-### 6.6 ³£Á¿»º³åÇø
-#### 6.6.1 ´´½¨³£Á¿»º³åÇø
-³£Á¿»º³åÇø(constant buffer)Ò²ÊÇÒ»ÖÖGPU×ÊÔ´(ID3D12Resource),ÆäÊý¾ÝÄÚÈÝ¿É¹©×ÅÉ«Æ÷³ÌÐòËùÒýÓÃ  
-³£Á¿»º³åÇøÓÉCPUÃ¿Ö¡¸üÐÂÒ»´Î,´´½¨µ½Ò»¸öÉÏ´«¶ÑÖÐ,´óÐ¡Îª256BµÄÕûÊý±¶  
-#### 6.6.2 ¸üÐÂ³£Á¿»º³åÇø
-**ComPtr\<ID3D12Resource\>::Map**»ñÈ¡Ö¸ÏòÓû¸üÐÂ×ÊÔ´Êý¾ÝµÄÖ¸Õë  
-**memcpy**()½«Êý¾Ý´ÓÏµÍ³ÄÚ´æ¸´ÖÆµ½³£Á¿»º³åÇø  
-²Î¿¼UploadBuffer.h  
-#### 6.6.4 ³£Á¿»º³åÇøÃèÊö·û
-ÀûÓÃÃèÊö·û½«³£Á¿»º´æÇø°ó¶¨ÖÁäÖÈ¾Á÷Ë®Ïß  
-ÌîÐ´**D3D12_DESCRIPTOR_HEAP_DESC**½á¹¹Ìå  
+ç»˜åˆ¶é¡¶ç‚¹: **ID3D12GraphicsCommandList :: DrawInstanced**  
+åœ¨ä½¿ç”¨ç´¢å¼•çš„æ—¶å€™,ç”¨ ID3D12GraphicsCommandList\::DrawIndexedInstanced ç»˜åˆ¶  
+### 6.3 ç´¢å¼•å’Œç´¢å¼•ç¼“å†²åŒº
+ä¸ºäº†ä½¿GPUå¯ä»¥è®¿é—®ç´¢å¼•æ•°ç»„,éœ€è¦å°†å®ƒä»¬æ”¾ç½®äºŽGPUçš„ç¼“å†²åŒºèµ„æº(ID3D12Resource)å†…,ç§°ä¸ºç´¢å¼•ç¼“å†²åŒº(index buffer)  
+ä¸ºäº†ä½¿ç´¢å¼•ç¼“å†²åŒºä¸Žæ¸²æŸ“æµæ°´çº¿ç»‘å®š,éœ€è¦ç»™ç´¢å¼•ç¼“å†²åŒºèµ„æºåˆ›å»ºç´¢å¼•ç¼“å†²åŒºè§†å›¾(index buffer view,ä¸éœ€è¦æè¿°ç¬¦å †)  
+**D3D12_INDEX_BUFFER_VIEW**,å±žæ€§BufferLocation:å¾…åˆ›å»ºè§†å›¾çš„ç´¢å¼•ç¼“å†²åŒºèµ„æºè™šæ‹Ÿåœ°å€,é€šè¿‡ID3D12Resource::GetGPUVirtualAddressèŽ·å–  
+å°†ç´¢å¼•ç¼“å†²åŒºç»‘å®šåˆ°è¾“å…¥è£…é…å™¨é˜¶æ®µ: **ID3D12GraphicsCommandList :: IASetIndexBuffer**  
+ç»˜åˆ¶: **ID3D12GraphicsCommandList :: DrawIndexedInstand**  
+### 6.6 å¸¸é‡ç¼“å†²åŒº
+#### 6.6.1 åˆ›å»ºå¸¸é‡ç¼“å†²åŒº
+å¸¸é‡ç¼“å†²åŒº(constant buffer)ä¹Ÿæ˜¯ä¸€ç§GPUèµ„æº(ID3D12Resource),å…¶æ•°æ®å†…å®¹å¯ä¾›ç€è‰²å™¨ç¨‹åºæ‰€å¼•ç”¨  
+å¸¸é‡ç¼“å†²åŒºç”±CPUæ¯å¸§æ›´æ–°ä¸€æ¬¡,åˆ›å»ºåˆ°ä¸€ä¸ªä¸Šä¼ å †ä¸­,å¤§å°ä¸º256Bçš„æ•´æ•°å€  
+#### 6.6.2 æ›´æ–°å¸¸é‡ç¼“å†²åŒº
+**ComPtr\<ID3D12Resource\>::Map**èŽ·å–æŒ‡å‘æ¬²æ›´æ–°èµ„æºæ•°æ®çš„æŒ‡é’ˆ  
+**memcpy**()å°†æ•°æ®ä»Žç³»ç»Ÿå†…å­˜å¤åˆ¶åˆ°å¸¸é‡ç¼“å†²åŒº  
+å‚è€ƒUploadBuffer.h  
+#### 6.6.4 å¸¸é‡ç¼“å†²åŒºæè¿°ç¬¦
+åˆ©ç”¨æè¿°ç¬¦å°†å¸¸é‡ç¼“å­˜åŒºç»‘å®šè‡³æ¸²æŸ“æµæ°´çº¿  
+å¡«å†™**D3D12_DESCRIPTOR_HEAP_DESC**ç»“æž„ä½“  
 Type=**D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV**  
 Flags=**D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE**  
-´´½¨ÃèÊö·û¶Ñ: **CreateDescriptorHeap()**  
-ÌîÐ´**D3D12_CONSTANT_BUFFER_VIEW_DESC**½á¹¹Ìå  
-´´½¨³£Á¿»º³åÇø**ID3D12Device::CreateConstantBufferView()**  
-#### 6.6.5 ¸ùÇ©ÃûºÍÃèÊö·û±í
-²»Í¬ÀàÐÍµÄ×ÊÔ´»á±»°ó¶¨µ½ÌØ¶¨µÄ¼Ä´æÆ÷²Û(register slot)ÉÏ,¹©×ÅÉ«Æ÷³ÌÐò·ÃÎÊ  
-¸ùÇ©Ãû(root signature): °ó¶¨µ½äÖÈ¾Á÷Ë®ÏßÉÏµÄ×ÊÔ´,Ó³Éäµ½×ÅÉ«Æ÷µÄ¶ÔÓ¦ÊäÈë¼Ä´æÆ÷  
-¸ùÇ©ÃûÓÉ**ID3D12RootSignature**½Ó¿Ú±íÊ¾,ÒÔÒ»×éÃèÊö×ÅÉ«Æ÷ËùÐèÒª×ÊÔ´µÄ¸ù²ÎÊý(root parameter)¶¨Òå  
-¸ù²ÎÊý(**CD3DX12_ROOT_PARAMETER**)¿ÉÒÔÊÇ¸ù³£Á¿(root constant),¸ùÃèÊö·û(root descriptor),ÃèÊö·û±í(descriptor table,**CD3DX12_DESCRIPTOR_RANGE**)  
+åˆ›å»ºæè¿°ç¬¦å †: **CreateDescriptorHeap()**  
+å¡«å†™**D3D12_CONSTANT_BUFFER_VIEW_DESC**ç»“æž„ä½“  
+åˆ›å»ºå¸¸é‡ç¼“å†²åŒº**ID3D12Device::CreateConstantBufferView()**  
+#### 6.6.5 æ ¹ç­¾åå’Œæè¿°ç¬¦è¡¨
+ä¸åŒç±»åž‹çš„èµ„æºä¼šè¢«ç»‘å®šåˆ°ç‰¹å®šçš„å¯„å­˜å™¨æ§½(register slot)ä¸Š,ä¾›ç€è‰²å™¨ç¨‹åºè®¿é—®  
+æ ¹ç­¾å(root signature): ç»‘å®šåˆ°æ¸²æŸ“æµæ°´çº¿ä¸Šçš„èµ„æº,æ˜ å°„åˆ°ç€è‰²å™¨çš„å¯¹åº”è¾“å…¥å¯„å­˜å™¨  
+æ ¹ç­¾åç”±**ID3D12RootSignature**æŽ¥å£è¡¨ç¤º,ä»¥ä¸€ç»„æè¿°ç€è‰²å™¨æ‰€éœ€è¦èµ„æºçš„æ ¹å‚æ•°(root parameter)å®šä¹‰  
+æ ¹å‚æ•°(**CD3DX12_ROOT_PARAMETER**)å¯ä»¥æ˜¯æ ¹å¸¸é‡(root constant),æ ¹æè¿°ç¬¦(root descriptor),æè¿°ç¬¦è¡¨(descriptor table,**CD3DX12_DESCRIPTOR_RANGE**)  
 **CD3DX12_DESCRIPTOR_RANGE.Init()**, **ID3D12RootSignature.InitAsDescriptorTable()**  
-¸ùÇ©ÃûÖ»¶¨ÒåÁËÓ¦ÓÃ³ÌÐòÒª°ó¶¨µ½äÖÈ¾Á÷Ë®ÏßµÄ×ÊÔ´,Ã»ÓÐÖ´ÐÐ°ó¶¨²Ù×÷  
-ÁîÃèÊö·û±íÓëäÖÈ¾Á÷Ë®Ïß°ó¶¨: **ID3D12GraphicsCommandList::SetGraphicsRootDescriptorTable()**  
-### 6.7 ±àÒë×ÅÉ«Æ÷
-**D3DCompileFromFile()**,²Î¿¼d3dUtil::CompileShader()  
-**ID3DBlob**ÀàÐÍÃèÊöÒ»¶ÎÄÚ´æ,Á½¸ö·½·¨  
-**GetBufferPointer**(·µ»ØÊý¾Ývoid*Ö¸Õë,Ê¹ÓÃÇ°Ðè×ª»»ÀàÐÍ),**GetBufferSize**()  
-### 6.8 ¹âÕ¤Æ÷×´Ì¬
+æ ¹ç­¾ååªå®šä¹‰äº†åº”ç”¨ç¨‹åºè¦ç»‘å®šåˆ°æ¸²æŸ“æµæ°´çº¿çš„èµ„æº,æ²¡æœ‰æ‰§è¡Œç»‘å®šæ“ä½œ  
+ä»¤æè¿°ç¬¦è¡¨ä¸Žæ¸²æŸ“æµæ°´çº¿ç»‘å®š: **ID3D12GraphicsCommandList::SetGraphicsRootDescriptorTable()**  
+### 6.7 ç¼–è¯‘ç€è‰²å™¨
+**D3DCompileFromFile()**,å‚è€ƒd3dUtil::CompileShader()  
+**ID3DBlob**ç±»åž‹æè¿°ä¸€æ®µå†…å­˜,ä¸¤ä¸ªæ–¹æ³•  
+**GetBufferPointer**(è¿”å›žæ•°æ®void*æŒ‡é’ˆ,ä½¿ç”¨å‰éœ€è½¬æ¢ç±»åž‹),**GetBufferSize**()  
+### 6.8 å…‰æ …å™¨çŠ¶æ€
 **D3D12_RASTERIZER_DESC**  
-### 6.9 Á÷Ë®Ïß×´Ì¬¶ÔÏó
+### 6.9 æµæ°´çº¿çŠ¶æ€å¯¹è±¡
 PSO: Pipeline State Object, **ID3D12PipelineState**  
-ÌîÐ´**D3D12_GRAPHICS_PIPELINE_STATE_DESC**½á¹¹Ìå  
-´´½¨PSO: **ID3D12Device::CreateGraphicsPipelineState()**  
-## Ê¾Àý´úÂë
-#### 1, ÊµÀý»¯D3DApp×ÓÀàBoxApp theApp(hInstance)
+å¡«å†™**D3D12_GRAPHICS_PIPELINE_STATE_DESC**ç»“æž„ä½“  
+åˆ›å»ºPSO: **ID3D12Device::CreateGraphicsPipelineState()**  
+## ç¤ºä¾‹ä»£ç 
+#### 1, å®žä¾‹åŒ–D3DAppå­ç±»BoxApp theApp(hInstance)
 #### 2, theApp.Initialize()
-»ùÀà³õÊ¼»¯**D3DApp::Initialize()**  
-ÖØÖÃÃüÁîÁÐ±í**mCommandList->Reset(mDirectCmdListAlloc.Get(), nullptr)**  
-##### BuildDescriptorHeaps() // ´´½¨ÃèÊö·û¶Ñ mCbvHeap  
+åŸºç±»åˆå§‹åŒ–**D3DApp::Initialize()**  
+é‡ç½®å‘½ä»¤åˆ—è¡¨**mCommandList->Reset(mDirectCmdListAlloc.Get(), nullptr)**  
+##### BuildDescriptorHeaps() // åˆ›å»ºæè¿°ç¬¦å † mCbvHeap  
 &emsp;D3D12_DESCRIPTOR_HEAP_DESC cbvHeapDesc  
 &emsp;md3dDevice->CreateDescriptorHeap(&cbvHeapDesc, IID_PPV_ARGS(&mCbvHeap))  
-##### BuildConstantBuffers() // ´´½¨³£Á¿»º³åÇø mCbvHeap(Ïà¹Ø)  
+##### BuildConstantBuffers() // åˆ›å»ºå¸¸é‡ç¼“å†²åŒº mCbvHeap(ç›¸å…³)  
 &emsp;D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc  
-&emsp;cbvDesc.BufferLocation=GetGPUVirtualAddress()+i*size(µÚi¸öÎïÌå)  
+&emsp;cbvDesc.BufferLocation=GetGPUVirtualAddress()+i*size(ç¬¬iä¸ªç‰©ä½“)  
 &emsp;md3dDevice->CreateConstantBufferView(
 		&cbvDesc,
 		mCbvHeap->GetCPUDescriptorHandleForHeapStart())  
-##### BuildRootSignature() // ´´½¨¸ùÇ©Ãû mRootSignature
+##### BuildRootSignature() // åˆ›å»ºæ ¹ç­¾å mRootSignature
   
 &emsp;CD3DX12_ROOT_PARAMETER[]  
 &emsp;CD3DX12_ROOT_SIGNATURE_DESC  
 &emsp;D3D12SerializeRootSignature()  
 &emsp;md3dDevice->CreateRootSignature()  
-##### BuildShadersAndInputLayout() // ´´½¨×ÅÉ«Æ÷ºÍÊäÈë²¼¾Ö mInputLayout, mvsByteCode, mpsByteCode  
-&emsp;¶¥µã×ÅÉ«Æ÷×Ö½ÚÂë mvsByteCode=CompileShader()  
-&emsp;ÏñËØ×ÅÉ«Æ÷×Ö½ÚÂë mpsByteCode=CompileShader()  
-&emsp;ÊäÈë²¼¾ÖÃèÊö,¶ÔÓ¦¶¥µã½á¹¹ÌåµÄÊôÐÔ(Ë³ÐòÏàÍ¬),Ò²¶Ô×ÅÉ«Æ÷ÊäÈëÇ©Ãû(×Ö·û´®ÏàÍ¬) mInputLayout  
-##### BuildBoxGeometry() // ´´½¨Box¼¸ºÎÌå mBoxGeo->DrawArgs["box"] 
-&emsp;¶¥µãÊý×é vertices  
-&emsp;Ë÷ÒýÊý×é indices  
-&emsp;¼¸ºÎÍ¼ÐÎ¸¨Öú½á¹¹Ìå mBoxGeo = std::make_unique\<MeshGeometry\>()  
-&emsp;´´½¨BlobÀàÐÍµÄ¶¥µãÊý×é D3DCreateBlob(vbByteSize, &mBoxGeo->VertexBufferCPU)  
-&emsp;½«¶¥µãÊý×é¸´ÖÆµ½ÄÚ´æ CopyMemory(mBoxGeo->VertexBufferCPU->GetBufferPointer(), vertices.data(), vbByteSize)  
-&emsp;´´½¨BlobÀàÐÍµÄË÷ÒýÊý×é D3DCreateBlob(ibByteSize, &mBoxGeo->IndexBufferCPU)  
-&emsp;½«Ë÷ÒýÊý×é¸´ÖÆµ½ÄÚ´æ CopyMemory(mBoxGeo->IndexBufferCPU->GetBufferPointer(), indices.data&emsp;(), ibByteSize)  
-&emsp;½«¶¥µãÊý×é´ÓÄÚ´æ¸´ÖÆµ½ÉÏ´«¶Ñ,ÔÙ´ÓÉÏ´«¶Ñ¸´ÖÆµ½GPU³£Á¿»º³åÇø  
+##### BuildShadersAndInputLayout() // åˆ›å»ºç€è‰²å™¨å’Œè¾“å…¥å¸ƒå±€ mInputLayout, mvsByteCode, mpsByteCode  
+&emsp;é¡¶ç‚¹ç€è‰²å™¨å­—èŠ‚ç  mvsByteCode=CompileShader()  
+&emsp;åƒç´ ç€è‰²å™¨å­—èŠ‚ç  mpsByteCode=CompileShader()  
+&emsp;è¾“å…¥å¸ƒå±€æè¿°,å¯¹åº”é¡¶ç‚¹ç»“æž„ä½“çš„å±žæ€§(é¡ºåºç›¸åŒ),ä¹Ÿå¯¹ç€è‰²å™¨è¾“å…¥ç­¾å(å­—ç¬¦ä¸²ç›¸åŒ) mInputLayout  
+##### BuildBoxGeometry() // åˆ›å»ºBoxå‡ ä½•ä½“ mBoxGeo->DrawArgs["box"] 
+&emsp;é¡¶ç‚¹æ•°ç»„ vertices  
+&emsp;ç´¢å¼•æ•°ç»„ indices  
+&emsp;å‡ ä½•å›¾å½¢è¾…åŠ©ç»“æž„ä½“ mBoxGeo = std::make_unique\<MeshGeometry\>()  
+&emsp;åˆ›å»ºBlobç±»åž‹çš„é¡¶ç‚¹æ•°ç»„ D3DCreateBlob(vbByteSize, &mBoxGeo->VertexBufferCPU)  
+&emsp;å°†é¡¶ç‚¹æ•°ç»„å¤åˆ¶åˆ°å†…å­˜ CopyMemory(mBoxGeo->VertexBufferCPU->GetBufferPointer(), vertices.data(), vbByteSize)  
+&emsp;åˆ›å»ºBlobç±»åž‹çš„ç´¢å¼•æ•°ç»„ D3DCreateBlob(ibByteSize, &mBoxGeo->IndexBufferCPU)  
+&emsp;å°†ç´¢å¼•æ•°ç»„å¤åˆ¶åˆ°å†…å­˜ CopyMemory(mBoxGeo->IndexBufferCPU->GetBufferPointer(), indices.data&emsp;(), ibByteSize)  
+&emsp;å°†é¡¶ç‚¹æ•°ç»„ä»Žå†…å­˜å¤åˆ¶åˆ°ä¸Šä¼ å †,å†ä»Žä¸Šä¼ å †å¤åˆ¶åˆ°GPUå¸¸é‡ç¼“å†²åŒº  
 &emsp;mBoxGeo->VertexBufferGPU = d3dUtil :: CreateDefaultBuffer()  
 &emsp;mBoxGeo->IndexBufferGPU = d3dUtil :: CreateDefaultBuffer()  
 &emsp;SubmeshGeometry submesh  
 &emsp;mBoxGeo->DrawArgs["box"] = submesh  
-##### BuildPSO() // ´´½¨Á÷Ë®Ïß×´Ì¬¶ÔÏó mPSO
+##### BuildPSO() // åˆ›å»ºæµæ°´çº¿çŠ¶æ€å¯¹è±¡ mPSO
 &emsp;D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc  
 &emsp;md3dDevice->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&mPSO))  
   
-Ö´ÐÐ³õÊ¼»¯ÃüÁî**mCommandList->Close()**  
+æ‰§è¡Œåˆå§‹åŒ–å‘½ä»¤**mCommandList->Close()**  
 ID3D12CommandList* cmdsLists[] = { mCommandList.Get() }  
 **mCommandQueue->ExecuteCommandLists(_countof(cmdsLists), cmdsLists)**  
-µÈ´ý³õÊ¼»¯Íê³É**FlushCommandQueue()**
+ç­‰å¾…åˆå§‹åŒ–å®Œæˆ**FlushCommandQueue()**
 #### 3, theApp.Run()
-¿ªÆôÏûÏ¢Ñ­»·Ö®Ç°,ÖØÖÃÓÎÏ·Ê±¼ä mTimer.Reset()  
+å¼€å¯æ¶ˆæ¯å¾ªçŽ¯ä¹‹å‰,é‡ç½®æ¸¸æˆæ—¶é—´ mTimer.Reset()  
 while (msg.message != WM_QUIT)  
-Èç¹ûÓÐWindowÏûÏ¢,´¦Àí if (PeekMessage(&msg, 0, 0, 0, PM_REMOVE))  
-·ñÔò,´¦ÀíÓÎÏ·Âß¼­ else  
+å¦‚æžœæœ‰Windowæ¶ˆæ¯,å¤„ç† if (PeekMessage(&msg, 0, 0, 0, PM_REMOVE))  
+å¦åˆ™,å¤„ç†æ¸¸æˆé€»è¾‘ else  
 mTimer.Tick()  
 ##### Update(mTimer)
-&emsp;Ã¿Ö¡¸üÐÂ³£Á¿»º´æÇøµÄ×ª»»¾ØÕó  
+&emsp;æ¯å¸§æ›´æ–°å¸¸é‡ç¼“å­˜åŒºçš„è½¬æ¢çŸ©é˜µ  
 &emsp;XMStoreFloat4x4(&objConstants.WorldViewProj, XMMatrixTranspose(worldViewProj))  
 &emsp;mObjectCB->CopyData(0, objConstants)  
 ##### Draw(mTimer)
@@ -123,19 +123,19 @@ mTimer.Tick()
 &emsp;mCommandList->ResourceBarrier()  
 &emsp;mCommandList->ClearRenderTargetView()  
 &emsp;mCommandList->ClearDepthStencilView()  
-&emsp;Ö¸¶¨½«ÒªäÖÈ¾µÄÄ¿±ê»º³åÇø **mCommandList->OMSetRenderTargets(1, &CurrentBackBufferView(), true, &DepthStencilView())**  
+&emsp;æŒ‡å®šå°†è¦æ¸²æŸ“çš„ç›®æ ‡ç¼“å†²åŒº **mCommandList->OMSetRenderTargets(1, &CurrentBackBufferView(), true, &DepthStencilView())**  
 &emsp;ID3D12DescriptorHeap* descriptorHeaps[] = { mCbvHeap.Get() }  
 &emsp;mCommandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps)  
-&emsp;ÉèÖÃ¸ùÇ©Ãû **mCommandList->SetGraphicsRootSignature(mRootSignature.Get())**  
-&emsp;ÊäÈë×°Åä¶¥µã»º´æ **mCommandList->IASetVertexBuffers(0, 1, &mBoxGeo->VertexBufferView())**  
+&emsp;è®¾ç½®æ ¹ç­¾å **mCommandList->SetGraphicsRootSignature(mRootSignature.Get())**  
+&emsp;è¾“å…¥è£…é…é¡¶ç‚¹ç¼“å­˜ **mCommandList->IASetVertexBuffers(0, 1, &mBoxGeo->VertexBufferView())**  
 &emsp;mCommandList->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST)  
-&emsp;ÁîÃèÊö·û±íÓëäÖÈ¾Á÷Ë®ÏßÏà°ó¶¨ **mCommandList->SetGraphicsRootDescriptorTable(0, mCbvHeap->GetGPUDescriptorHandleForHeapStart())**  
-&emsp;Ê¹ÓÃË÷Òý½øÐÐ»æÖÆ **mCommandList->DrawIndexedInstanced(
+&emsp;ä»¤æè¿°ç¬¦è¡¨ä¸Žæ¸²æŸ“æµæ°´çº¿ç›¸ç»‘å®š **mCommandList->SetGraphicsRootDescriptorTable(0, mCbvHeap->GetGPUDescriptorHandleForHeapStart())**  
+&emsp;ä½¿ç”¨ç´¢å¼•è¿›è¡Œç»˜åˆ¶ **mCommandList->DrawIndexedInstanced(
 		mBoxGeo->DrawArgs["box"].IndexCount,
 		1, 0, 0, 0)**  
 &emsp;mCommandList->ResourceBarrier()  
-&emsp;Íê³ÉÃüÁîµÄ¼ÇÂ¼ mCommandList->Close()  
-&emsp;ÏòÃüÁî¶ÓÁÐÌí¼ÓÃüÁîÁÐ±í ID3D12CommandList* cmdsLists[] = { mCommandList.Get() }  
+&emsp;å®Œæˆå‘½ä»¤çš„è®°å½• mCommandList->Close()  
+&emsp;å‘å‘½ä»¤é˜Ÿåˆ—æ·»åŠ å‘½ä»¤åˆ—è¡¨ ID3D12CommandList* cmdsLists[] = { mCommandList.Get() }  
 &emsp;**mCommandQueue->ExecuteCommandLists(_countof(cmdsLists), cmdsLists)**  
-&emsp;½»»»ºóÌ¨»º³åÇøÓëÇ°Ì¨»º³åÇø mSwapChain->Present(0, 0)  
-&emsp;µÈ´ý»æÖÆ´ËÖ¡µÄÃüÁîÖ´ÐÐÍê±Ï **FlushCommandQueue()**  
+&emsp;äº¤æ¢åŽå°ç¼“å†²åŒºä¸Žå‰å°ç¼“å†²åŒº mSwapChain->Present(0, 0)  
+&emsp;ç­‰å¾…ç»˜åˆ¶æ­¤å¸§çš„å‘½ä»¤æ‰§è¡Œå®Œæ¯• **FlushCommandQueue()**  

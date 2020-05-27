@@ -1,4 +1,4 @@
-﻿## 第7章 利用Direct3D绘制几何体(续)-LandAndWaves
+## 第7章 利用Direct3D绘制几何体(续)-LandAndWaves
 ### Initialize()
 D3DApp::Initialize()  
 mCommandList->Reset(mDirectCmdListAlloc.Get(), nullptr)  
