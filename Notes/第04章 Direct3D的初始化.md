@@ -15,9 +15,9 @@ GPU资源并非直接与渲染流水线相绑定,而是要通过描述符对它�
 常用的描述符:  
 <font color="#FF8000">CBV(constant buffer view)</font>: 常量缓冲视图  
 <font color="#FF8000">SRV(shader resource view)</font>: 着色器资源视图  
-<font color="#FF8000">UAV(unordered access view)</font>: 无视访问视图  
+<font color="#FF8000">UAV(unordered access view)</font>: 无序访问视图  
 <font color="#FF8000">RTV(render target view)</font>: 渲染目标视图  
-<font color="#FF8000">DSV(depth/stencil view)</font>深度/模板视图  
+<font color="#FF8000">DSV(depth/stencil view)</font>: 深度/模板视图  
 描述符堆descriptor heap(可以看做描述符数组),需要为每一种类型的描述符都创建出单独的描述符堆  
 也可为同一种描述符类型创建出多个描述符堆  
 #### 4.1.10 DirectX图形基础结构
@@ -62,6 +62,7 @@ CPU可以利用命令列表(command list,封装了一系列图形渲染命令)**
 填写**D3D12_VIEWPORT**结构体,**ID3D12GraphicsCommandList::RSSetViewports**  
 #### 4.3.10 设置裁剪矩形
 **D3D12_RECT**, **ID3D12GraphicsCommandList::RSSetScissorRects**  
+
 ## 示例代码
 #### 1, WinMain函数中,根据应用句柄HINSTANCE实例化D3DApp(的子类)theApp  
 #### 2, 初始化theApp.Initialize()包括创建窗口,初始化DX  
